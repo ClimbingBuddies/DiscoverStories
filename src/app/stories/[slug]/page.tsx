@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
+import EpisodeAudioPlayer from "@/components/EpisodeAudioPlayer";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -154,12 +155,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
                           </p>
                           <div className="flex flex-wrap gap-3">
                             {episode.audio_url ? (
-                              <a
-                                href={episode.audio_url}
-                                className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
-                              >
-                                Play
-                              </a>
+                              <EpisodeAudioPlayer audioUrl={episode.audio_url} />
                             ) : (
                               <span className="inline-flex items-center justify-center rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-500">
                                 No audio

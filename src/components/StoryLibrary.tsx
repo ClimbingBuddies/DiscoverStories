@@ -39,9 +39,26 @@ function saveProgressMap(progressMap: Record<string, { episode: string; percenta
   }
 }
 
+const CATEGORY_KEYWORDS: Array<{ label: string; keywords: string[] }> = [
+  { label: "Science Fiction", keywords: ["science fiction", "sci-fi", "sci fi", "future", "space", "robot", "dyson", "cosmic", "quantum", "galaxy", "star", "satellite", "technology", "ai", "android"] },
+  { label: "Romance", keywords: ["romance", "love", "heart", "kiss", "affection", "relationship"] },
+  { label: "Fantasy", keywords: ["fantasy", "magic", "wizard", "dragon", "enchanted", "myth", "spell", "kingdom", "realm"] },
+  { label: "Education", keywords: ["education", "learn", "school", "teacher", "history", "science", "lesson", "knowledge", "academy"] },
+  { label: "Mystery", keywords: ["mystery", "secret", "detective", "clue", "unknown", "hidden", "haunted", "ghost", "riddle"] },
+  { label: "Adventure", keywords: ["adventure", "journey", "quest", "explore", "travel", "expedition", "treasure", "survival", "escape"] },
+  { label: "Drama", keywords: ["drama", "conflict", "struggle", "loss", "family", "war", "betrayal", "sacrifice"] },
+];
+
+function inferStoryCategories(story: Pick<LibraryStory, "title" | "short_description" | "description">): string[] {
+  const haystack = `${story.title ?? ""} ${story.short_description ?? ""} ${story.description ?? ""}`.toLowerCase();
+
+  return CATEGORY_KEYWORDS.filter(({ keywords }) => keywords.some((keyword) => haystack.includes(keyword))).map(({ label }) => label);
+}
+
 export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
   const [lastSelectedSlug, setLastSelectedSlug] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, { episode: string; percentage: number }>>({});
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
     let savedSlug: string | null = null;
@@ -65,9 +82,26 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
     [stories]
   );
 
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    publishedStories.forEach((story) => {
+      inferStoryCategories(story).forEach((category) => categories.add(category));
+    });
+
+    return ["All", ...Array.from(categories).sort()];
+  }, [publishedStories]);
+
+  const filteredPublishedStories = useMemo(() => {
+    if (selectedCategory === "All") {
+      return publishedStories;
+    }
+
+    return publishedStories.filter((story) => inferStoryCategories(story).includes(selectedCategory));
+  }, [publishedStories, selectedCategory]);
+
   const allPublished = useMemo(
-    () => [...publishedStories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [publishedStories]
+    () => [...filteredPublishedStories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [filteredPublishedStories]
   );
 
   const featuredStory = useMemo(() => {
@@ -131,6 +165,28 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
 
   return (
     <div className="space-y-12">
+      {availableCategories.length > 1 ? (
+        <div className="flex flex-wrap gap-2">
+          {availableCategories.map((category) => {
+            const isActive = selectedCategory === category;
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setSelectedCategory(category)}
+                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  isActive
+                    ? "border-emerald-400 bg-emerald-400/15 text-emerald-300"
+                    : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-600"
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {featuredStory ? (
         <FeaturedStoryCard story={featuredStory} onSelect={handleSelect} />
       ) : null}
