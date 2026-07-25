@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
-import EpisodeAudioPlayer from "@/components/EpisodeAudioPlayer";
+import EpisodeCardActions from "@/components/EpisodeCardActions";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -149,26 +149,12 @@ export default async function StoryPage({ params, searchParams }: Props) {
                           )}
                         </div>
 
-                        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm text-zinc-500">
-                            {episode.word_count ?? 0} words · {Math.round((episode.duration_seconds ?? 0) / 60)} minutes
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            {episode.audio_url ? (
-                              <EpisodeAudioPlayer audioUrl={episode.audio_url} />
-                            ) : (
-                              <span className="inline-flex items-center justify-center rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-500">
-                                No audio
-                              </span>
-                            )}
-                            <Link
-                              href={`/stories/${story.slug}/episodes/${episode.episode_number}`}
-                              className="inline-flex items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/90 px-4 py-2 text-sm font-semibold text-white transition hover:border-emerald-400 hover:text-emerald-300"
-                            >
-                              Read
-                            </Link>
-                          </div>
-                        </div>
+                        <EpisodeCardActions
+                          audioUrl={episode.audio_url ?? null}
+                          readHref={`/stories/${story.slug}/episodes/${episode.episode_number}`}
+                          wordCount={episode.word_count ?? 0}
+                          durationMinutes={Math.round((episode.duration_seconds ?? 0) / 60)}
+                        />
                       </div>
                     </div>
                   </article>
