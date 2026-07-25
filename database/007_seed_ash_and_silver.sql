@@ -22,6 +22,8 @@ BEGIN
         title,
         short_description,
         description,
+        banner_image_path,
+        cover_image_path,
         cover_image_url,
         content_status,
         published_at
@@ -36,6 +38,8 @@ BEGIN
 When a sealed letter disappears before she can steal it, Elara follows the story left behind by locks, gears, hidden rooms and altered stone. Her search draws her beneath the capital, through noble intrigues and towards fragments of an ancient civilisation misunderstood by the modern world.
 
 A quietly decent noble named Cedric notices the elusive thief and chases her across the city, but this is Elara''s story. Their rivalry becomes respect only after he learns that she has been following a far more important mystery. As the stakes grow, Elara begins to experience powers she neither expected nor understands.',
+        'ash-and-silver/banner.png',
+        'ash-and-silver/cover.png',
         NULL,
         'published',
         now()
@@ -45,6 +49,8 @@ A quietly decent noble named Cedric notices the elusive thief and chases her acr
         title = EXCLUDED.title,
         short_description = EXCLUDED.short_description,
         description = EXCLUDED.description,
+        banner_image_path = COALESCE(public.stories.banner_image_path, EXCLUDED.banner_image_path),
+        cover_image_path = COALESCE(public.stories.cover_image_path, EXCLUDED.cover_image_path),
         content_status = EXCLUDED.content_status,
         published_at = COALESCE(public.stories.published_at, EXCLUDED.published_at),
         updated_at = now()
@@ -58,6 +64,7 @@ A quietly decent noble named Cedric notices the elusive thief and chases her acr
         title,
         summary,
         audio_url,
+        artwork_path,
         artwork_url,
         duration_seconds,
         is_free,
@@ -70,52 +77,52 @@ A quietly decent noble named Cedric notices the elusive thief and chases her acr
         (
             v_story_id, 1, 1, 'The Clockmaker''s Daughter',
             'Elara spends her days repairing clocks beside her hardworking father and her nights accepting small thefts that challenge her curiosity more than her conscience. In the market she briefly notices a young noble treating ordinary people with unexpected respect, but he is only a passing detail in her day. That evening she enters a merchant''s home to steal a sealed letter and discovers that someone reached it first.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e01.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 2, 'Every Lock Tells a Story',
             'Unwilling to accept that another thief beat her, Elara studies the merchant''s locks, windows and hidden compartments as evidence. A memory of her father teaching her that every mechanism tells a story helps her recognise that the missing letter was never the only prize. During a second job, the noble she noticed in the market nearly catches her and unknowingly begins the hunt for the city''s most elusive thief.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e02.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 3, 'The Fox''s Game',
             'Cedric''s search becomes a challenge Elara cannot resist. She leads him through rooftops, workshops and crowded streets while continuing her own investigation, always escaping through preparation and knowledge of the city rather than luck. Beneath one of the capital''s oldest buildings she finds an unfamiliar symbol carved into stone that predates everything around it.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e03.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 4, 'One Step Ahead',
             'Cedric finally corners Elara after learning to anticipate several of her favourite routes. She escapes through wit, but not before showing him the evidence of a much greater theft committed while he was chasing her. Cedric realises she has been following a genuine conspiracy, and the contest between hunter and thief ends with neither of them winning.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e04.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 5, 'The Broken Mechanism',
             'Back in the workshop, Elara compares the ancient symbol with old mechanical drawings, damaged clockwork and designs collected through years of repairs. Her father sees only another puzzle occupying his daughter, unaware of how dangerous it may become. Elara discovers that the symbol behaves less like writing and more like one piece of a much larger mechanism.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e05.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 6, 'Beneath the City',
             'Elara follows the pattern into forgotten tunnels below the capital and finds machinery unlike anything made by modern craftsmen. Her ordinary skills allow her to wake one small part of it, proving that the ancient builders expected their work to be understood. When the darkness suddenly appears as clear as daylight from somewhere above her, Elara experiences the first hint of an ability she cannot explain.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e06.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 7, 'Whispers',
             'Missing documents and secret meetings unsettle the noble houses, drawing guards and political agents into Elara''s path. She cares more about the ancient machinery than court rivalries, but the same people appear behind both mysteries. Cedric investigates from within the nobility while Elara moves through the places its members believe are invisible.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e07.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 8, 'The Old Tongue',
             'An abandoned shrine outside the city contains the same designs found beneath the capital. Among them Elara discovers the repeated word VAELOR, a name modern scholars cannot translate with confidence. Touching the carving produces a disturbing sense of recognition and strengthens her fear that the impossible moment beneath the city was not imagination.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e08.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 9, 'The Missing Piece',
             'Elara learns that the original letter was one fragment of a larger puzzle connecting old ruins, political alliances and a history deliberately misunderstood. Cedric reaches part of the same conclusion through court records and private conversations. Their investigations collide, forcing them to exchange information while both remain careful not to call the arrangement trust.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e09.png', NULL, 0, true, 'published', now(), '', 0
         ),
         (
             v_story_id, 1, 10, 'Ash and Silver',
             'Elara and Cedric prevent the stolen documents from being used to ignite conflict between rival houses, but the political conspiracy proves to be only the surface of the mystery. Deep beneath the city, Elara opens an ancient mechanism by listening to the story told by its damaged parts. Beyond it waits another door, the name VAELOR and the first undeniable sign that something within Elara has begun to awaken.',
-            '', NULL, 0, true, 'published', now(), '', 0
+            '', 'ash-and-silver/episodes/ash-and-silver-s01e10.png', NULL, 0, true, 'published', now(), '', 0
         )
     ON CONFLICT (story_id, episode_number)
     DO UPDATE SET
@@ -132,6 +139,7 @@ A quietly decent noble named Cedric notices the elusive thief and chases her acr
                 THEN public.episodes.audio_url
             ELSE EXCLUDED.audio_url
         END,
+        artwork_path = COALESCE(public.episodes.artwork_path, EXCLUDED.artwork_path),
         artwork_url = COALESCE(public.episodes.artwork_url, EXCLUDED.artwork_url),
         script_text = CASE
             WHEN COALESCE(public.episodes.script_text, '') <> ''
