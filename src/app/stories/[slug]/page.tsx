@@ -154,6 +154,13 @@ export default async function StoryPage({ params, searchParams }: Props) {
                           readHref={`/stories/${story.slug}/episodes/${episode.episode_number}`}
                           wordCount={episode.word_count ?? 0}
                           durationMinutes={Math.round((episode.duration_seconds ?? 0) / 60)}
+                          episodeTitle={episode.title}
+                          episodeSummary={episode.summary ?? ""}
+                          episodeNumber={episode.episode_number}
+                          seasonNumber={episode.season_number ?? 1}
+                          storyTitle={story.title}
+                          artworkPath={episode.artwork_path ?? null}
+                          durationSeconds={episode.duration_seconds ?? 0}
                         />
                       </div>
                     </div>

@@ -9,9 +9,29 @@ type Props = {
   readHref: string;
   wordCount: number;
   durationMinutes: number;
+  // Episode info for player
+  episodeTitle: string;
+  episodeSummary: string;
+  episodeNumber: number;
+  seasonNumber: number;
+  storyTitle: string;
+  artworkPath: string | null;
+  durationSeconds: number;
 };
 
-export default function EpisodeCardActions({ audioUrl, readHref, wordCount, durationMinutes }: Props) {
+export default function EpisodeCardActions({
+  audioUrl,
+  readHref,
+  wordCount,
+  durationMinutes,
+  episodeTitle,
+  episodeSummary,
+  episodeNumber,
+  seasonNumber,
+  storyTitle,
+  artworkPath,
+  durationSeconds,
+}: Props) {
   const [playerOpen, setPlayerOpen] = useState(false);
 
   return (
@@ -26,7 +46,18 @@ export default function EpisodeCardActions({ audioUrl, readHref, wordCount, dura
 
       <div className="flex flex-wrap items-center gap-3">
         {audioUrl ? (
-          <EpisodeAudioPlayer audioUrl={audioUrl} onOpenChange={setPlayerOpen} />
+          <EpisodeAudioPlayer
+            audioUrl={audioUrl}
+            title={episodeTitle}
+            description={episodeSummary}
+            storyTitle={storyTitle}
+            episodeNumber={episodeNumber}
+            seasonNumber={seasonNumber}
+            artworkPath={artworkPath}
+            wordCount={wordCount}
+            durationSeconds={durationSeconds}
+            onOpenChange={setPlayerOpen}
+          />
         ) : (
           <span className="inline-flex items-center justify-center rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-500">
             No audio
