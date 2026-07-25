@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
-import EpisodeCardActions from "@/components/EpisodeCardActions";
+import EpisodeCard from "@/components/EpisodeCard";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -119,52 +119,12 @@ export default async function StoryPage({ params, searchParams }: Props) {
 
               <div className="space-y-4">
                 {seasonEpisodes.map((episode) => (
-                  <article
+                  <EpisodeCard
                     key={episode.id}
-                    className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6"
-                  >
-                    <div className="grid gap-4 sm:grid-cols-[320px_minmax(0,1fr)]">
-                      <div className="relative overflow-hidden rounded-3xl bg-zinc-950">
-                        <div className="aspect-[4/3] sm:aspect-[5/4]">
-                          <Image
-                            src={getStorageImageUrl(episode.artwork_path ?? null)}
-                            alt={episode.title}
-                            fill
-                            sizes="(max-width: 640px) 100vw, 320px"
-                            className="object-cover"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col justify-between">
-                        <div>
-                          <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">
-                            Episode {episode.episode_number}
-                          </p>
-                          <h3 className="mt-2 text-xl font-semibold text-white">
-                            {episode.title}
-                          </h3>
-                          {episode.summary && (
-                            <p className="mt-3 text-zinc-400">{episode.summary}</p>
-                          )}
-                        </div>
-
-                        <EpisodeCardActions
-                          audioUrl={episode.audio_url ?? null}
-                          readHref={`/stories/${story.slug}/episodes/${episode.episode_number}`}
-                          wordCount={episode.word_count ?? 0}
-                          durationMinutes={Math.round((episode.duration_seconds ?? 0) / 60)}
-                          episodeTitle={episode.title}
-                          episodeSummary={episode.summary ?? ""}
-                          episodeNumber={episode.episode_number}
-                          seasonNumber={episode.season_number ?? 1}
-                          storyTitle={story.title}
-                          artworkPath={episode.artwork_path ?? null}
-                          durationSeconds={episode.duration_seconds ?? 0}
-                        />
-                      </div>
-                    </div>
-                  </article>
+                    episode={episode}
+                    storySlug={story.slug}
+                    storyTitle={story.title}
+                  />
                 ))}
               </div>
             </section>
