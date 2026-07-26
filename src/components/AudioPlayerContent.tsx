@@ -112,7 +112,7 @@ export default function AudioPlayerContent({ episode, storyTitle, onClose }: Pro
               alt={episode.title}
               fill
               sizes="100vw"
-              className="object-cover"
+              className="z-10 object-cover"
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement;
                 img.style.display = "none";
@@ -120,7 +120,7 @@ export default function AudioPlayerContent({ episode, storyTitle, onClose }: Pro
             />
           ) : null}
           {/* Fallback */}
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-zinc-600">
+          <div className="absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-zinc-600">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
               <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -128,7 +128,7 @@ export default function AudioPlayerContent({ episode, storyTitle, onClose }: Pro
             </svg>
           </div>
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-900" />
+          <div className="absolute inset-0 z-20 bg-gradient-to-b from-transparent via-transparent to-zinc-900" />
         </div>
       </div>
 
