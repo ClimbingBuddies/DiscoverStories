@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
-import EpisodeCard from "@/components/EpisodeCard";
+import StoryEpisodesSection from "@/components/StoryEpisodesSection";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -15,8 +15,6 @@ export default async function StoryPage({ params, searchParams }: Props) {
   const searchParamsObj = await searchParams;
   const page = Math.max(1, Number(searchParamsObj.page ?? 1));
   const pageSize = 10;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
   const { data: story } = await supabase
     .from("stories")
@@ -35,8 +33,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
     .eq("story_id", story.id)
     .eq("episode_status", "published")
     .order("season_number")
-    .order("episode_number")
-    .range(from, to);
+    .order("episode_number");
 
   if (error) {
     throw new Error(error.message);
@@ -53,9 +50,6 @@ export default async function StoryPage({ params, searchParams }: Props) {
     throw new Error(countError.message);
   }
 
-  const hasNextPage = totalEpisodes ? (page * pageSize) < totalEpisodes : false;
-  const nextPage = page + 1;
-
   const { data: hasWiki, error: wikiError } = await supabase.rpc("has_public_story_wiki", {
     p_story_id: story.id,
   });
@@ -65,16 +59,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
   }
 
   const wikiEnabled = Boolean(hasWiki);
-
-  const seasons = episodes.reduce(
-    (groups, episode) => {
-      const season = episode.season_number ?? 1;
-      groups[season] ??= [];
-      groups[season].push(episode);
-      return groups;
-    },
-    {} as Record<number, typeof episodes>
-  );
+  const initialEpisodes = (episodes ?? []).slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
@@ -110,51 +95,16 @@ export default async function StoryPage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        <div className="mt-12 space-y-10">
-          {wikiEnabled ? (
-            <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-sm text-emerald-200">
-              <p className="font-semibold">Story wiki available</p>
-              <p className="mt-2 text-zinc-300">
-                Explore the public story wiki, spoiler-aware and tied to your completed episode progress.
-              </p>
-              <Link
-                href={`/stories/${story.slug}/wiki`}
-                className="mt-4 inline-flex items-center justify-center rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
-              >
-                View story wiki
-              </Link>
-            </div>
-          ) : null}
-
-          {Object.entries(seasons).map(([seasonNumber, seasonEpisodes]) => (
-            <section key={seasonNumber}>
-              <h2 className="mb-4 text-2xl font-semibold text-white">
-                Season {seasonNumber}
-              </h2>
-
-              <div className="space-y-4">
-                {seasonEpisodes.map((episode) => (
-                  <EpisodeCard
-                    key={episode.id}
-                    episode={episode}
-                    storySlug={story.slug}
-                    storyTitle={story.title}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-
-          {hasNextPage && (
-            <div className="flex justify-center pt-8">
-              <Link
-                href={`?page=${nextPage}`}
-                className="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-zinc-950 hover:bg-emerald-500 transition-colors"
-              >
-                Load Next 10 Episodes
-              </Link>
-            </div>
-          )}
+        <div className="mt-12">
+          <StoryEpisodesSection
+            story={{ slug: story.slug, title: story.title }}
+            wikiEnabled={wikiEnabled}
+            initialPage={page}
+            initialEpisodes={initialEpisodes}
+            episodes={episodes ?? []}
+            pageSize={pageSize}
+            totalEpisodes={totalEpisodes}
+          />
         </div>
       </div>
     </main>
