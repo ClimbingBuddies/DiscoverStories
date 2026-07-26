@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import FeaturedStoryCard from "@/components/FeaturedStory";
 import StoryRow from "@/components/StoryRow";
+import { STUDIO_MODE_COOKIE, STUDIO_MODE_STORAGE_KEY } from "@/lib/studio-mode-constants";
 
 const LAST_SELECTED_KEY = "discover-stories:lastSelectedStory";
 const PROGRESS_KEY = "discover-stories:storyProgress";
-const STUDIO_MODE_KEY = "discover-stories:studioMode";
 
 export type LibraryStory = {
   id: string;
@@ -55,11 +55,11 @@ function inferStoryCategories(story: Pick<LibraryStory, "title" | "short_descrip
   return CATEGORY_KEYWORDS.filter(({ keywords }) => keywords.some((keyword) => haystack.includes(keyword))).map(({ label }) => label);
 }
 
-export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
+export default function StoryLibrary({ stories, initialStudioMode = false }: { stories: LibraryStory[]; initialStudioMode?: boolean }) {
   const [lastSelectedSlug, setLastSelectedSlug] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, { episode: string; percentage: number }>>({});
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [studioMode, setStudioMode] = useState(false);
+  const [studioMode, setStudioMode] = useState(initialStudioMode);
 
   useEffect(() => {
     let savedSlug: string | null = null;
@@ -69,7 +69,19 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
     try {
       savedSlug = window.localStorage.getItem(LAST_SELECTED_KEY);
       savedProgress = getStoredProgress();
-      savedStudioMode = window.localStorage.getItem(STUDIO_MODE_KEY) === "true";
+      const localStorageValue = window.localStorage.getItem(STUDIO_MODE_STORAGE_KEY);
+      const cookieValue = document.cookie
+        .split("; ")
+        .find((item) => item.startsWith(`${STUDIO_MODE_COOKIE}=`))
+        ?.split("=")[1];
+
+      if (localStorageValue === "true" || localStorageValue === "false") {
+        savedStudioMode = localStorageValue === "true";
+      } else if (cookieValue === "true" || cookieValue === "false") {
+        savedStudioMode = cookieValue === "true";
+      }
+
+      document.cookie = `${STUDIO_MODE_COOKIE}=${savedStudioMode}; path=/; max-age=31536000; samesite=lax`;
     } catch {
       // ignore client-side storage errors
     }
@@ -152,27 +164,28 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
   const handleStudioModeChange = (enabled: boolean) => {
     setStudioMode(enabled);
     try {
-      window.localStorage.setItem(STUDIO_MODE_KEY, String(enabled));
+      window.localStorage.setItem(STUDIO_MODE_STORAGE_KEY, String(enabled));
+      document.cookie = `${STUDIO_MODE_COOKIE}=${enabled}; path=/; max-age=31536000; samesite=lax`;
     } catch {
       // ignore
     }
   };
 
   return (
-    <div className="space-y-12">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-4">
-        <div>
-          <p className="font-semibold text-white">Studio Mode</p>
-          <p className="text-sm text-zinc-400">Preview draft and review stories on the live layout.</p>
-        </div>
-        <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-200">
+    <div className="relative space-y-8">
+      <div className="pointer-events-none absolute -top-16 right-0 z-10">
+        <label
+          className="pointer-events-auto inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/90 px-3 py-1.5 text-xs font-medium text-zinc-200"
+          title="Studio Mode: Preview draft and review stories on the live layout."
+        >
+          <span>Studio</span>
           <input
             type="checkbox"
             checked={studioMode}
             onChange={(event) => handleStudioModeChange(event.target.checked)}
-            className="h-5 w-5 accent-emerald-400"
+            className="h-4 w-4 accent-emerald-400"
           />
-          {studioMode ? "On" : "Off"}
+          <span>{studioMode ? "On" : "Off"}</span>
         </label>
       </div>
 

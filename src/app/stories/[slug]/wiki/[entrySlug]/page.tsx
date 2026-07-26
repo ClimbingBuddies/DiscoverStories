@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
+import { isStudioModeEnabled } from "@/lib/studio-mode";
 
 type SearchParams = {
   spoilers?: string | string[];
@@ -97,6 +98,7 @@ export default async function WikiEntryPage({
   params: Promise<{ slug: string; entrySlug: string }>;
   searchParams: Promise<SearchParams>;
 }) {
+  const studioModeEnabled = await isStudioModeEnabled();
   const { slug, entrySlug } = await params;
   const resolvedSearchParams = await searchParams;
   const spoilersParam = getParam(resolvedSearchParams.spoilers);
@@ -118,12 +120,16 @@ export default async function WikiEntryPage({
   const wiki = data as WikiResponse | null;
 
   if (rpcError || !wiki?.story) {
-    const { data: story, error: storyError } = await supabase
+    let storyQuery = supabase
       .from("stories")
       .select("slug, title, short_description, banner_image_path")
-      .eq("slug", slug)
-      .eq("content_status", "published")
-      .single();
+      .eq("slug", slug);
+
+    if (!studioModeEnabled) {
+      storyQuery = storyQuery.eq("content_status", "published");
+    }
+
+    const { data: story, error: storyError } = await storyQuery.single();
 
     if (!story || storyError) {
       notFound();

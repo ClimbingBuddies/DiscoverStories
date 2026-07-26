@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
+import { isStudioModeEnabled } from "@/lib/studio-mode";
 import StoryEpisodesSection from "@/components/StoryEpisodesSection";
 
 type Props = {
@@ -11,40 +12,55 @@ type Props = {
 };
 
 export default async function StoryPage({ params, searchParams }: Props) {
+  const studioModeEnabled = await isStudioModeEnabled();
   const { slug } = await params;
   const searchParamsObj = await searchParams;
   const page = Math.max(1, Number(searchParamsObj.page ?? 1));
   const pageSize = 10;
 
-  const { data: story } = await supabase
+  let storyQuery = supabase
     .from("stories")
     .select("id, slug, title, description, short_description, banner_image_path")
-    .eq("slug", slug)
-    .eq("content_status", "published")
-    .single();
+    .eq("slug", slug);
+
+  if (!studioModeEnabled) {
+    storyQuery = storyQuery.eq("content_status", "published");
+  }
+
+  const { data: story } = await storyQuery.single();
 
   if (!story) notFound();
 
-  const { data: episodes, error } = await supabase
+  let episodesQuery = supabase
     .from("episodes")
     .select(
       "id, season_number, episode_number, title, summary, word_count, duration_seconds, episode_status, audio_url, artwork_path"
     )
     .eq("story_id", story.id)
-    .eq("episode_status", "published")
     .order("season_number")
     .order("episode_number");
+
+  if (!studioModeEnabled) {
+    episodesQuery = episodesQuery.eq("episode_status", "published");
+  }
+
+  const { data: episodes, error } = await episodesQuery;
 
   if (error) {
     throw new Error(error.message);
   }
 
   // Get total count of published episodes to determine if there's a next page
-  const { count: totalEpisodes, error: countError } = await supabase
+  let countQuery = supabase
     .from("episodes")
     .select("id", { count: "exact", head: true })
-    .eq("story_id", story.id)
-    .eq("episode_status", "published");
+    .eq("story_id", story.id);
+
+  if (!studioModeEnabled) {
+    countQuery = countQuery.eq("episode_status", "published");
+  }
+
+  const { count: totalEpisodes, error: countError } = await countQuery;
 
   if (countError) {
     throw new Error(countError.message);

@@ -3,50 +3,64 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import TextReaderButton from "@/components/TextReaderButton";
 import QuickPlayPlayer from "@/components/QuickPlay/QuickPlayPlayer";
+import { isStudioModeEnabled } from "@/lib/studio-mode";
 
 type Props = {
   params: Promise<{ slug: string; episodeNumber: string }>;
 };
 
 export default async function EpisodeReadPage({ params }: Props) {
+  const studioModeEnabled = await isStudioModeEnabled();
   const { slug, episodeNumber } = await params;
   const episodeIndex = Number(episodeNumber);
   if (!Number.isInteger(episodeIndex) || episodeIndex <= 0) {
     notFound();
   }
 
-  const { data: story } = await supabase
+  let storyQuery = supabase
     .from("stories")
     .select("id, slug, title")
-    .eq("slug", slug)
-    .eq("content_status", "published")
-    .single();
+    .eq("slug", slug);
+
+  if (!studioModeEnabled) {
+    storyQuery = storyQuery.eq("content_status", "published");
+  }
+
+  const { data: story } = await storyQuery.single();
 
   if (!story) {
     notFound();
   }
 
-  const { data: episode, error } = await supabase
+  let episodeQuery = supabase
     .from("episodes")
     .select("id, episode_number, title, summary, script_text, audio_url")
     .eq("story_id", story.id)
-    .eq("episode_number", episodeIndex)
-    .eq("episode_status", "published")
-    .single();
+    .eq("episode_number", episodeIndex);
+
+  if (!studioModeEnabled) {
+    episodeQuery = episodeQuery.eq("episode_status", "published");
+  }
+
+  const { data: episode, error } = await episodeQuery.single();
 
   if (!episode || error) {
     notFound();
   }
 
-  const { data: nextEpisode } = await supabase
+  let nextEpisodeQuery = supabase
     .from("episodes")
     .select("episode_number")
     .eq("story_id", story.id)
     .gt("episode_number", episodeIndex)
-    .eq("episode_status", "published")
     .order("episode_number", { ascending: true })
-    .limit(1)
-    .single();
+    .limit(1);
+
+  if (!studioModeEnabled) {
+    nextEpisodeQuery = nextEpisodeQuery.eq("episode_status", "published");
+  }
+
+  const { data: nextEpisode } = await nextEpisodeQuery.single();
 
   const nextEpisodeNumber = nextEpisode?.episode_number ?? null;
   const content = episode.script_text?.trim() || episode.summary || "No readable content is available for this episode.";

@@ -1,9 +1,12 @@
 import { supabase } from "@/lib/supabase";
 import StoryLibrary from "@/components/StoryLibrary";
+import { isStudioModeEnabled } from "@/lib/studio-mode";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const studioModeEnabled = await isStudioModeEnabled();
+
   const { data: stories, error } = await supabase
     .from("stories")
     .select(
@@ -15,11 +18,16 @@ export default async function Home() {
   let episodeRows: Array<{ story_id: string; season_number: number | null }> = [];
 
   if (storyIds.length > 0) {
-    const { data, error: episodeError } = await supabase
+    let episodeQuery = supabase
       .from("episodes")
       .select("story_id, season_number")
-      .in("story_id", storyIds)
-      .eq("episode_status", "published");
+      .in("story_id", storyIds);
+
+    if (!studioModeEnabled) {
+      episodeQuery = episodeQuery.eq("episode_status", "published");
+    }
+
+    const { data, error: episodeError } = await episodeQuery;
 
     if (episodeError) {
       throw new Error(episodeError.message);
@@ -56,11 +64,8 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10 space-y-3">
-          <p className="text-sm uppercase tracking-widest text-emerald-400">
-            Discover Stories
-          </p>
-          <h1 className="text-4xl font-bold">Discover your next story</h1>
+        <div className="mb-6 space-y-3">
+          <h1 className="text-4xl font-bold text-emerald-400">Discover Your Next Story</h1>
           <p className="max-w-3xl text-zinc-400">
             Browse cinematic audio stories, resume your listening, and explore featured titles.
           </p>
@@ -71,7 +76,7 @@ export default async function Home() {
             Supabase error: {error.message}
           </p>
         ) : storiesWithEpisodeCount && storiesWithEpisodeCount.length > 0 ? (
-          <StoryLibrary stories={storiesWithEpisodeCount} />
+          <StoryLibrary stories={storiesWithEpisodeCount} initialStudioMode={studioModeEnabled} />
         ) : (
           <p className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-zinc-400">
             No stories have been added yet.

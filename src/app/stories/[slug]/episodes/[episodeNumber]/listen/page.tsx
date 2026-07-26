@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
+import { STUDIO_MODE_COOKIE, STUDIO_MODE_STORAGE_KEY } from "@/lib/studio-mode-constants";
 
 type Episode = {
   id: string;
@@ -49,13 +50,24 @@ export default function ListenPage() {
   useEffect(() => {
     async function fetchData() {
       try {
+        const localStorageValue = window.localStorage.getItem(STUDIO_MODE_STORAGE_KEY);
+        const cookieValue = document.cookie
+          .split("; ")
+          .find((item) => item.startsWith(`${STUDIO_MODE_COOKIE}=`))
+          ?.split("=")[1];
+        const studioModeEnabled = localStorageValue === "true" || cookieValue === "true";
+
         // Fetch story
-        const { data: storyData } = await supabase
+        let storyQuery = supabase
           .from("stories")
           .select("id, slug, title")
-          .eq("slug", slug)
-          .eq("content_status", "published")
-          .single();
+          .eq("slug", slug);
+
+        if (!studioModeEnabled) {
+          storyQuery = storyQuery.eq("content_status", "published");
+        }
+
+        const { data: storyData } = await storyQuery.single();
 
         if (!storyData) {
           notFound();
@@ -64,15 +76,19 @@ export default function ListenPage() {
         setStory(storyData);
 
         // Fetch episode
-        const { data: episodeData } = await supabase
+        let episodeQuery = supabase
           .from("episodes")
           .select(
             "id, episode_number, season_number, title, summary, audio_url, artwork_path, word_count, duration_seconds, script_text"
           )
           .eq("story_id", storyData.id)
-          .eq("episode_number", episodeNumber)
-          .eq("episode_status", "published")
-          .single();
+          .eq("episode_number", episodeNumber);
+
+        if (!studioModeEnabled) {
+          episodeQuery = episodeQuery.eq("episode_status", "published");
+        }
+
+        const { data: episodeData } = await episodeQuery.single();
 
         if (!episodeData) {
           notFound();
@@ -81,15 +97,19 @@ export default function ListenPage() {
         setEpisode(episodeData);
 
         // Fetch next episode
-        const { data: nextEpisodeData } = await supabase
+        let nextEpisodeQuery = supabase
           .from("episodes")
           .select("episode_number")
           .eq("story_id", storyData.id)
           .gt("episode_number", episodeNumber)
-          .eq("episode_status", "published")
           .order("episode_number", { ascending: true })
-          .limit(1)
-          .single();
+          .limit(1);
+
+        if (!studioModeEnabled) {
+          nextEpisodeQuery = nextEpisodeQuery.eq("episode_status", "published");
+        }
+
+        const { data: nextEpisodeData } = await nextEpisodeQuery.single();
 
         if (nextEpisodeData) {
           setNextEpisode(nextEpisodeData);
