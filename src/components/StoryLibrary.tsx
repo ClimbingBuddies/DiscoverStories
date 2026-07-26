@@ -231,7 +231,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
       </div>
 
       {studioMode ? (
-        <StoryRow title="In Production" stories={studioStories} onSelect={handleSelect} studioMode />
+        <StoryRow title="In Production" stories={studioStories} onSelect={handleSelect} />
       ) : (
         <StoryRow title="Coming Soon" stories={comingSoonStories} onSelect={handleSelect} />
       )}
