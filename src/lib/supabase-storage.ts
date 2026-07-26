@@ -8,7 +8,9 @@ if (!supabaseUrl) {
 
 export function getPublicStorageUrl(path: string): string {
   const trimmedPath = path.replace(/^\/+/, "");
-  return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${trimmedPath}`;
+  // Add cache buster parameter to force fresh images
+  const cacheBuster = Math.floor(Date.now() / 3600000); // Changes every hour
+  return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${trimmedPath}?v=${cacheBuster}`;
 }
 
 export function getStorageImageUrl(imagePath: string | null): string {
