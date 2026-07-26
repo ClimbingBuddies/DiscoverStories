@@ -7,12 +7,13 @@ import EpisodeCard from "@/components/EpisodeCard";
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: { page?: string };
+  searchParams: Promise<{ page?: string }>;
 };
 
 export default async function StoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const page = Math.max(1, Number(searchParams.page ?? 1));
+  const searchParamsObj = await searchParams;
+  const page = Math.max(1, Number(searchParamsObj.page ?? 1));
   const pageSize = 10;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
@@ -40,6 +41,20 @@ export default async function StoryPage({ params, searchParams }: Props) {
   if (error) {
     throw new Error(error.message);
   }
+
+  // Get total count of published episodes to determine if there's a next page
+  const { count: totalEpisodes, error: countError } = await supabase
+    .from("episodes")
+    .select("id", { count: "exact", head: true })
+    .eq("story_id", story.id)
+    .eq("episode_status", "published");
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
+
+  const hasNextPage = totalEpisodes ? (page * pageSize) < totalEpisodes : false;
+  const nextPage = page + 1;
 
   const { data: hasWiki, error: wikiError } = await supabase.rpc("has_public_story_wiki", {
     p_story_id: story.id,
@@ -129,6 +144,17 @@ export default async function StoryPage({ params, searchParams }: Props) {
               </div>
             </section>
           ))}
+
+          {hasNextPage && (
+            <div className="flex justify-center pt-8">
+              <Link
+                href={`?page=${nextPage}`}
+                className="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-zinc-950 hover:bg-emerald-500 transition-colors"
+              >
+                Load Next 10 Episodes
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </main>
