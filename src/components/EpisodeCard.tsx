@@ -56,7 +56,7 @@ export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
                 alt={episode.title}
                 fill
                 sizes="(max-width: 640px) 100vw, 320px"
-                className="object-cover"
+                className="z-10 object-cover"
                 onError={(e) => {
                   // Hide image on error, fallback will show
                   const img = e.currentTarget as HTMLImageElement;
@@ -65,7 +65,7 @@ export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
               />
             ) : null}
             {/* Fallback icon - always visible as background */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-zinc-600">
+            <div className="absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-zinc-600">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <circle cx="8.5" cy="8.5" r="1.5"/>
