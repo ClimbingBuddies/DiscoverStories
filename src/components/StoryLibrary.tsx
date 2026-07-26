@@ -6,6 +6,7 @@ import StoryRow from "@/components/StoryRow";
 
 const LAST_SELECTED_KEY = "discover-stories:lastSelectedStory";
 const PROGRESS_KEY = "discover-stories:storyProgress";
+const STUDIO_MODE_KEY = "discover-stories:studioMode";
 
 export type LibraryStory = {
   id: string;
@@ -51,7 +52,6 @@ const CATEGORY_KEYWORDS: Array<{ label: string; keywords: string[] }> = [
 
 function inferStoryCategories(story: Pick<LibraryStory, "title" | "short_description" | "description">): string[] {
   const haystack = `${story.title ?? ""} ${story.short_description ?? ""} ${story.description ?? ""}`.toLowerCase();
-
   return CATEGORY_KEYWORDS.filter(({ keywords }) => keywords.some((keyword) => haystack.includes(keyword))).map(({ label }) => label);
 }
 
@@ -59,14 +59,17 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
   const [lastSelectedSlug, setLastSelectedSlug] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, { episode: string; percentage: number }>>({});
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [studioMode, setStudioMode] = useState(false);
 
   useEffect(() => {
     let savedSlug: string | null = null;
     let savedProgress: Record<string, { episode: string; percentage: number }> = {};
+    let savedStudioMode = false;
 
     try {
       savedSlug = window.localStorage.getItem(LAST_SELECTED_KEY);
       savedProgress = getStoredProgress();
+      savedStudioMode = window.localStorage.getItem(STUDIO_MODE_KEY) === "true";
     } catch {
       // ignore client-side storage errors
     }
@@ -74,6 +77,7 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
     /* eslint-disable react-hooks/set-state-in-effect */
     setLastSelectedSlug(savedSlug);
     setProgressMap(savedProgress);
+    setStudioMode(savedStudioMode);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
@@ -82,20 +86,21 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
     [stories]
   );
 
+  const studioStories = useMemo(
+    () => stories.filter((story) => story.content_status !== "published"),
+    [stories]
+  );
+
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
     publishedStories.forEach((story) => {
       inferStoryCategories(story).forEach((category) => categories.add(category));
     });
-
     return ["All", ...Array.from(categories).sort()];
   }, [publishedStories]);
 
   const filteredPublishedStories = useMemo(() => {
-    if (selectedCategory === "All") {
-      return publishedStories;
-    }
-
+    if (selectedCategory === "All") return publishedStories;
     return publishedStories.filter((story) => inferStoryCategories(story).includes(selectedCategory));
   }, [publishedStories, selectedCategory]);
 
@@ -118,18 +123,8 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
 
   const continueStories = useMemo(() => {
     if (!continueStory) return [];
-
-    const progress = progressMap[continueStory.slug] ?? {
-      episode: "Episode 1",
-      percentage: 10,
-    };
-    return [
-      {
-        ...continueStory,
-        last_listened_episode: progress.episode,
-        percentage_complete: progress.percentage,
-      },
-    ];
+    const progress = progressMap[continueStory.slug] ?? { episode: "Episode 1", percentage: 10 };
+    return [{ ...continueStory, last_listened_episode: progress.episode, percentage_complete: progress.percentage }];
   }, [continueStory, progressMap]);
 
   const newestStories = useMemo(
@@ -137,10 +132,7 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
     [allPublished, featuredStory]
   );
 
-  const comingSoonStories = useMemo(
-    () => stories.filter((story) => story.content_status !== "published").slice(0, 8),
-    [stories]
-  );
+  const comingSoonStories = useMemo(() => studioStories.slice(0, 8), [studioStories]);
 
   const handleSelect = (slug: string) => {
     try {
@@ -148,13 +140,7 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
       setLastSelectedSlug(slug);
       setProgressMap((current) => {
         if (current[slug]) return current;
-        const next = {
-          ...current,
-          [slug]: {
-            episode: "Episode 4",
-            percentage: 61,
-          },
-        };
+        const next = { ...current, [slug]: { episode: "Episode 4", percentage: 61 } };
         saveProgressMap(next);
         return next;
       });
@@ -163,8 +149,39 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
     }
   };
 
+  const handleStudioModeChange = (enabled: boolean) => {
+    setStudioMode(enabled);
+    try {
+      window.localStorage.setItem(STUDIO_MODE_KEY, String(enabled));
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="space-y-12">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-4">
+        <div>
+          <p className="font-semibold text-white">Studio Mode</p>
+          <p className="text-sm text-zinc-400">Preview draft and review stories on the live layout.</p>
+        </div>
+        <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-200">
+          <input
+            type="checkbox"
+            checked={studioMode}
+            onChange={(event) => handleStudioModeChange(event.target.checked)}
+            className="h-5 w-5 accent-emerald-400"
+          />
+          {studioMode ? "On" : "Off"}
+        </label>
+      </div>
+
+      {studioMode ? (
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-5 py-4 text-sm text-amber-100">
+          Studio Mode is open for prototyping. Draft content is visible to anyone who turns it on.
+        </div>
+      ) : null}
+
       {availableCategories.length > 1 ? (
         <div className="flex flex-wrap gap-2">
           {availableCategories.map((category) => {
@@ -187,9 +204,7 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
         </div>
       ) : null}
 
-      {featuredStory ? (
-        <FeaturedStoryCard story={featuredStory} onSelect={handleSelect} />
-      ) : null}
+      {featuredStory ? <FeaturedStoryCard story={featuredStory} onSelect={handleSelect} /> : null}
 
       <div className="grid gap-12 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
         {continueStories.length > 0 ? (
@@ -197,13 +212,16 @@ export default function StoryLibrary({ stories }: { stories: LibraryStory[] }) {
             <StoryRow title="Continue Listening" stories={continueStories} onSelect={handleSelect} />
           </div>
         ) : null}
-
         <div className={continueStories.length > 0 ? "" : "lg:col-span-2"}>
           <StoryRow title="Newest Stories" stories={newestStories} onSelect={handleSelect} />
         </div>
       </div>
 
-      <StoryRow title="Coming Soon" stories={comingSoonStories} onSelect={handleSelect} />
+      {studioMode ? (
+        <StoryRow title="In Production" stories={studioStories} onSelect={handleSelect} studioMode />
+      ) : (
+        <StoryRow title="Coming Soon" stories={comingSoonStories} onSelect={handleSelect} />
+      )}
     </div>
   );
 }
