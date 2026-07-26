@@ -22,13 +22,24 @@ export default async function ReadPage({ params }: Props) {
   // Fetch episode
   const { data: episode } = await supabase
     .from("episodes")
-    .select("id, episode_number, season_number, title, script_text, word_count, duration_seconds")
+    .select("id, episode_number, season_number, title, script_text, word_count, duration_seconds, audio_url")
     .eq("story_id", story.id)
     .eq("episode_number", parseInt(episodeNumber))
     .eq("episode_status", "published")
     .single();
 
   if (!episode) notFound();
+
+  // Fetch next episode
+  const { data: nextEpisode } = await supabase
+    .from("episodes")
+    .select("episode_number")
+    .eq("story_id", story.id)
+    .gt("episode_number", parseInt(episodeNumber))
+    .eq("episode_status", "published")
+    .order("episode_number", { ascending: true })
+    .limit(1)
+    .single();
 
   const readingMinutes = episode.word_count ? Math.round(episode.word_count / 200) : 0;
 
@@ -81,12 +92,29 @@ export default async function ReadPage({ params }: Props) {
           >
             ← Back
           </Link>
-          <Link
-            href={`/stories/${slug}/episodes/${episode.episode_number}/listen`}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-center hover:bg-emerald-500 transition-colors font-medium text-zinc-950"
-          >
-            🎵 Listen to Audio
-          </Link>
+          {episode.audio_url && (
+            <Link
+              href={`/stories/${slug}/episodes/${episode.episode_number}/listen`}
+              className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-center hover:bg-emerald-500 transition-colors font-medium text-zinc-950"
+            >
+              🎵 Listen to Audio
+            </Link>
+          )}
+          {nextEpisode ? (
+            <Link
+              href={`/stories/${slug}/episodes/${nextEpisode.episode_number}/read`}
+              className="flex-1 rounded-lg bg-zinc-800 px-4 py-3 text-center hover:bg-zinc-700 transition-colors font-medium"
+            >
+              Next →
+            </Link>
+          ) : (
+            <button
+              disabled
+              className="flex-1 rounded-lg bg-zinc-800 px-4 py-3 text-center text-zinc-600 cursor-not-allowed"
+            >
+              Next →
+            </button>
+          )}
         </div>
       </footer>
     </div>

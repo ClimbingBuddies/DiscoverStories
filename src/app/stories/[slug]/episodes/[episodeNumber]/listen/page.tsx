@@ -17,6 +17,7 @@ type Episode = {
   artwork_path: string | null;
   word_count: number | null;
   duration_seconds: number | null;
+  script_text: string | null;
 };
 
 type Story = {
@@ -36,6 +37,7 @@ export default function ListenPage() {
 
   const [story, setStory] = useState<Story | null>(null);
   const [episode, setEpisode] = useState<Episode | null>(null);
+  const [nextEpisode, setNextEpisode] = useState<{ episode_number: number } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -65,7 +67,7 @@ export default function ListenPage() {
         const { data: episodeData } = await supabase
           .from("episodes")
           .select(
-            "id, episode_number, season_number, title, summary, audio_url, artwork_path, word_count, duration_seconds"
+            "id, episode_number, season_number, title, summary, audio_url, artwork_path, word_count, duration_seconds, script_text"
           )
           .eq("story_id", storyData.id)
           .eq("episode_number", episodeNumber)
@@ -77,6 +79,21 @@ export default function ListenPage() {
         }
 
         setEpisode(episodeData);
+
+        // Fetch next episode
+        const { data: nextEpisodeData } = await supabase
+          .from("episodes")
+          .select("episode_number")
+          .eq("story_id", storyData.id)
+          .gt("episode_number", episodeNumber)
+          .eq("episode_status", "published")
+          .order("episode_number", { ascending: true })
+          .limit(1)
+          .single();
+
+        if (nextEpisodeData) {
+          setNextEpisode(nextEpisodeData);
+        }
       } finally {
         setLoading(false);
       }
@@ -184,6 +201,39 @@ export default function ListenPage() {
         <div className="flex flex-1 items-center justify-center">
           <p className="text-zinc-400">No audio available for this episode.</p>
         </div>
+        <footer className="border-t border-zinc-800 bg-zinc-900 px-6 py-4">
+          <div className="flex gap-4">
+            <Link
+              href={`/stories/${slug}`}
+              className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center hover:bg-zinc-700 transition-colors font-medium text-sm"
+            >
+              ← Back
+            </Link>
+            {episode.script_text && (
+              <Link
+                href={`/stories/${slug}/episodes/${episode.episode_number}/read`}
+                className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center hover:bg-zinc-700 transition-colors font-medium text-sm"
+              >
+                📖 Read
+              </Link>
+            )}
+            {nextEpisode ? (
+              <Link
+                href={`/stories/${slug}/episodes/${nextEpisode.episode_number}/listen`}
+                className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center hover:bg-zinc-700 transition-colors font-medium text-sm"
+              >
+                Next →
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center text-zinc-600 cursor-not-allowed text-sm"
+              >
+                Next →
+              </button>
+            )}
+          </div>
+        </footer>
       </div>
     );
   }
@@ -327,17 +377,39 @@ export default function ListenPage() {
                 {SPEEDS[speedIndex]}x
               </button>
             </div>
+          </div>
 
+          {/* Navigation Buttons */}
+          <div className="flex gap-4 pt-4 border-t border-zinc-800">
             <Link
-              href={`/stories/${slug}/episodes/${episode.episode_number}/read`}
-              className="text-zinc-400 hover:text-emerald-400 transition-colors p-2"
-              title="Read text"
+              href={`/stories/${slug}`}
+              className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center hover:bg-zinc-700 transition-colors font-medium text-sm"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
+              ← Back
             </Link>
+            {episode.script_text && (
+              <Link
+                href={`/stories/${slug}/episodes/${episode.episode_number}/read`}
+                className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center hover:bg-zinc-700 transition-colors font-medium text-sm"
+              >
+                📖 Read
+              </Link>
+            )}
+            {nextEpisode ? (
+              <Link
+                href={`/stories/${slug}/episodes/${nextEpisode.episode_number}/listen`}
+                className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center hover:bg-zinc-700 transition-colors font-medium text-sm"
+              >
+                Next →
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-center text-zinc-600 cursor-not-allowed text-sm"
+              >
+                Next →
+              </button>
+            )}
           </div>
         </div>
       </footer>
