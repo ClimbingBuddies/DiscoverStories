@@ -2,9 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
-import AudioPlayerContent from "@/components/AudioPlayerContent";
 
 type Episode = {
   id: string;
@@ -25,23 +23,8 @@ type Props = {
 };
 
 export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
-
   const durationMinutes = episode.duration_seconds ? Math.round(episode.duration_seconds / 60) : 0;
   const wordCount = episode.word_count ?? 0;
-
-  if (isOpen) {
-    // Expanded player state
-    return (
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
-        <AudioPlayerContent
-          episode={episode}
-          storyTitle={storyTitle}
-          onClose={() => setIsOpen(false)}
-        />
-      </div>
-    );
-  }
 
   // Compact card state
   return (
@@ -94,13 +77,12 @@ export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
 
             <div className="flex flex-wrap gap-3">
               {episode.audio_url ? (
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(true)}
+                <Link
+                  href={`/stories/${storySlug}/episodes/${episode.episode_number}/listen`}
                   className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
                 >
                   Play
-                </button>
+                </Link>
               ) : (
                 <span className="inline-flex items-center justify-center rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-500">
                   No audio
@@ -108,7 +90,7 @@ export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
               )}
 
               <Link
-                href={`/stories/${storySlug}/episodes/${episode.episode_number}`}
+                href={`/stories/${storySlug}/episodes/${episode.episode_number}/read`}
                 className="inline-flex items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/90 px-4 py-2 text-sm font-semibold text-white transition hover:border-emerald-400 hover:text-emerald-300"
               >
                 Read
