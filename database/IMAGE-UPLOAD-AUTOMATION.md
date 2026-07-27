@@ -1,28 +1,39 @@
 # Automatic image upload process
 
-Use the `story-images` bucket and upload files using:
+The supported Draft route is:
 
 ```text
-the-cartographers-dream/cover.png
-the-cartographers-dream/banner.png
-the-cartographers-dream/episodes/episode-01.png
+Generated image → real JPEG conversion → GitHub queue → OIDC bridge
+→ Supabase Storage → media_assets → story/episode link → status update
 ```
 
-The story folder must exactly match `stories.slug`; episode numbers must match
-`episodes.episode_number`.
+The bridge is asynchronous infrastructure, not a direct ChatGPT file-upload tool.
 
-## Setup
+## Draft file policy
 
-1. Run `database/007_image_upload_automation.sql` in the Supabase SQL Editor.
-2. Deploy the `sync-storage-image` Edge Function from `supabase/functions/sync-storage-image/index.ts`.
-3. Create Database Webhooks on `storage.objects` for events `INSERT` and `UPDATE`, targeting that Edge Function. `UPDATE` allows replacing an image at the same path.
-4. Run the one-time backfill:
+- Ordinary Draft artwork is converted to genuine JPEG bytes before upload.
+- The workflow resizes to a maximum of 1280×1280, strips metadata and uses JPEG quality 82.
+- Changing an extension is not conversion; the workflow verifies the JPEG signature.
+- PNG is retained only where transparency is required or a later production decision explicitly calls for it.
+- Database fields store relative Storage paths.
 
-```sql
-select * from public.sync_existing_story_images(
-  'story-images', 'https://YOUR_PROJECT_REF.supabase.co'
-);
-```
+## Reliability behaviour
 
-After setup, uploading a correctly named image updates the database within a
-few seconds. Replacing an image at the same path is safe.
+- Each image is processed independently and temporary failures are retried three times.
+- A failed image does not prevent later queue items from being attempted.
+- The result artifact lists successes and failures so only failed items need rerunning.
+- Versioned Draft paths use safe Storage upsert.
+- Workflow status is changed only after upload, media registration, linking and Storage verification succeed.
+- An asset is not complete until its public object, database field and website display are verified.
+
+## Acceptance test
+
+Before a full batch, queue one cover, one banner and Episodes 1–2. Success means all four are genuine JPEGs, exist in Storage, are linked in the database, display on the website and the result artifact reports zero failures. Only then queue Episodes 3–10.
+
+## Queue fields
+
+Each queue item needs `storySlug`, `assetRole`, `stage`, `workflowStatus`, `versionNumber` and `imageBase64`. Episode items also need `seasonNumber` and `episodeNumber`.
+
+## Legacy storage sync
+
+The existing `sync-storage-image` webhook remains available for manually uploaded, correctly named objects. It is separate from the GitHub OIDC bridge.
