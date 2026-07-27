@@ -1,0 +1,10 @@
+{
+  "storySlug": "echoes-under-the-city",
+  "assetRole": "episode",
+  "stage": "concept",
+  "workflowStatus": "review",
+  "versionNumber": 3,
+  "seasonNumber": 1,
+  "episodeNumber": 1,
+  "generationNotes": "End-to-end ChatGPT image transfer proof through GitHub OIDC into Supabase Storage."
+}
