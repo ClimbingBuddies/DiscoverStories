@@ -10,7 +10,7 @@ export default async function Home() {
   let storyQuery = supabase
     .from("stories")
     .select(
-      "id, slug, title, short_description, description, content_status, cover_image_path, banner_image_path, created_at"
+      "id, slug, title, short_description, description, content_status, scheduled_at, cover_image_path, banner_image_path, created_at"
     )
     .order("created_at", { ascending: false });
 
