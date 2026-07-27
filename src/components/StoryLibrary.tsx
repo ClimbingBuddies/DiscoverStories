@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import FeaturedStoryCard from "@/components/FeaturedStory";
 import StoryRow from "@/components/StoryRow";
 import { STUDIO_MODE_COOKIE, STUDIO_MODE_STORAGE_KEY } from "@/lib/studio-mode-constants";
@@ -56,6 +57,7 @@ function inferStoryCategories(story: Pick<LibraryStory, "title" | "short_descrip
 }
 
 export default function StoryLibrary({ stories, initialStudioMode = false }: { stories: LibraryStory[]; initialStudioMode?: boolean }) {
+  const router = useRouter();
   const [lastSelectedSlug, setLastSelectedSlug] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, { episode: string; percentage: number }>>({});
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -169,6 +171,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
     } catch {
       // ignore
     }
+    router.refresh();
   };
 
   return (
