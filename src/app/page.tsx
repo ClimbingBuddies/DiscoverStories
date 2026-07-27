@@ -10,7 +10,7 @@ export default async function Home() {
   let storyQuery = supabase
     .from("stories")
     .select(
-      "id, slug, title, short_description, description, content_status, scheduled_at, cover_image_path, banner_image_path, created_at"
+      "id, slug, title, short_description, description, content_status, scheduled_at, cover_image_path, banner_image_path, created_at, genres ( slug, name )"
     )
     .order("created_at", { ascending: false });
 
@@ -64,7 +64,7 @@ export default async function Home() {
   const storiesWithEpisodeCount = stories?.map((story) => ({
     ...story,
     episodeCount: episodeCountByStory[story.id] ?? 0,
-    seasonNumber: seasonNumberByStory[story.id] ?? 1,
+    seasonNumber: seasonNumberByStory[story.id] ?? 1,\n    genres: story.genres ?? [],
   })) ?? [];
 
   return (
