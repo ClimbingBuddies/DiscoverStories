@@ -105,7 +105,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
     publishedStories.forEach((story) => {
-      inferStoryCategories(story).forEach((category) => categories.add(category));
+      getStoryCategories(story).forEach((category) => categories.add(category));
     });
     return ["All", ...Array.from(categories).sort()];
   }, [publishedStories]);
@@ -113,7 +113,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
   const visiblePublishedStories = useMemo(() => {
     const filtered = selectedCategory === "All"
       ? publishedStories
-      : publishedStories.filter((story) => inferStoryCategories(story).includes(selectedCategory));
+      : publishedStories.filter((story) => getStoryCategories(story).includes(selectedCategory));
 
     return [...filtered].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
