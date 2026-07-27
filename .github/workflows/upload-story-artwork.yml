@@ -1,0 +1,110 @@
+name: Upload queued story artwork
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "production-queue/**/manifest.json"
+      - "production-queue/**/image.b64"
+  workflow_dispatch:
+    inputs:
+      queue_path:
+        description: Queue folder beneath production-queue
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_FUNCTION_URL: https://qsyapcprhhmlsgdzclwq.supabase.co/functions/v1/github-story-artwork-bridge
+    steps:
+      - name: Check out queued artwork
+        uses: actions/checkout@v4
+
+      - name: Resolve queue folder
+        id: queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            folder="production-queue/${{ inputs.queue_path }}"
+          else
+            changed_file=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" | grep '^production-queue/.*/manifest.json$' | head -n 1 || true)
+            if [[ -z "$changed_file" ]]; then
+              echo "No queued artwork manifest was found in this pull request."
+              exit 1
+            fi
+            folder=$(dirname "$changed_file")
+          fi
+          test -f "$folder/manifest.json"
+          test -f "$folder/image.b64"
+          echo "folder=$folder" >> "$GITHUB_OUTPUT"
+
+      - name: Request short-lived GitHub identity token
+        id: oidc
+        shell: bash
+        run: |
+          set -euo pipefail
+          response=$(curl -sS --fail-with-body \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=supabase-story-artwork")
+          token=$(jq -r '.value' <<< "$response")
+          test -n "$token"
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
+      - name: Decode image
+        shell: bash
+        run: |
+          set -euo pipefail
+          folder="${{ steps.queue.outputs.folder }}"
+          base64 --decode "$folder/image.b64" > "$RUNNER_TEMP/story-artwork.jpg"
+          test -s "$RUNNER_TEMP/story-artwork.jpg"
+
+      - name: Upload and link artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          folder="${{ steps.queue.outputs.folder }}"
+          manifest="$folder/manifest.json"
+
+          story_slug=$(jq -r '.storySlug' "$manifest")
+          asset_role=$(jq -r '.assetRole' "$manifest")
+          stage=$(jq -r '.stage // "concept"' "$manifest")
+          workflow_status=$(jq -r '.workflowStatus // "review"' "$manifest")
+          version_number=$(jq -r '.versionNumber // 1' "$manifest")
+          season_number=$(jq -r '.seasonNumber // empty' "$manifest")
+          episode_number=$(jq -r '.episodeNumber // empty' "$manifest")
+          generation_notes=$(jq -r '.generationNotes // "ChatGPT generated concept transferred through GitHub Actions."' "$manifest")
+
+          args=(
+            -sS --fail-with-body
+            -X POST "$SUPABASE_FUNCTION_URL"
+            -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}"
+            -F "action=upload"
+            -F "storySlug=$story_slug"
+            -F "assetRole=$asset_role"
+            -F "stage=$stage"
+            -F "workflowStatus=$workflow_status"
+            -F "versionNumber=$version_number"
+            -F "generationNotes=$generation_notes"
+            -F "file=@$RUNNER_TEMP/story-artwork.jpg;type=image/jpeg"
+          )
+
+          if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
+          if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
+
+          curl "${args[@]}" | tee "$RUNNER_TEMP/upload-result.json"
+          jq -e '.uploaded == true and (.storagePath | length > 0)' "$RUNNER_TEMP/upload-result.json"
+
+      - name: Upload result manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-artwork-upload-result
+          path: ${{ runner.temp }}/upload-result.json
+          retention-days: 7
