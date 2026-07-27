@@ -34,7 +34,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             folder="production-queue/${{ inputs.queue_path }}"
           else
-            changed_file=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" | grep '^production-queue/.*/manifest.json$' | head -n 1 || true)
+            changed_file=$(find production-queue -name manifest.json -type f | sort | head -n 1)
             if [[ -z "$changed_file" ]]; then
               echo "No queued artwork manifest was found in this pull request."
               exit 1
