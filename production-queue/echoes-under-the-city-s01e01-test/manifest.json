@@ -3,8 +3,8 @@
   "assetRole": "episode",
   "stage": "concept",
   "workflowStatus": "review",
-  "versionNumber": 1,
+  "versionNumber": 2,
   "seasonNumber": 1,
   "episodeNumber": 1,
-  "generationNotes": "ChatGPT concept workflow end-to-end transfer test for Echoes Under the City, Season 1 Episode 1."
+  "generationNotes": "ChatGPT image transfer proof using GitHub OIDC and the Supabase artwork bridge."
 }
