@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import FeaturedStoryCard from "@/components/FeaturedStory";
 import StoryRow from "@/components/StoryRow";
 import { STUDIO_MODE_COOKIE } from "@/lib/studio-mode-constants";
+import {
+  type ContentStatus,
+  isPublishedStatus,
+  PRODUCTION_STATUS_LABELS,
+} from "@/lib/content-status";
 
 const LAST_SELECTED_KEY = "discover-stories:lastSelectedStory";
 const PROGRESS_KEY = "discover-stories:storyProgress";
@@ -17,7 +22,8 @@ export type LibraryStory = {
   description: string | null;
   cover_image_path: string | null;
   banner_image_path: string | null;
-  content_status: string;
+  content_status: ContentStatus;
+  scheduled_at: string | null;
   episodeCount: number;
   seasonNumber: number;
   created_at: string;
@@ -81,14 +87,19 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
   }, []);
 
   const publishedStories = useMemo(
-    () => stories.filter((story) => story.content_status === "published"),
+    () => stories.filter((story) => isPublishedStatus(story.content_status)),
     [stories]
   );
 
-  const productionStories = useMemo(
-    () => stories.filter((story) => story.content_status !== "published"),
-    [stories]
-  );
+  const productionGroups = useMemo(() => {
+    return (["review", "scheduled", "draft", "archived"] as const)
+      .map((status) => ({
+        status,
+        title: PRODUCTION_STATUS_LABELS[status],
+        stories: stories.filter((story) => story.content_status === status),
+      }))
+      .filter((group) => group.stories.length > 0);
+  }, [stories]);
 
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
@@ -157,7 +168,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
       <div className="pointer-events-none absolute -top-16 right-0 z-10">
         <label
           className="pointer-events-auto inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/90 px-3 py-1.5 text-xs font-medium text-zinc-200"
-          title="Studio Mode: Preview draft and review stories on the live layout."
+          title="Studio Mode: Preview production statuses on the live layout."
         >
           <span>Studio</span>
           <input
@@ -172,7 +183,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
 
       {studioMode ? (
         <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-5 py-4 text-sm text-amber-100">
-          Studio Mode is open for prototyping. Draft content is visible to anyone who turns it on.
+          Studio Mode is a layout preview. Database permissions still control which production records are available.
         </div>
       ) : null}
 
@@ -211,9 +222,16 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
         </div>
       </div>
 
-      {studioMode && productionStories.length > 0 ? (
-        <StoryRow title="In Production" stories={productionStories} onSelect={handleSelect} />
-      ) : null}
+      {studioMode
+        ? productionGroups.map((group) => (
+            <StoryRow
+              key={group.status}
+              title={group.title}
+              stories={group.stories}
+              onSelect={handleSelect}
+            />
+          ))
+        : null}
     </div>
   );
 }
