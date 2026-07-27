@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import FeaturedStoryCard from "@/components/FeaturedStory";
 import StoryRow from "@/components/StoryRow";
-import { STUDIO_MODE_COOKIE, STUDIO_MODE_STORAGE_KEY } from "@/lib/studio-mode-constants";
+import { STUDIO_MODE_COOKIE } from "@/lib/studio-mode-constants";
 
 const LAST_SELECTED_KEY = "discover-stories:lastSelectedStory";
 const PROGRESS_KEY = "discover-stories:storyProgress";
@@ -66,24 +66,10 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
   useEffect(() => {
     let savedSlug: string | null = null;
     let savedProgress: Record<string, { episode: string; percentage: number }> = {};
-    let savedStudioMode = false;
 
     try {
       savedSlug = window.localStorage.getItem(LAST_SELECTED_KEY);
       savedProgress = getStoredProgress();
-      const localStorageValue = window.localStorage.getItem(STUDIO_MODE_STORAGE_KEY);
-      const cookieValue = document.cookie
-        .split("; ")
-        .find((item) => item.startsWith(`${STUDIO_MODE_COOKIE}=`))
-        ?.split("=")[1];
-
-      if (localStorageValue === "true" || localStorageValue === "false") {
-        savedStudioMode = localStorageValue === "true";
-      } else if (cookieValue === "true" || cookieValue === "false") {
-        savedStudioMode = cookieValue === "true";
-      }
-
-      document.cookie = `${STUDIO_MODE_COOKIE}=${savedStudioMode}; path=/; max-age=31536000; samesite=lax`;
     } catch {
       // ignore client-side storage errors
     }
@@ -91,7 +77,6 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
     /* eslint-disable react-hooks/set-state-in-effect */
     setLastSelectedSlug(savedSlug);
     setProgressMap(savedProgress);
-    setStudioMode(savedStudioMode);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
@@ -100,7 +85,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
     [stories]
   );
 
-  const studioStories = useMemo(
+  const productionStories = useMemo(
     () => stories.filter((story) => story.content_status !== "published"),
     [stories]
   );
@@ -113,27 +98,27 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
     return ["All", ...Array.from(categories).sort()];
   }, [publishedStories]);
 
-  const filteredPublishedStories = useMemo(() => {
-    if (selectedCategory === "All") return publishedStories;
-    return publishedStories.filter((story) => inferStoryCategories(story).includes(selectedCategory));
-  }, [publishedStories, selectedCategory]);
+  const visiblePublishedStories = useMemo(() => {
+    const filtered = selectedCategory === "All"
+      ? publishedStories
+      : publishedStories.filter((story) => inferStoryCategories(story).includes(selectedCategory));
 
-  const allPublished = useMemo(
-    () => [...filteredPublishedStories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [filteredPublishedStories]
-  );
+    return [...filtered].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [publishedStories, selectedCategory]);
 
   const featuredStory = useMemo(() => {
     const lastSelected = lastSelectedSlug
-      ? allPublished.find((story) => story.slug === lastSelectedSlug)
+      ? visiblePublishedStories.find((story) => story.slug === lastSelectedSlug)
       : undefined;
-    return lastSelected ?? allPublished[0] ?? null;
-  }, [allPublished, lastSelectedSlug]);
+    return lastSelected ?? visiblePublishedStories[0] ?? null;
+  }, [visiblePublishedStories, lastSelectedSlug]);
 
   const continueStory = useMemo(() => {
     if (!lastSelectedSlug) return null;
-    return allPublished.find((story) => story.slug === lastSelectedSlug) ?? null;
-  }, [allPublished, lastSelectedSlug]);
+    return visiblePublishedStories.find((story) => story.slug === lastSelectedSlug) ?? null;
+  }, [visiblePublishedStories, lastSelectedSlug]);
 
   const continueStories = useMemo(() => {
     if (!continueStory) return [];
@@ -142,11 +127,9 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
   }, [continueStory, progressMap]);
 
   const newestStories = useMemo(
-    () => allPublished.filter((story) => story.slug !== featuredStory?.slug).slice(0, 8),
-    [allPublished, featuredStory]
+    () => visiblePublishedStories.filter((story) => story.slug !== featuredStory?.slug).slice(0, 8),
+    [visiblePublishedStories, featuredStory]
   );
-
-  const comingSoonStories = useMemo(() => studioStories.slice(0, 8), [studioStories]);
 
   const handleSelect = (slug: string) => {
     try {
@@ -165,12 +148,7 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
 
   const handleStudioModeChange = (enabled: boolean) => {
     setStudioMode(enabled);
-    try {
-      window.localStorage.setItem(STUDIO_MODE_STORAGE_KEY, String(enabled));
-      document.cookie = `${STUDIO_MODE_COOKIE}=${enabled}; path=/; max-age=31536000; samesite=lax`;
-    } catch {
-      // ignore
-    }
+    document.cookie = `${STUDIO_MODE_COOKIE}=${enabled}; path=/; max-age=31536000; samesite=lax`;
     router.refresh();
   };
 
@@ -233,11 +211,9 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
         </div>
       </div>
 
-      {studioMode ? (
-        <StoryRow title="In Production" stories={studioStories} onSelect={handleSelect} />
-      ) : (
-        <StoryRow title="Coming Soon" stories={comingSoonStories} onSelect={handleSelect} />
-      )}
+      {studioMode && productionStories.length > 0 ? (
+        <StoryRow title="In Production" stories={productionStories} onSelect={handleSelect} />
+      ) : null}
     </div>
   );
 }
