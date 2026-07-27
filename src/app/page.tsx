@@ -7,12 +7,18 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const studioModeEnabled = await isStudioModeEnabled();
 
-  const { data: stories, error } = await supabase
+  let storyQuery = supabase
     .from("stories")
     .select(
       "id, slug, title, short_description, description, content_status, cover_image_path, banner_image_path, created_at"
     )
     .order("created_at", { ascending: false });
+
+  if (!studioModeEnabled) {
+    storyQuery = storyQuery.eq("content_status", "published");
+  }
+
+  const { data: stories, error } = await storyQuery;
 
   const storyIds = stories?.map((story) => story.id) ?? [];
   let episodeRows: Array<{ story_id: string; season_number: number | null }> = [];
@@ -75,7 +81,7 @@ export default async function Home() {
           <p className="rounded-lg bg-red-950 p-4 text-red-300">
             Supabase error: {error.message}
           </p>
-        ) : storiesWithEpisodeCount && storiesWithEpisodeCount.length > 0 ? (
+        ) : storiesWithEpisodeCount.length > 0 ? (
           <StoryLibrary stories={storiesWithEpisodeCount} initialStudioMode={studioModeEnabled} />
         ) : (
           <p className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-zinc-400">
