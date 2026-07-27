@@ -52,6 +52,7 @@ const CATEGORY_KEYWORDS: Array<{ label: string; keywords: string[] }> = [
   { label: "Romance", keywords: ["romance", "love", "heart", "kiss", "affection", "relationship"] },
   { label: "Fantasy", keywords: ["fantasy", "magic", "wizard", "dragon", "enchanted", "myth", "spell", "kingdom", "realm"] },
   { label: "Education", keywords: ["education", "learn", "school", "teacher", "history", "science", "lesson", "knowledge", "academy"] },
+  { label: "Biographies", keywords: ["biography", "biographies", "biographical", "memoir", "life story", "lifespan", "lifetime", "real life"] },
   { label: "Mystery", keywords: ["mystery", "secret", "detective", "clue", "unknown", "hidden", "haunted", "ghost", "riddle"] },
   { label: "Adventure", keywords: ["adventure", "journey", "quest", "explore", "travel", "expedition", "treasure", "survival", "escape"] },
   { label: "Drama", keywords: ["drama", "conflict", "struggle", "loss", "family", "war", "betrayal", "sacrifice"] },
