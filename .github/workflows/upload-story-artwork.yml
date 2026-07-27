@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       queue_path:
-        description: Queue folder beneath production-queue
+        description: Queue folder or batch folder beneath production-queue
         required: true
         type: string
 
@@ -26,24 +26,28 @@ jobs:
       - name: Check out queued artwork
         uses: actions/checkout@v4
 
-      - name: Resolve queue folder
+      - name: Resolve queued manifests
         id: queue
         shell: bash
         run: |
           set -euo pipefail
+          output="$RUNNER_TEMP/queued-manifests.txt"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            folder="production-queue/${{ inputs.queue_path }}"
-          else
-            changed_file=$(find production-queue -name manifest.json -type f | sort | head -n 1)
-            if [[ -z "$changed_file" ]]; then
-              echo "No queued artwork manifest was found in this pull request."
-              exit 1
+            target="production-queue/${{ inputs.queue_path }}"
+            if [[ -f "$target/manifest.json" ]]; then
+              printf '%s\n' "$target/manifest.json" > "$output"
+            else
+              find "$target" -name manifest.json -type f | sort > "$output"
             fi
-            folder=$(dirname "$changed_file")
+          else
+            find production-queue -name manifest.json -type f | sort > "$output"
           fi
-          test -f "$folder/manifest.json"
-          test -f "$folder/image.b64"
-          echo "folder=$folder" >> "$GITHUB_OUTPUT"
+          test -s "$output"
+          while IFS= read -r manifest; do
+            test -f "$(dirname "$manifest")/image.b64"
+          done < "$output"
+          echo "manifest_list=$output" >> "$GITHUB_OUTPUT"
+          echo "count=$(wc -l < "$output" | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
       - name: Request short-lived GitHub identity token
         id: oidc
@@ -58,49 +62,52 @@ jobs:
           echo "::add-mask::$token"
           echo "token=$token" >> "$GITHUB_OUTPUT"
 
-      - name: Decode image
+      - name: Upload and link artwork batch
         shell: bash
         run: |
           set -euo pipefail
-          folder="${{ steps.queue.outputs.folder }}"
-          base64 --decode "$folder/image.b64" > "$RUNNER_TEMP/story-artwork.jpg"
-          test -s "$RUNNER_TEMP/story-artwork.jpg"
+          results="$RUNNER_TEMP/upload-results.jsonl"
+          : > "$results"
 
-      - name: Upload and link artwork
-        shell: bash
-        run: |
-          set -euo pipefail
-          folder="${{ steps.queue.outputs.folder }}"
-          manifest="$folder/manifest.json"
+          while IFS= read -r manifest; do
+            folder=$(dirname "$manifest")
+            image_file="$RUNNER_TEMP/$(basename "$folder").jpg"
+            base64 --decode "$folder/image.b64" > "$image_file"
+            test -s "$image_file"
 
-          story_slug=$(jq -r '.storySlug' "$manifest")
-          asset_role=$(jq -r '.assetRole' "$manifest")
-          stage=$(jq -r '.stage // "concept"' "$manifest")
-          workflow_status=$(jq -r '.workflowStatus // "review"' "$manifest")
-          version_number=$(jq -r '.versionNumber // 1' "$manifest")
-          season_number=$(jq -r '.seasonNumber // empty' "$manifest")
-          episode_number=$(jq -r '.episodeNumber // empty' "$manifest")
-          generation_notes=$(jq -r '.generationNotes // "ChatGPT generated concept transferred through GitHub Actions."' "$manifest")
+            story_slug=$(jq -r '.storySlug' "$manifest")
+            asset_role=$(jq -r '.assetRole' "$manifest")
+            stage=$(jq -r '.stage // "concept"' "$manifest")
+            workflow_status=$(jq -r '.workflowStatus // "draft"' "$manifest")
+            version_number=$(jq -r '.versionNumber // 1' "$manifest")
+            season_number=$(jq -r '.seasonNumber // empty' "$manifest")
+            episode_number=$(jq -r '.episodeNumber // empty' "$manifest")
+            generation_notes=$(jq -r '.generationNotes // "ChatGPT generated draft concept transferred through the Story Pipeline."' "$manifest")
 
-          args=(
-            -sS --fail-with-body
-            -X POST "$SUPABASE_FUNCTION_URL"
-            -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}"
-            -F "action=upload"
-            -F "storySlug=$story_slug"
-            -F "assetRole=$asset_role"
-            -F "stage=$stage"
-            -F "workflowStatus=$workflow_status"
-            -F "versionNumber=$version_number"
-            -F "generationNotes=$generation_notes"
-            -F "file=@$RUNNER_TEMP/story-artwork.jpg;type=image/jpeg"
-          )
+            args=(
+              -sS --fail-with-body
+              -X POST "$SUPABASE_FUNCTION_URL"
+              -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}"
+              -F "action=upload"
+              -F "storySlug=$story_slug"
+              -F "assetRole=$asset_role"
+              -F "stage=$stage"
+              -F "workflowStatus=$workflow_status"
+              -F "versionNumber=$version_number"
+              -F "generationNotes=$generation_notes"
+              -F "file=@$image_file;type=image/jpeg"
+            )
 
-          if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
-          if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
+            if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
+            if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
 
-          curl "${args[@]}" | tee "$RUNNER_TEMP/upload-result.json"
-          jq -e '.uploaded == true and (.storagePath | length > 0)' "$RUNNER_TEMP/upload-result.json"
+            result=$(curl "${args[@]}")
+            jq -e '.uploaded == true and (.storagePath | length > 0)' <<< "$result"
+            jq -c . <<< "$result" >> "$results"
+          done < "${{ steps.queue.outputs.manifest_list }}"
+
+          test "$(wc -l < "$results" | tr -d ' ')" = "${{ steps.queue.outputs.count }}"
+          jq -s '{status:"complete", uploaded:length, results:.}' "$results" > "$RUNNER_TEMP/upload-result.json"
 
       - name: Upload result manifest
         uses: actions/upload-artifact@v4
