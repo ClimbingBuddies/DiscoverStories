@@ -16,13 +16,13 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   upload:
     runs-on: ubuntu-latest
     env:
       SUPABASE_FUNCTION_URL: https://qsyapcprhhmlsgdzclwq.supabase.co/functions/v1/story-artwork-production
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -45,14 +45,18 @@ jobs:
           test -f "$folder/image.b64"
           echo "folder=$folder" >> "$GITHUB_OUTPUT"
 
-      - name: Confirm protected credential
+      - name: Request short-lived GitHub identity token
+        id: oidc
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${SUPABASE_SERVICE_ROLE_KEY}" ]]; then
-            echo "Repository secret SUPABASE_SERVICE_ROLE_KEY is not configured."
-            exit 1
-          fi
+          response=$(curl -sS --fail-with-body \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=supabase-story-artwork")
+          token=$(jq -r '.value' <<< "$response")
+          test -n "$token"
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
 
       - name: Decode image
         shell: bash
@@ -63,7 +67,6 @@ jobs:
           test -s "$RUNNER_TEMP/story-artwork.jpg"
 
       - name: Upload and link artwork
-        id: upload
         shell: bash
         run: |
           set -euo pipefail
@@ -82,7 +85,7 @@ jobs:
           args=(
             -sS --fail-with-body
             -X POST "$SUPABASE_FUNCTION_URL"
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+            -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}"
             -F "action=upload"
             -F "storySlug=$story_slug"
             -F "assetRole=$asset_role"
