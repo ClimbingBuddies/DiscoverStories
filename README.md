@@ -16,6 +16,7 @@ The project supports:
 The current operating model is documented in:
 
 - [`documentation/architecture/story-production-pipeline.md`](documentation/architecture/story-production-pipeline.md)
+- [`documentation/pipelines/audio-platform-draft-pipeline.md`](documentation/pipelines/audio-platform-draft-pipeline.md) — authoritative ten-episode Draft Pipeline runbook
 - [`documentation/architecture/production-knowledge-model.md`](documentation/architecture/production-knowledge-model.md)
 - [`documentation/specifications/episode-artwork-production-specification.md`](documentation/specifications/episode-artwork-production-specification.md)
 - [`documentation/specifications/episode-artwork-production-guide.md`](documentation/specifications/episode-artwork-production-guide.md)
