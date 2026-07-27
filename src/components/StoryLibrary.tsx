@@ -47,20 +47,8 @@ function saveProgressMap(progressMap: Record<string, { episode: string; percenta
   }
 }
 
-const CATEGORY_KEYWORDS: Array<{ label: string; keywords: string[] }> = [
-  { label: "Science Fiction", keywords: ["science fiction", "sci-fi", "sci fi", "future", "space", "robot", "dyson", "cosmic", "quantum", "galaxy", "star", "satellite", "technology", "ai", "android"] },
-  { label: "Romance", keywords: ["romance", "love", "heart", "kiss", "affection", "relationship"] },
-  { label: "Fantasy", keywords: ["fantasy", "magic", "wizard", "dragon", "enchanted", "myth", "spell", "kingdom", "realm"] },
-  { label: "Education", keywords: ["education", "learn", "school", "teacher", "history", "science", "lesson", "knowledge", "academy"] },
-  { label: "Biographies", keywords: ["biography", "biographies", "biographical", "memoir", "life story", "lifespan", "lifetime", "real life"] },
-  { label: "Mystery", keywords: ["mystery", "secret", "detective", "clue", "unknown", "hidden", "haunted", "ghost", "riddle"] },
-  { label: "Adventure", keywords: ["adventure", "journey", "quest", "explore", "travel", "expedition", "treasure", "survival", "escape"] },
-  { label: "Drama", keywords: ["drama", "conflict", "struggle", "loss", "family", "war", "betrayal", "sacrifice"] },
-];
-
-function inferStoryCategories(story: Pick<LibraryStory, "title" | "short_description" | "description">): string[] {
-  const haystack = `${story.title ?? ""} ${story.short_description ?? ""} ${story.description ?? ""}`.toLowerCase();
-  return CATEGORY_KEYWORDS.filter(({ keywords }) => keywords.some((keyword) => haystack.includes(keyword))).map(({ label }) => label);
+function getStoryCategories(story: Pick<LibraryStory, "genres">): string[] {
+  return (story.genres ?? []).map((genre) => genre.name);
 }
 
 export default function StoryLibrary({ stories, initialStudioMode = false }: { stories: LibraryStory[]; initialStudioMode?: boolean }) {
