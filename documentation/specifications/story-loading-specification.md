@@ -4,12 +4,13 @@
 
 ## 1. Purpose
 
-This specification governs idempotent loading of one story and a controlled episode batch into Supabase.
+This specification governs idempotent loading of one story, full episodes and roadmap-block presentation records into Supabase.
 
 ## 2. Stable identity
 
 - Story: `stories.slug`
 - Episode: `(story_id, season_number, episode_number)`
+- Roadmap block: the same stable identity plus `episode_kind = roadmap_block`, `episode_end_number`, and structured data containing ten planned episode numbers, titles and summaries.
 
 The obsolete two-column episode key is not used.
 
@@ -19,7 +20,7 @@ A story load must:
 
 1. Run in one transaction.
 2. Resolve or upsert the story by slug.
-3. Insert or update exactly the intended episode range.
+3. Insert or update exactly the intended full-episode range or roadmap-block record.
 4. Update approved narrative fields only.
 5. Calculate `word_count` from stored `script_text`.
 6. Preserve unrelated production data.
@@ -34,7 +35,8 @@ The loader may update:
 - story cover and banner paths when supplied,
 - episode title,
 - episode summary,
-- episode script,
+- episode script when `episode_kind = full`,
+- roadmap-block structured plans when `episode_kind = roadmap_block`,
 - calculated word count,
 - episode artwork path when supplied,
 - explicitly authorised visibility status.
@@ -54,7 +56,7 @@ The loader must not overwrite:
 
 ## 6. Word count
 
-Word count is calculated and displayed for review. Creative ranges are recommendations, not SQL constraints. A script may fail only when required content is blank or structurally invalid, not because of its length.
+Word count is calculated and displayed for review. Creative ranges are recommendations, not SQL constraints. A script may fail only when required content is blank or structurally invalid, not because of its length. Roadmap blocks have no `script_text` requirement and must contain ten individually numbered plans.
 
 ## 7. Status
 
@@ -74,7 +76,8 @@ New rows default to draft unless publication is explicitly authorised. A publish
 Post-commit verification reports:
 
 - story slug and title,
-- season and episode numbers,
+- season and episode numbers and, for roadmap blocks, the start/end range,
+- episode kind (`full` or `roadmap_block`),
 - episode status,
 - word count,
 - artwork path,
@@ -83,4 +86,4 @@ Post-commit verification reports:
 
 ## 10. Definition of done
 
-A story load is complete when it is safe to rerun, updates the intended narrative batch without duplicates, preserves production outputs and returns clear verification evidence.
+A story load is complete when it is safe to rerun, updates the intended narrative batch or roadmap block without duplicates, preserves production outputs and returns clear verification evidence.
