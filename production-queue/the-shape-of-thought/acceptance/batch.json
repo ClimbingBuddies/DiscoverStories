@@ -40,5 +40,6 @@
       "seasonNumber": 1,
       "episodeNumber": 2
     }
-  ]
+  ],
+  "retryReason": "ImageMagick 6 compatibility fix"
 }
