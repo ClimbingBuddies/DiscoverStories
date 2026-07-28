@@ -5,7 +5,7 @@
 **Current focus:** Draft only  
 **Workflow statuses:** Draft → Review → Published  
 **Owner:** Audio Platform  
-**Last updated:** 27 Jul 2026
+**Last updated:** 28 Jul 2026
 
 This is the authoritative runbook for creating a variable-range Audio Platform draft. The requested episode range and mode determine whether the pipeline prepares roadmap material, full scripts, artwork, or a combination of these. The detailed story, wiki, SQL and artwork specifications remain supporting references. If a supporting document appears to conflict with this runbook, stop and report the conflict before loading data.
 
@@ -17,7 +17,7 @@ The Draft Pipeline creates a complete, reviewable Draft Workspace before any ext
 - the initial production batch;
 - a private wiki/story bible derived from the story and episodes;
 - character and visual-continuity guidance;
-- one cover, one banner and initial artwork for Episodes 1–10; later episode artwork is generated on demand when those episodes are approved for production;
+- one cover, one banner and initial artwork for the default first production batch; later episode artwork is generated on demand unless explicitly requested for a selected range;
 - database records, category assignment and artwork links prepared for a later commit;
 - a review package that can be discussed and revised before loading;
 - website verification after explicit approval and commit.
@@ -49,7 +49,7 @@ Do not start image generation, image upload or database loading until the earlie
    - If no range was supplied, prepare the complete planned 100-episode roadmap. If a range was supplied, preserve the wider roadmap only when it is already available or explicitly requested.
    - Each block must have a spoiler-light title and description suitable for display above its planned episodes.
    - The architecture describes what is planned without revealing major deaths, betrayals, discoveries, philosophical conclusions or later outcomes.
-   - Only the first ten episodes need complete prose in the initial draft batch.
+   - Complete prose is required only for the requested range when the selected mode is `full scripts`; roadmap material does not require full prose.
 
 2. **Episode architecture and blocks**
    - Show the complete planned season structure before the full prose begins.
@@ -73,7 +73,7 @@ Do not start image generation, image upload or database loading until the earlie
 
 5. **Character and visual continuity**
    - Define recurring characters' identity, age range, face/hair, build, clothing, accessories, emotional baseline and non-changing visual constraints.
-   - Identify changes that are intentionally allowed across Episodes 1–10.
+   - Identify changes that are intentionally allowed across the requested full-script range.
    - Do not invent artwork details that contradict the story or wiki.
 
 6. **Episode visual briefs**
@@ -89,7 +89,7 @@ Do not start image generation, image upload or database loading until the earlie
    - Use the character continuity record, Wiki/story bible and episode visual briefs.
    - The images are deliberately replaceable and are for testing the complete website pipeline.
    - Do not embed titles, episode numbers, logos, watermarks, borders, UI or generated text.
-   - The image set must show character consistency, emotional variety and the important visual states of the opening batch.
+   - The image set must show character consistency, emotional variety and the important visual states of the requested artwork range.
 
 8. **Prepare the load**
    - Confirm the slug, category, story status, episode range, image filenames and relative storage paths.
@@ -127,7 +127,7 @@ Artwork has three separate operational stages:
 | Draft/Review placeholder | Test the complete website and database path | May be uploaded and linked |
 | Production | Final approved artwork for publication | Linked after final approval |
 
-The standard no-range quick-draft set is **one cover + one banner + ten episode images for Episodes 1–10**. Artwork for later episodes is **on demand** unless the command explicitly requests it for a selected range.
+The standard no-range quick-draft set is **one cover + one banner + ten episode images for the first production batch (Episodes 1–10)**. Artwork for later episodes is **on demand** unless the command explicitly requests it for a selected range.
 
 JPEG/JPG is the standard format for ordinary low-resolution Draft/Review placeholders. The generator may emit PNG, but the upload workflow must perform a real JPEG conversion and verify the resulting file before upload. PNG is retained only when transparency is genuinely required or a later approved production decision calls for it.
 
