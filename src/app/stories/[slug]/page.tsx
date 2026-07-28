@@ -50,7 +50,6 @@ export default async function StoryPage({ params, searchParams }: Props) {
     throw new Error(error.message);
   }
 
-  // Get total count of published episodes to determine if there's a next page
   let countQuery = supabase
     .from("episodes")
     .select("id", { count: "exact", head: true })
@@ -73,6 +72,38 @@ export default async function StoryPage({ params, searchParams }: Props) {
 
   if (wikiError) {
     throw new Error(wikiError.message);
+  }
+
+  let planningBlocks: Array<{
+    id: string;
+    block_number: number;
+    episode_start: number;
+    episode_end: number;
+    title: string;
+    arc_summary: string | null;
+    episode_summaries: Array<{
+      episode_number: number;
+      title: string;
+      summary: string;
+    }>;
+    draft_assessment: string | null;
+    content_status: string;
+  }> = [];
+
+  if (studioModeEnabled) {
+    const { data, error: planningError } = await supabase
+      .from("story_episode_planning_blocks")
+      .select(
+        "id, block_number, episode_start, episode_end, title, arc_summary, episode_summaries, draft_assessment, content_status"
+      )
+      .eq("story_id", story.id)
+      .order("block_number");
+
+    if (planningError) {
+      throw new Error(planningError.message);
+    }
+
+    planningBlocks = (data ?? []) as typeof planningBlocks;
   }
 
   const wikiEnabled = Boolean(hasWiki);
@@ -121,6 +152,8 @@ export default async function StoryPage({ params, searchParams }: Props) {
             episodes={episodes ?? []}
             pageSize={pageSize}
             totalEpisodes={totalEpisodes}
+            studioModeEnabled={studioModeEnabled}
+            planningBlocks={planningBlocks}
           />
         </div>
       </div>
