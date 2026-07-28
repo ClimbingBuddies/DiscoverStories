@@ -7,7 +7,7 @@
 
 This specification governs the creative development of a story from approved brief through a private story bible, a 100-episode roadmap, complete episode prose, continuity controls and production-ready metadata.
 
-The normal workflow creates and reviews episodes in ten-episode batches. The first ten episodes test the interpretation of the brief and the quality of the story before the next batch is authorised.
+The Draft and Review Pipelines may each run repeatedly. Draft creates or revises creative material; Review assesses quality, continuity and KPIs and authorises progression. Review approval is not publication approval.
 
 ## 2. Source brief
 
@@ -58,7 +58,7 @@ A season is planned as ten connected arcs of approximately ten episodes:
 | 81–90 | Final approach |
 | 91–100 | Climax and consequence |
 
-Episodes 1–10 are written in full. Episodes 11–100 remain at roadmap or outline level until the preceding batch has been reviewed.
+Episodes 1–10 are written in full. Episodes 11–100 are stored as individually planned roadmap blocks by default. Each block is one draft presentation record titled, for example, `Episodes 11–20`, containing ten numbered titles and summaries. A later Draft run may develop a selected block into full episodes.
 
 ## 5. Episode production card
 
@@ -111,7 +111,7 @@ After a batch is approved:
 5. Add visual profiles only for recurring entries where consistency matters.
 6. Build or refresh production bundles only when production begins.
 
-The wiki is both the reader-facing lore system and the internal production knowledge base, with public and private content separated by tables, fields and RLS.
+The private Story Bible is the internal production knowledge base. The Studio Wiki is the draft/review presentation of private and planned material. The Public Wiki is separate and contains only published, reader-safe content.
 
 ## 9. Review gates
 
@@ -123,7 +123,7 @@ The review process distinguishes:
 - continuity issues,
 - production issues.
 
-Episodes 11–20 begin only after Episodes 1–10 have a recorded approval, revision or stop decision.
+A Review run may assess any Draft run or roadmap block, including revised ideas. Development of a later full-script batch may be authorised by Review, but Draft may prepare or revise roadmap material before that authorisation.
 
 ## 10. Definition of done
 
@@ -135,4 +135,4 @@ A batch is complete when:
 - episode production cards are complete,
 - reusable knowledge has been identified,
 - the next arc still fits the season roadmap,
-- and a reviewer has explicitly authorised or declined the next batch.
+- and the relevant Draft or Review run has a recorded outcome. Publication requires a separate Public Pipeline decision.
