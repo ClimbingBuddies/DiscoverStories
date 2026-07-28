@@ -8,6 +8,7 @@ type EpisodeItem = {
   id: string;
   season_number: number | null;
   episode_number: number;
+  episode_end_number: number | null;
   title: string;
   summary: string | null;
   word_count: number | null;
@@ -144,7 +145,7 @@ export default function StoryEpisodesSection({
           <div>
             <p className="text-sm font-semibold text-white">Episode blocks</p>
             <p className="text-sm text-zinc-400">
-              Showing {startEpisode}-{endEpisode} of {totalEpisodes ?? 0} episodes
+              Showing {startEpisode}-{endEpisode} of {totalEpisodes ?? 0} records
             </p>
           </div>
 
