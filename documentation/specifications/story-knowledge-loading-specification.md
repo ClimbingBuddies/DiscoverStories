@@ -8,7 +8,7 @@ This specification governs idempotent loading of reusable story knowledge. The s
 
 ## 2. Dependency order
 
-Story knowledge follows story loading. Every referenced story and episode row must already exist.
+Story knowledge follows story loading. Every referenced story row must exist. Full-episode links must resolve to individual episode rows. Studio/review knowledge may reference an existing roadmap-block row and identify a planned episode inside its structured block data.
 
 Recommended load order:
 
@@ -29,7 +29,8 @@ Recommended load order:
 - wiki entry: `(story_id, slug)`
 - section: `(wiki_entry_id, section_key)`
 - relationship: `(source_entry_id, target_entry_id, relationship_type)`
-- episode appearance: `(episode_id, wiki_entry_id)`
+- full-episode appearance: `(episode_id, wiki_entry_id)`
+- roadmap-block appearance: `(roadmap_block_episode_id, wiki_entry_id, planned_episode_number)`
 - character and visual profile: parent `wiki_entry_id`
 
 Titles and descriptions may change without creating a new entity.
@@ -68,7 +69,7 @@ Every `episode_wiki_entries` row must resolve an episode and wiki entry from the
 
 ## 8. Spoiler control
 
-Reveal episode numbers used during authoring are resolved to real episode IDs scoped by story, season and episode number. Public APIs and RLS enforce visibility; browser hiding alone is insufficient.
+Published Wiki episode references must resolve to published, reader-safe individual episode IDs. Studio Wiki and private Story Bible references may resolve to a roadmap-block ID plus a planned episode number inside its structured data. Public APIs and RLS enforce visibility; browser hiding alone is insufficient.
 
 ## 9. Verification
 
