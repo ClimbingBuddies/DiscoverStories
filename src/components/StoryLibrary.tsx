@@ -22,6 +22,7 @@ export type LibraryStory = {
   description: string | null;
   cover_image_path: string | null;
   banner_image_path: string | null;
+  genres: Array<{ slug: string; name: string }>;
   content_status: ContentStatus;
   scheduled_at: string | null;
   episodeCount: number;

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { getStorageImageUrl } from "@/lib/supabase-storage";
 
 export type RowStory = {
@@ -25,8 +24,6 @@ export default function StoryRow({
   stories: RowStory[];
   onSelect?: (slug: string) => void;
 }) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -44,8 +41,6 @@ export default function StoryRow({
               key={story.id}
               href={`/stories/${story.slug}`}
               onClick={() => onSelect?.(story.slug)}
-              onMouseEnter={() => setHoveredId(story.id)}
-              onMouseLeave={() => setHoveredId(null)}
               className="group relative min-w-[18rem] max-w-[21.25rem] flex-shrink-0 h-full overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 transition hover:border-emerald-400"
             >
               <div className="relative aspect-[3/2] overflow-hidden bg-zinc-950">
@@ -59,35 +54,23 @@ export default function StoryRow({
               </div>
 
               <div className="flex h-full flex-col justify-between space-y-4 p-5">
-                <div className="space-y-2">
+                <div className="min-h-[11.5rem] space-y-3">
                   <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">
                     {story.content_status}
                   </p>
                   <h3 className="text-2xl font-semibold leading-tight text-white line-clamp-2">
                     {story.title}
                   </h3>
-                  {hoveredId === story.id ? (
-                    <p className="text-sm leading-6 text-zinc-300">
-                      {story.short_description ?? "Discover this story."}
-                    </p>
-                  ) : (
-                    <p className="text-sm leading-6 text-zinc-400 line-clamp-3">
-                      {story.short_description ?? "No description yet."}
-                    </p>
-                  )}
+                  <p className="text-sm leading-6 text-zinc-300 line-clamp-4">
+                    {story.short_description ?? "No description yet."}
+                  </p>
                 </div>
 
-                {hoveredId === story.id ? (
-                  <div className="rounded-3xl border border-emerald-400/20 bg-zinc-950/95 p-4 text-sm text-zinc-300">
-                    <p className="font-semibold text-white">Story preview</p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between pt-4">
-                    <span className="text-sm font-semibold text-emerald-300">
-                      View Story →
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
+                  <span className="text-sm font-semibold text-emerald-300 transition group-hover:text-emerald-200">
+                    View Story →
+                  </span>
+                </div>
               </div>
             </Link>
           ))}

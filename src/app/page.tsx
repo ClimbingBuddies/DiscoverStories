@@ -64,7 +64,8 @@ export default async function Home() {
   const storiesWithEpisodeCount = stories?.map((story) => ({
     ...story,
     episodeCount: episodeCountByStory[story.id] ?? 0,
-    seasonNumber: seasonNumberByStory[story.id] ?? 1,\n    genres: story.genres ?? [],
+    seasonNumber: seasonNumberByStory[story.id] ?? 1,
+    genres: story.genres ?? [],
   })) ?? [];
 
   return (
