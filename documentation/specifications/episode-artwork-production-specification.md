@@ -20,9 +20,9 @@ The production process separates low-cost creative decisions from final-quality 
 | Story cover | Enduring story mood | Story card and story detail | The enduring identity of the story |
 | Story banner | World atmosphere | Hero/header areas | A wide atmospheric statement of the world |
 
-Artwork must be supplied at a suitable quality for the platform. No fixed production dimensions are required by this specification.
+Artwork must be supplied at a suitable quality for the platform. No fixed production dimensions are required by this specification. Roadmap-block and planned-episode artwork is optional and created only when explicitly requested.
 
-Concept and refinement images are temporary review assets and do not need final production quality. Only approved production artwork is uploaded and linked as the platform asset.
+Concept and refinement images are temporary review assets and do not need final production quality. Only approved production artwork is uploaded and linked as the platform asset. Draft and Review placeholder artwork may be uploaded for Studio testing.
 
 ## 2. Source-of-truth hierarchy
 
@@ -174,7 +174,13 @@ Use lowercase slugs and a predictable naming pattern. Keep temporary review asse
 
 Only the final approved production filename is treated as the stable public platform asset.
 
-## 10. Three-stage workflow
+## 10. Artwork request rule
+
+Artwork is not generated automatically for every roadmap block or planned episode. A user may request a representative block image or an individual planned-episode image. Use the block naming pattern `slug-s01e11-20.jpg`; do not imply that it is a playable Episode 11.
+
+Image-generation tools may emit PNG. PNG is an intermediate generation format. Convert the selected asset to JPEG/JPG before storage, database linking or website use, except where transparency is genuinely required.
+
+## 11. Three-stage workflow
 
 ### Stage 1 — Concept
 
@@ -210,7 +216,7 @@ Purpose: create the final website-ready asset from an approved refined direction
 
 Do not introduce a new scene, camera angle, pose, costume or emotional interpretation during Production.
 
-## 11. Review scoring
+## 12. Review scoring
 
 Each concept should receive the following scores from 1 to 5:
 
@@ -226,7 +232,7 @@ Each concept should receive the following scores from 1 to 5:
 
 Any concept with Story Fidelity below 4 must not proceed to Refine.
 
-## 12. Credit optimisation
+## 13. Credit optimisation
 
 - Never use a full production render merely to test a composition, pose, expression or camera angle.
 - Read and verify the source scene before generation.
@@ -236,7 +242,7 @@ Any concept with Story Fidelity below 4 must not proceed to Refine.
 - Review batches together to prevent repeated poses, expressions, framing and locations.
 - Keep the Concept Board and text report separate; do not spend image-generation effort rendering report tables.
 
-## 13. Final quality checklist
+## 14. Final quality checklist
 
 ### Story and evidence
 
@@ -265,9 +271,9 @@ Any concept with Story Fidelity below 4 must not proceed to Refine.
 - Is this the final Production asset rather than a temporary file?
 - Has storage, database linkage and website display been verified?
 
-## 14. Version control
+## 15. Version control
 
-This is Version 1.4, dated 26 Jul 2026.
+This is Version 1.5, dated 28 Jul 2026.
 
 Version 1.4 introduces:
 
