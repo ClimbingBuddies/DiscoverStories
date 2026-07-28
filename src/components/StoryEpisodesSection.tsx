@@ -17,6 +17,22 @@ type EpisodeItem = {
   artwork_path: string | null;
 };
 
+type PlanningBlock = {
+  id: string;
+  block_number: number;
+  episode_start: number;
+  episode_end: number;
+  title: string;
+  arc_summary: string | null;
+  episode_summaries: Array<{
+    episode_number: number;
+    title: string;
+    summary: string;
+  }>;
+  draft_assessment: string | null;
+  content_status: string;
+};
+
 type StoryEpisodesSectionProps = {
   story: {
     slug: string;
@@ -28,6 +44,8 @@ type StoryEpisodesSectionProps = {
   episodes: EpisodeItem[];
   pageSize: number;
   totalEpisodes: number | null;
+  studioModeEnabled: boolean;
+  planningBlocks: PlanningBlock[];
 };
 
 export default function StoryEpisodesSection({
@@ -38,6 +56,8 @@ export default function StoryEpisodesSection({
   episodes,
   pageSize,
   totalEpisodes,
+  studioModeEnabled,
+  planningBlocks,
 }: StoryEpisodesSectionProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -215,6 +235,55 @@ export default function StoryEpisodesSection({
           </div>
         </section>
       ))}
+
+      {studioModeEnabled && planningBlocks.length > 0 ? (
+        <section className="space-y-5">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-amber-300">Studio draft</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Future episode planning blocks</h2>
+            <p className="mt-2 text-zinc-400">
+              All draft planning blocks are shown while Studio mode is on.
+            </p>
+          </div>
+
+          {planningBlocks.map((block) => (
+            <article key={block.id} className="rounded-3xl border border-amber-400/20 bg-amber-400/5 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.2em] text-amber-300">
+                    Episodes {block.episode_start}-{block.episode_end}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-semibold text-white">{block.title}</h3>
+                </div>
+                <span className="rounded-full border border-amber-300/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
+                  {block.content_status}
+                </span>
+              </div>
+
+              {block.arc_summary ? <p className="mt-4 leading-7 text-zinc-300">{block.arc_summary}</p> : null}
+
+              <div className="mt-6 space-y-4">
+                {block.episode_summaries.map((episode) => (
+                  <div key={episode.episode_number} className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-emerald-400">
+                      Episode {episode.episode_number}
+                    </p>
+                    <h4 className="mt-1 font-semibold text-white">{episode.title}</h4>
+                    <p className="mt-2 text-sm leading-6 text-zinc-400">{episode.summary}</p>
+                  </div>
+                ))}
+              </div>
+
+              {block.draft_assessment ? (
+                <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-300">Draft assessment</p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">{block.draft_assessment}</p>
+                </div>
+              ) : null}
+            </article>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }
