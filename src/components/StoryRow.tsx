@@ -66,42 +66,20 @@ export default function StoryRow({
                   <h3 className="text-2xl font-semibold leading-tight text-white line-clamp-2">
                     {story.title}
                   </h3>
-                  <p className="text-sm leading-6 text-zinc-400 line-clamp-3">
-                    {story.short_description ?? "No description yet."}
-                  </p>
+                  {hoveredId === story.id ? (
+                    <p className="text-sm leading-6 text-zinc-300">
+                      {story.short_description ?? "Discover this story."}
+                    </p>
+                  ) : (
+                    <p className="text-sm leading-6 text-zinc-400 line-clamp-3">
+                      {story.short_description ?? "No description yet."}
+                    </p>
+                  )}
                 </div>
 
-                {story.last_listened_episode && story.percentage_complete != null ? (
-                  <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-emerald-400">
-                      Continue Listening
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      {story.last_listened_episode}
-                    </p>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-800">
-                      <div
-                        className="h-full rounded-full bg-emerald-400"
-                        style={{ width: `${story.percentage_complete}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-zinc-500">
-                      {story.percentage_complete}%
-                    </p>
-                  </div>
-                ) : null}
-
                 {hoveredId === story.id ? (
-                  <div className="space-y-2 rounded-3xl border border-emerald-400/20 bg-zinc-950/95 p-4 text-sm text-zinc-300">
-                    <p className="font-semibold text-white">
-                      {story.last_listened_episode ? "Continue Listening" : "Story preview"}
-                    </p>
-                    <p>{story.short_description ?? "Discover this story."}</p>
-                    {story.last_listened_episode ? (
-                      <p className="text-xs text-zinc-500">
-                        Resume at {story.last_listened_episode} • {story.percentage_complete}% complete
-                      </p>
-                    ) : null}
+                  <div className="rounded-3xl border border-emerald-400/20 bg-zinc-950/95 p-4 text-sm text-zinc-300">
+                    <p className="font-semibold text-white">Story preview</p>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between pt-4">
