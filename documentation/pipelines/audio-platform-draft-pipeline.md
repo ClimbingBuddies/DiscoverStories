@@ -26,7 +26,7 @@ The trigger phrase **Audio Platform Draft Pipeline** starts a draft workflow. It
 
 Draft data is experimental and may be replaced, revised or removed during testing. The Draft Pipeline must never use `published` status as a testing shortcut. The current Studio toggle is a temporary development control, not an authentication boundary; it must eventually be replaced by authenticated permissions and database-enforced access controls/RLS.
 
-This runbook does not define the Review, Published or Audio pipelines. Those remain future workflows. Draft Workspace review is part of Draft creation; it is not the same as publishing approval.
+This runbook does not define the Review, Public or Audio pipelines. Draft and Review are repeatable and separate: Draft creates/revises and structurally checks; Review assesses quality, continuity and KPIs and authorises progression; Public releases approved content.
 
 ## 2. The mandatory execution order
 
@@ -36,10 +36,10 @@ Do not start image generation, image upload or database loading until the earlie
 
 - **No range supplied:** prepare the complete initial Draft Workspace: Episodes 1–10 as the first production batch, the full 100-episode roadmap in ten-episode blocks, the private Story Bible and draft Wiki, cover, banner and initial artwork for Episodes 1–10.
 - **A range supplied:** process only that range unless the command explicitly requests the roadmap, Wiki, artwork or another additional deliverable.
-- **Episodes 1–20:** default to full-script production when requested as a production range; they may remain roadmap maps when the selected mode is `roadmap`.
-- **Episodes 21–49:** default to roadmap/block material unless the user explicitly requests full scripts.
-- **Episodes 50–100:** default to full-script production when the user requests that range, because a range this far into development normally represents an established production batch. Use roadmap material only when `mode: roadmap` is explicitly selected.
-- **Mode:** `full scripts`, `roadmap`, `artwork`, `wiki`, or `publish`. If omitted, infer the least surprising mode from the requested range and existing material, and state the inference before proceeding.
+- **Episodes 1–10:** full scripts when requested.
+- **Episodes 11–100:** roadmap blocks by default. A roadmap block is one draft presentation record containing ten individually numbered episode plans; it is not ten completed episode rows.
+- **Later full scripts:** only when the user explicitly requests development of a specific planned range.
+- **Mode:** `full scripts`, `roadmap`, `artwork` or `wiki`. `publish` is not a Draft Pipeline mode; publication belongs exclusively to the Public Pipeline. If omitted, state the inferred mode before proceeding.
 - **Profile/audience:** word-count profiles and audience settings are advisory inputs for pacing and review, not automatic failure conditions. A kids episode may be substantially shorter than a general-audience episode.
 
 1. **Brief and concept**
@@ -65,7 +65,7 @@ Do not start image generation, image upload or database loading until the earlie
    - Calculate and report word count for review only. Word count is advisory and must never block the Draft Pipeline, review preparation or a SQL transaction. The Review and Published pipelines assess whether the episode is appropriate for its audience, format and dramatic purpose.
 
 4. **Wiki and story bible**
-   - Build the private wiki from the concept and the requested episode range, plus any explicitly requested wider roadmap.
+   - Build the private Story Bible from the concept and the requested episode range, plus any explicitly requested wider roadmap. Build draft Studio Wiki content separately when requested.
    - Record only facts supported by the story or clearly labelled planned canon.
    - Include the protagonist, recurring characters, relationships, setting, important objects, timeline, rules and unresolved questions.
    - A wiki is optional for a minimal exploratory draft, but it is required for this complete Draft Pipeline test because it supports continuity and artwork.
@@ -85,7 +85,7 @@ Do not start image generation, image upload or database loading until the earlie
    - Generate the cover, banner and episode artwork included in the request.
    - For the no-range default, this is one cover, one banner and initial low-resolution artwork for Episodes 1–10.
    - Artwork for later episodes is on demand unless the requested range explicitly includes artwork and the relevant scripts/material are ready.
-   - Use the character continuity record, Wiki/story bible and episode visual briefs.
+   - Use the character continuity record, private Story Bible, Studio Wiki data and episode visual briefs.
    - The images are deliberately replaceable and are for testing the complete website pipeline.
    - Do not embed titles, episode numbers, logos, watermarks, borders, UI or generated text.
    - The image set must show character consistency, emotional variety and the important visual states of the requested artwork range.
@@ -132,13 +132,16 @@ JPEG/JPG is the standard format for ordinary low-resolution Draft/Review placeho
 
 Production dimensions are 1024×1024 for square artwork and 1600×900 for banners. Draft dimensions may be lower and flexible, provided the images are recognisable and suitable for pipeline testing.
 
-Use lowercase slugs and predictable names. Draft filenames may follow the working upload convention, but the database path must match the actual uploaded object. Production paths use:
+Use lowercase slugs and predictable names. Draft filenames may follow the working upload convention, but the database path must match the actual uploaded object. Final stored artwork uses `.jpg`:
 
 ```text
-<slug>/cover.png
-<slug>/banner.png
-<slug>/episodes/<slug>-s01eNN.png
+<slug>/cover.jpg
+<slug>/banner.jpg
+<slug>/episodes/<slug>-s01eNN.jpg
+<slug>/episodes/<slug>-s01e11-20.jpg
 ```
+
+Image generation may return PNG as an intermediate. Convert the selected asset to a real JPEG before upload/linking. Retain PNG only where transparency is genuinely required.
 
 ## 4. Database and SQL safety rules
 
@@ -190,9 +193,9 @@ Use this instruction when starting a new draft:
 
 > **Audio Platform Draft Pipeline**
 >
-> Create the complete review-only Draft Workspace for “[TITLE]” in the “[CATEGORY]” category. Follow the authoritative runbook in `documentation/pipelines/audio-platform-draft-pipeline.md`.
+> Create the complete Draft Workspace for “[TITLE]” in the “[CATEGORY]” category. Follow the authoritative runbook in `documentation/pipelines/audio-platform-draft-pipeline.md`.
 >
-> Work in this order: concept and season architecture; spoiler-light episode blocks; Episodes 1–10; wiki/story bible; character and visual continuity; episode production cards and continuity checks; visual briefs; one cover, one banner and low-resolution draft images for Episodes 1–10; draft SQL/data mapping. Do not create later episode artwork until the relevant block is approved and artwork is requested on demand.
+> Work in this order: concept and season architecture; spoiler-light episode blocks; Episodes 1–10; private Story Bible and Studio Wiki; character and visual continuity; episode production cards and continuity checks; visual briefs; one cover, one banner and low-resolution draft images for Episodes 1–10; draft SQL/data mapping. Create roadmap-block or planned-episode artwork only when the user explicitly requests it; it is never automatic.
 >
 > After explicit approval, load records and test assets as `draft` and verify them through Studio. Never publish. Use status `draft`. Word count is informational only. Do not use Review or Published approval rules. Report completion at each stage and stop at the first failed stage.
 
