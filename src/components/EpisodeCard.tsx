@@ -26,8 +26,9 @@ type Props = {
 export default function EpisodeCard({ episode, storySlug }: Props) {
   const durationMinutes = episode.duration_seconds ? Math.round(episode.duration_seconds / 60) : 0;
   const wordCount = episode.word_count ?? 0;
-  const episodeLabel = episode.episode_end_number
-    ? `Episodes ${episode.episode_number}–${episode.episode_end_number}`
+  const isRoadmap = episode.episode_end_number !== null;
+  const episodeLabel = isRoadmap
+    ? `Episodes ${episode.episode_number}–${episode.episode_end_number}: ${episode.title} Roadmap`
     : `Episode ${episode.episode_number}`;
 
   return (
@@ -63,7 +64,7 @@ export default function EpisodeCard({ episode, storySlug }: Props) {
             <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">
               {episodeLabel}
             </p>
-            <h3 className="mt-2 text-xl font-semibold text-white">{episode.title}</h3>
+            {!isRoadmap && <h3 className="mt-2 text-xl font-semibold text-white">{episode.title}</h3>}
             {episode.summary && <p className="mt-3 text-zinc-400">{episode.summary}</p>}
           </div>
 
