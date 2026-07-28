@@ -13,7 +13,8 @@ create or replace function public.get_public_story_wiki(
     p_entry_slug text default null,
     p_completed_season integer default null,
     p_completed_episode integer default null,
-    p_include_spoilers boolean default false
+    p_include_spoilers boolean default false,
+    p_include_drafts boolean default false
 )
 returns jsonb
 language sql
@@ -37,7 +38,8 @@ with selected_story as (
       on sws.story_id = s.id
      and sws.wiki_enabled = true
     where s.slug = p_story_slug
-      and s.content_status = 'published'
+      and (s.content_status = 'published'
+           or (p_include_drafts and s.content_status in ('draft', 'review')))
 ),
 episode_sequence as (
     select
@@ -55,6 +57,7 @@ episode_sequence as (
     join selected_story s
       on s.id = e.story_id
     where e.episode_status = 'published'
+       or (p_include_drafts and e.episode_status in ('draft', 'review'))
 ),
 viewer_state as (
     select
@@ -100,7 +103,8 @@ entry_rows as (
     left join episode_sequence reveal_episode
       on reveal_episode.id = we.reveal_episode_id
     where we.is_public = true
-      and we.content_status = 'published'
+      and (we.content_status = 'published'
+           or (p_include_drafts and we.content_status in ('draft', 'review')))
 ),
 requested_entry as (
     select er.*
@@ -135,7 +139,8 @@ section_rows as (
     left join episode_sequence reveal_episode
       on reveal_episode.id = wes.reveal_episode_id
     where wes.is_public = true
-      and wes.content_status = 'published'
+      and (wes.content_status = 'published'
+           or (p_include_drafts and wes.content_status in ('draft', 'review')))
       and re.is_unlocked = true
 ),
 relationship_rows as (
@@ -168,7 +173,8 @@ relationship_rows as (
     left join episode_sequence reveal_episode
       on reveal_episode.id = r.reveal_episode_id
     where r.is_public = true
-      and r.content_status = 'published'
+      and (r.content_status = 'published'
+           or (p_include_drafts and r.content_status in ('draft', 'review')))
       and re.is_unlocked = true
       and source_entry.is_unlocked = true
       and target_entry.is_unlocked = true
@@ -316,7 +322,10 @@ select case
 end;
 $function$;
 
-create or replace function public.has_public_story_wiki(p_story_id uuid)
+create or replace function public.has_public_story_wiki(
+    p_story_id uuid,
+    p_include_drafts boolean default false
+)
 returns boolean
 language sql
 stable
@@ -330,15 +339,20 @@ as $function$
           on sws.story_id = s.id
          and sws.wiki_enabled = true
         where s.id = p_story_id
-          and s.content_status = 'published'
+          and (s.content_status = 'published'
+               or (p_include_drafts and s.content_status in ('draft', 'review')))
     );
 $function$;
+
+drop function if exists public.get_public_story_wiki(text, text, integer, integer, boolean);
+drop function if exists public.has_public_story_wiki(uuid);
 
 revoke all on function public.get_public_story_wiki(
     text,
     text,
     integer,
     integer,
+    boolean,
     boolean
 ) from public;
 
@@ -347,11 +361,12 @@ grant execute on function public.get_public_story_wiki(
     text,
     integer,
     integer,
+    boolean,
     boolean
 ) to anon, authenticated;
 
-revoke all on function public.has_public_story_wiki(uuid) from public;
-grant execute on function public.has_public_story_wiki(uuid)
+revoke all on function public.has_public_story_wiki(uuid, boolean) from public;
+grant execute on function public.has_public_story_wiki(uuid, boolean)
 to anon, authenticated;
 
 comment on function public.get_public_story_wiki(
@@ -359,10 +374,11 @@ comment on function public.get_public_story_wiki(
     text,
     integer,
     integer,
+    boolean,
     boolean
 ) is 'Returns only published public wiki content, filtered by listener progress or an explicit spoiler opt-in.';
 
-comment on function public.has_public_story_wiki(uuid)
+comment on function public.has_public_story_wiki(uuid, boolean)
 is 'Returns whether a published story has an enabled public wiki.';
 
 commit;
