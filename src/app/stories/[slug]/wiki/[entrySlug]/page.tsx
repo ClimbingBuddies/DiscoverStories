@@ -114,7 +114,6 @@ export default async function WikiEntryPage({
     p_completed_season: completedSeason,
     p_completed_episode: completedEpisode,
     p_include_spoilers: spoilersOn,
-    p_include_drafts: studioModeEnabled,
   });
 
   const rpcError = error?.message ?? null;
