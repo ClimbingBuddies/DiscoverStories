@@ -65,7 +65,6 @@ Episodes 1–10 are written in full. Episodes 11–100 are stored as individuall
 Each episode has:
 
 - season and episode number,
-- title,
 - spoiler-controlled summary,
 - opening image,
 - viewpoint objective,
@@ -123,6 +122,10 @@ The review process distinguishes:
 - continuity issues,
 - production issues.
 
+The Review Pipeline must apply the Story Quality Index (SQI) after the draft package is complete and before authorising progression. SQI is a 100-point story-level KPI covering story promise and hook, character appeal and agency, plot and arc structure, emotional engagement, pacing and dramatic load, world and atmosphere, dialogue and voice, originality and specificity, continuity and causality, and episode endings.
+
+The authoritative scoring model, thresholds, evidence requirements and assessment template are defined in `documentation/specifications/story-quality-index.md`. The Review Pipeline and its Batch Review Record remain responsible for the findings and final decision.
+
 A Review run may assess any Draft run or roadmap block, including revised ideas. Development of a later full-script batch may be authorised by Review, but Draft may prepare or revise roadmap material before that authorisation.
 
 ## 10. Definition of done
@@ -135,4 +138,5 @@ A batch is complete when:
 - episode production cards are complete,
 - reusable knowledge has been identified,
 - the next arc still fits the season roadmap,
+- the SQI assessment has been completed,
 - and the relevant Draft or Review run has a recorded outcome. Publication requires a separate Public Pipeline decision.
