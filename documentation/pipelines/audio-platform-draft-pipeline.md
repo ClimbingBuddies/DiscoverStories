@@ -84,6 +84,7 @@ Do not start image generation, image upload or database loading until the earlie
    - Verify category assignment.
    - Verify wiki records and links where included.
    - Verify each artwork path exists, resolves publicly and displays on the website.
+   - For a new or changed bridge, first run the four-asset acceptance batch: cover, banner and Episodes 1–2.
    - Verify rerunning the load does not create duplicates or erase audio/production fields.
    - Report the first failed stage; do not silently continue.
 
@@ -99,7 +100,7 @@ Artwork has three separate operational stages:
 
 The standard quick-draft set is **one cover + one banner + ten episode images**.
 
-JPEG/JPG is the recommended format for low-resolution Draft/Review placeholders because it is smaller, faster and already works with the current review/upload workflow. PNG is the current production convention for approved website assets where the asset is promoted to Production. Do not reject a valid draft because it is JPEG, and do not convert or replace working draft assets unless promotion is explicitly requested.
+JPEG/JPG is the standard format for ordinary low-resolution Draft/Review placeholders. The generator may emit PNG, but the upload workflow must perform a real JPEG conversion and verify the resulting file before upload. PNG is retained only when transparency is genuinely required or a later approved production decision calls for it.
 
 Production dimensions are 1024×1024 for square artwork and 1600×900 for banners. Draft dimensions may be lower and flexible, provided the images are recognisable and suitable for pipeline testing.
 
