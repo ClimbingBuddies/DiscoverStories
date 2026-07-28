@@ -7,6 +7,7 @@ import { getStorageImageUrl } from "@/lib/supabase-storage";
 type Episode = {
   id: string;
   episode_number: number;
+  episode_end_number: number | null;
   season_number: number | null;
   title: string;
   summary: string | null;
@@ -22,15 +23,16 @@ type Props = {
   storyTitle: string;
 };
 
-export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
+export default function EpisodeCard({ episode, storySlug }: Props) {
   const durationMinutes = episode.duration_seconds ? Math.round(episode.duration_seconds / 60) : 0;
   const wordCount = episode.word_count ?? 0;
+  const episodeLabel = episode.episode_end_number
+    ? `Episodes ${episode.episode_number}–${episode.episode_end_number}`
+    : `Episode ${episode.episode_number}`;
 
-  // Compact card state
   return (
     <article className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
       <div className="grid gap-4 sm:grid-cols-[320px_minmax(0,1fr)]">
-        {/* Artwork */}
         <div className="relative overflow-hidden rounded-3xl bg-zinc-950">
           <div className="aspect-[4/3] sm:aspect-[5/4]">
             {episode.artwork_path ? (
@@ -41,13 +43,11 @@ export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
                 sizes="(max-width: 640px) 100vw, 320px"
                 className="z-10 object-cover"
                 onError={(e) => {
-                  // Hide image on error, fallback will show
                   const img = e.currentTarget as HTMLImageElement;
                   img.style.display = "none";
                 }}
               />
             ) : null}
-            {/* Fallback icon - always visible as background */}
             <div className="absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-zinc-600">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -58,11 +58,10 @@ export default function EpisodeCard({ episode, storySlug, storyTitle }: Props) {
           </div>
         </div>
 
-        {/* Episode info and controls */}
         <div className="flex flex-col justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">
-              Episode {episode.episode_number}
+              {episodeLabel}
             </p>
             <h3 className="mt-2 text-xl font-semibold text-white">{episode.title}</h3>
             {episode.summary && <p className="mt-3 text-zinc-400">{episode.summary}</p>}
