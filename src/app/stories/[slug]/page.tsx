@@ -68,6 +68,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
 
   const { data: hasWiki, error: wikiError } = await supabase.rpc("has_public_story_wiki", {
     p_story_id: story.id,
+    p_include_drafts: studioModeEnabled,
   });
 
   if (wikiError) {
