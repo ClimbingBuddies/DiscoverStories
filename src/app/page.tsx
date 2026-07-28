@@ -61,11 +61,13 @@ export default async function Home() {
     {} as Record<string, number>
   );
 
-  const storiesWithEpisodeCount = stories?.map((story) => ({
-    ...story,
-    episodeCount: episodeCountByStory[story.id] ?? 0,
-    seasonNumber: seasonNumberByStory[story.id] ?? 1,\n    genres: story.genres ?? [],
-  })) ?? [];
+  const storiesWithEpisodeCount =
+    stories?.map((story) => ({
+      ...story,
+      episodeCount: episodeCountByStory[story.id] ?? 0,
+      seasonNumber: seasonNumberByStory[story.id] ?? 1,
+      genres: story.genres ?? [],
+    })) ?? [];
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
