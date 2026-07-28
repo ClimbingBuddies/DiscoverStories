@@ -89,6 +89,7 @@ jobs:
           : > "$results"
           : > "$failures"
           item_number=0
+          declare -A episode_hashes=()
           if command -v magick >/dev/null 2>&1; then
             image_convert=(magick)
           else
@@ -106,6 +107,22 @@ jobs:
             if ! "${image_convert[@]}" "$source_file" -auto-orient -strip -resize '1280x1280>' -quality 82 "$image_file" || [[ "$(identify -quiet -format '%m' "$image_file")" != "JPEG" ]]; then
               jq -cn --argjson item "$item_number" --arg error "JPEG conversion or validation failed" '{item:$item,error:$error}' >> "$failures"
               continue
+            fi
+            # Reject exact duplicate episode artwork before any Storage upload.
+            # Cover and banner may share a visual direction, but two episode assets
+            # in the same batch must not contain identical converted JPEG bytes.
+            asset_role=$(jq -r '.assetRole' <<< "$item")
+            if [[ "$asset_role" == episode* ]]; then
+              image_hash=$(sha256sum "$image_file" | awk '{print $1}')
+              duplicate_item="${episode_hashes[$image_hash]-}"
+              if [[ -n "$duplicate_item" ]]; then
+                jq -cn --argjson item "$item_number" --arg assetRole "$asset_role" \
+                  --arg duplicateOf "$duplicate_item" --arg hash "$image_hash" \
+                  --arg error "Duplicate episode artwork bytes; rejected before upload" \
+                  '{item:$item,assetRole:$assetRole,duplicateOf:$duplicateOf,sha256:$hash,error:$error}' >> "$failures"
+                continue
+              fi
+              episode_hashes["$image_hash"]="$asset_role"
             fi
 
             story_slug=$(jq -r '.storySlug' <<< "$item")
