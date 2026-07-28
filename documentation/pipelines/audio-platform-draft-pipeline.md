@@ -11,19 +11,22 @@ This is the authoritative runbook for creating a complete ten-episode Audio Plat
 
 ## 1. What the Draft Pipeline is for
 
-The Draft Pipeline creates a complete, testable vertical slice of a story:
+The Draft Pipeline creates a complete, reviewable Draft Workspace before any external commit:
 
 - one story concept and longer-term season direction;
 - Episodes 1–10;
 - a private wiki/story bible derived from the story and episodes;
 - character and visual-continuity guidance;
 - one cover, one banner and ten low-resolution episode images;
-- database records, category assignment and artwork links;
-- website verification.
+- database records, category assignment and artwork links prepared for a later commit;
+- a review package that can be discussed and revised before loading;
+- website verification after explicit approval and commit.
+
+The trigger phrase **Audio Platform Draft Pipeline** starts a review-only draft. It must not write to Supabase, Storage, GitHub repository content or the public website. The separate commit step is performed only after the user explicitly approves the draft and requests the approved pipeline/load operation.
 
 Draft data is experimental and may be replaced, revised or removed during testing. A record marked `published` may exist for current website/sample-data testing; that does not mean the wider platform or the creative work has received final public approval. Do not add `is_test_content` or `pipeline_environment` unless a separate schema decision is approved.
 
-This runbook does not define the Review, Published or Audio pipelines. Those remain future workflows.
+This runbook does not define the Review, Published or Audio pipelines. Those remain future workflows. Draft Workspace review is part of Draft creation; it is not the same as publishing approval.
 
 ## 2. The mandatory execution order
 
@@ -32,53 +35,65 @@ Do not start image generation, image upload or database loading until the earlie
 1. **Brief and concept**
    - Confirm title, slug, category and audience.
    - Define the hook, premise, central character, story promise and major question.
-   - Define the intended 100-episode direction as ten broad arcs. Only the first ten episodes need complete prose.
+   - Define the intended season architecture as ten broad arcs or episode blocks.
+   - Each block must have a spoiler-light title and description suitable for display above its planned episodes.
+   - The architecture describes what is planned without revealing major deaths, betrayals, discoveries, philosophical conclusions or later outcomes.
+   - Only the first ten episodes need complete prose in the initial draft batch.
 
-2. **Episodes 1–10**
+2. **Episode architecture and blocks**
+   - Show the complete planned season structure before the full prose begins.
+   - For each ten-episode block, record the episode range, thematic section title, spoiler-light description and the planned episode titles or short descriptions where available.
+   - A block is a planning/presentation layer. It must not be inserted into the ordinary numeric episode field as `21–30` or another non-numeric value.
+   - Preserve the existing episode identity contract: `(story_id, season_number, episode_number)`.
+   - If a block is later condensed into one listening episode, retain the block plan separately and use a normal numeric episode record for the condensed listening unit. Do not silently create ten published identities from one condensed script.
+
+3. **Episodes 1–10**
    - Write the complete first ten episodes.
    - Each episode needs a number, title, summary and narrative prose.
    - Use character-led pacing, distinct emotional movement and a meaningful consequence or changed objective across the opening batch.
    - Word count is calculated and reported for information. It is subjective guidance and must never block the draft or fail a SQL transaction.
 
-3. **Wiki and story bible**
+4. **Wiki and story bible**
    - Build the private wiki from the concept and Episodes 1–10.
    - Record only facts supported by the story or clearly labelled planned canon.
    - Include the protagonist, recurring characters, relationships, setting, important objects, timeline, rules and unresolved questions.
    - A wiki is optional for a minimal exploratory draft, but it is required for this complete Draft Pipeline test because it supports continuity and artwork.
 
-4. **Character and visual continuity**
+5. **Character and visual continuity**
    - Define recurring characters' identity, age range, face/hair, build, clothing, accessories, emotional baseline and non-changing visual constraints.
    - Identify changes that are intentionally allowed across Episodes 1–10.
    - Do not invent artwork details that contradict the story or wiki.
 
-5. **Episode visual briefs**
+6. **Episode visual briefs**
    - Create one brief for the cover, banner and each episode image.
    - For every episode specify: visual event, setting, subject/action, emotion, focal object, composition, lighting/palette and continuity notes.
    - Dream, memory, supernatural or altered-state imagery must be identified explicitly when it is part of the episode's meaning.
    - Select one clear event per image. Do not combine unrelated scenes.
 
-6. **Draft artwork**
+7. **Draft artwork**
    - Generate one cover, one banner and ten low-resolution episode placeholders.
    - Use the character continuity record and episode visual briefs.
    - The images are deliberately replaceable and are for testing the complete website pipeline.
    - Do not embed titles, episode numbers, logos, watermarks, borders, UI or generated text.
    - The image set must show character consistency, emotional variety and the important visual states of the opening batch.
 
-7. **Prepare the load**
+8. **Prepare the load**
    - Confirm the slug, category, story status, episode range, image filenames and relative storage paths.
    - Prepare idempotent story, episode, wiki and category data.
    - Use current database column names and the season-aware episode key:
      `(story_id, season_number, episode_number)`.
    - Preserve existing audio, duration, audit fields and approved assets unless the request explicitly authorises replacement.
 
-8. **Load and link**
-   - Load the story and Episodes 1–10 using the approved SQL/draft loader.
+9. **Explicit approval, load and link**
+   - Do not perform this stage during the initial Draft Pipeline trigger.
+   - Wait for explicit user approval of the Draft Workspace.
+   - Load the approved story and Episodes 1–10 using the approved SQL/draft loader.
    - Load wiki content where included.
    - Assign the story through the database-driven `genres → story_genres → stories` relationship.
    - Upload/link cover, banner and episode artwork only after the corresponding creative records exist.
    - Use relative Supabase Storage paths, never signed URLs, in database fields.
 
-9. **Verify**
+10. **Verify after commit**
    - Verify one story row and exactly ten intended episode rows.
    - Verify episode numbers are contiguous and the episode key is correct.
    - Verify category assignment.
@@ -127,7 +142,15 @@ Use lowercase slugs and predictable names. Draft filenames may follow the workin
 - Do not add test-environment columns for ordinary draft experimentation.
 - Run read-only verification after the transaction commits.
 
-## 5. Required completion report
+## 5. Draft Workspace review boundary
+
+The initial Draft Pipeline response must present the complete draft for discussion in one seamless workspace. It should include the story concept, private story bible, planned season/episode blocks, Episodes 1–10, production cards, continuity checks, artwork concepts and draft SQL/data mapping. The user should not need to restate these components.
+
+At this stage, mark the package **Review pending** and do not claim that the database, Storage, GitHub content or website has been updated.
+
+After discussion, the user may request revisions. The pipeline must regenerate or amend the affected draft components and re-run continuity checks before approval.
+
+## 6. Required completion report
 
 A Draft Pipeline run is complete only when the report includes:
 
@@ -148,19 +171,19 @@ A Draft Pipeline run is complete only when the report includes:
 
 The pipeline is **not** complete merely because the creative text exists or images were generated. It is complete when the database and website test has also been verified.
 
-## 6. Reusable instruction
+## 7. Reusable instruction
 
 Use this instruction when starting a new draft:
 
-> **Use the Audio Platform Draft Pipeline only.**
+> **Audio Platform Draft Pipeline**
 >
-> Create a complete ten-episode draft for “[TITLE]” in the “[CATEGORY]” category. Follow the authoritative runbook in `documentation/pipelines/audio-platform-draft-pipeline.md`.
+> Create the complete review-only Draft Workspace for “[TITLE]” in the “[CATEGORY]” category. Follow the authoritative runbook in `documentation/pipelines/audio-platform-draft-pipeline.md`.
 >
-> Work in this order: concept and longer-term direction; Episodes 1–10; wiki/story bible; character and visual continuity; episode visual briefs; one cover, one banner and ten low-resolution draft images; database/category/artwork loading; verification.
+> Work in this order: concept and season architecture; spoiler-light episode blocks; Episodes 1–10; wiki/story bible; character and visual continuity; episode production cards and continuity checks; visual briefs; one cover, one banner and ten low-resolution draft images; draft SQL/data mapping.
 >
-> Do not generate images, upload files or load the database until the story, Episodes 1–10, wiki and visual briefs are complete. Use status `draft`. Word count is informational only. Do not use Review or Published approval rules. Report completion at each stage and stop at the first failed stage.
+> Do not upload files or load the database during this review-only step. Images may be generated as draft concepts/placeholders, but external upload and database commit require explicit approval. Use status `draft`. Word count is informational only. Do not use Review or Published approval rules. Report completion at each stage and stop at the first failed stage.
 
-## 7. Supporting specifications
+## 8. Supporting specifications
 
 - Story creation: `documentation/specifications/story-creation-specification.md`
 - Wiki and SQL insert: `documentation/specifications/wiki-sql-insert-specification.md`
