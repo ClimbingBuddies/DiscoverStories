@@ -11,7 +11,6 @@ export default async function ReadPage({ params }: Props) {
   const studioModeEnabled = await isStudioModeEnabled();
   const { slug, episodeNumber } = await params;
 
-  // Fetch story
   let storyQuery = supabase
     .from("stories")
     .select("id, slug, title")
@@ -25,10 +24,9 @@ export default async function ReadPage({ params }: Props) {
 
   if (!story) notFound();
 
-  // Fetch episode
   let episodeQuery = supabase
     .from("episodes")
-    .select("id, episode_number, season_number, title, script_text, word_count, duration_seconds, audio_url")
+    .select("id, episode_number, episode_end_number, season_number, title, script_text, word_count, duration_seconds, audio_url")
     .eq("story_id", story.id)
     .eq("episode_number", parseInt(episodeNumber));
 
@@ -40,7 +38,6 @@ export default async function ReadPage({ params }: Props) {
 
   if (!episode) notFound();
 
-  // Fetch next episode
   let nextEpisodeQuery = supabase
     .from("episodes")
     .select("episode_number")
@@ -56,10 +53,12 @@ export default async function ReadPage({ params }: Props) {
   const { data: nextEpisode } = await nextEpisodeQuery.single();
 
   const readingMinutes = episode.word_count ? Math.round(episode.word_count / 200) : 0;
+  const episodeLabel = episode.episode_end_number
+    ? `Episodes ${episode.episode_number}–${episode.episode_end_number}`
+    : `Episode ${episode.episode_number}`;
 
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100">
-      {/* Header */}
       <header className="border-b border-zinc-800 bg-zinc-900 px-6 py-4 sm:px-8">
         <div className="flex items-center gap-4">
           <Link
@@ -72,7 +71,7 @@ export default async function ReadPage({ params }: Props) {
             </svg>
           </Link>
           <div className="flex-1">
-            <p className="text-sm text-emerald-400 uppercase tracking-wide">Episode {episode.episode_number}</p>
+            <p className="text-sm text-emerald-400 uppercase tracking-wide">{episodeLabel}</p>
             <h1 className="text-2xl font-bold">{episode.title}</h1>
           </div>
           <div className="text-right text-sm text-zinc-400">
@@ -82,7 +81,6 @@ export default async function ReadPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Scrollable Content */}
       <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-8">
         <article className="prose prose-invert max-w-3xl mx-auto text-zinc-300 leading-relaxed">
           {episode.script_text ? (
@@ -97,7 +95,6 @@ export default async function ReadPage({ params }: Props) {
         </article>
       </main>
 
-      {/* Footer with Navigation */}
       <footer className="border-t border-zinc-800 bg-zinc-900 p-4 sm:p-6">
         <div className="flex gap-4 max-w-3xl mx-auto">
           <Link
