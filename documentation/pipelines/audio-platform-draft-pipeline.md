@@ -1,7 +1,7 @@
 # Audio Platform Draft Pipeline
 
 **Status:** Current working standard  
-**Scope:** Draft creation and technical website testing  
+**Scope:** Draft creation, draft loading and Studio verification  
 **Current focus:** Draft only  
 **Workflow statuses:** Draft → Review → Published  
 **Owner:** Audio Platform  
@@ -11,20 +11,20 @@ This is the authoritative runbook for creating a variable-range Audio Platform d
 
 ## 1. What the Draft Pipeline is for
 
-The Draft Pipeline creates a complete, reviewable Draft Workspace before any external commit:
+The Draft Pipeline creates a complete internal Draft Workspace and may load approved records and test assets as `draft` after explicit user approval:
 
 - one story concept and longer-term season direction;
 - the initial production batch;
-- a private wiki/story bible derived from the story and episodes;
+- a separate private Story Bible and, where requested, draft Wiki content;
 - character and visual-continuity guidance;
 - one cover, one banner and initial artwork for the default first production batch; later episode artwork is generated on demand unless explicitly requested for a selected range;
-- database records, category assignment and artwork links prepared for a later commit;
+- draft database records, category assignment and artwork links;
 - a review package that can be discussed and revised before loading;
-- website verification after explicit approval and commit.
+- Studio verification after explicit approval and draft load.
 
-The trigger phrase **Audio Platform Draft Pipeline** starts a review-only draft. It must not write to Supabase, Storage, GitHub repository content or the public website. The separate commit step is performed only after the user explicitly approves the draft and requests the approved pipeline/load operation.
+The trigger phrase **Audio Platform Draft Pipeline** starts a draft workflow. It must not publish anything. After explicit approval, it may load stories, episodes, roadmap blocks, Wiki records and test artwork as `draft`, then verify them through Studio. Public queries must return only published, public-safe material.
 
-Draft data is experimental and may be replaced, revised or removed during testing. A record marked `published` may exist for current website/sample-data testing; that does not mean the wider platform or the creative work has received final public approval. Do not add `is_test_content` or `pipeline_environment` unless a separate schema decision is approved.
+Draft data is experimental and may be replaced, revised or removed during testing. The Draft Pipeline must never use `published` status as a testing shortcut. The current Studio toggle is a temporary development control, not an authentication boundary; it must eventually be replaced by authenticated permissions and database-enforced access controls/RLS.
 
 This runbook does not define the Review, Published or Audio pipelines. Those remain future workflows. Draft Workspace review is part of Draft creation; it is not the same as publishing approval.
 
@@ -34,7 +34,7 @@ Do not start image generation, image upload or database loading until the earlie
 
 ### Default command behaviour
 
-- **No range supplied:** prepare the complete initial Draft Workspace: Episodes 1–10 as the first production batch, the full 100-episode roadmap in ten-episode blocks, the Wiki/story bible, cover, banner and initial artwork for Episodes 1–10.
+- **No range supplied:** prepare the complete initial Draft Workspace: Episodes 1–10 as the first production batch, the full 100-episode roadmap in ten-episode blocks, the private Story Bible and draft Wiki, cover, banner and initial artwork for Episodes 1–10.
 - **A range supplied:** process only that range unless the command explicitly requests the roadmap, Wiki, artwork or another additional deliverable.
 - **Episodes 1–20:** default to full-script production when requested as a production range; they may remain roadmap maps when the selected mode is `roadmap`.
 - **Episodes 21–49:** default to roadmap/block material unless the user explicitly requests full scripts.
@@ -54,9 +54,8 @@ Do not start image generation, image upload or database loading until the earlie
 2. **Episode architecture and blocks**
    - Show the complete planned season structure before the full prose begins.
    - For each requested ten-episode block, record the episode range, thematic section title, spoiler-light description and the planned episode titles or short descriptions where available.
-   - Roadmap mode requires structured summaries/maps. Full-script mode requires complete episode prose for the requested range.
-   - A block is a planning/presentation layer. It must not be inserted into the ordinary numeric episode field as `21–30` or another non-numeric value.
-   - Preserve the existing episode identity contract: `(story_id, season_number, episode_number)`.
+   - Roadmap mode requires ten individually titled and summarised plans inside each roadmap-block record. Full-script mode requires complete episode prose for the requested range.
+   - A block is a planning/presentation layer, not one listenable episode. Store it with a numeric start identity and explicit end number, for example `episode_number = 11`, `episode_end_number = 20`, title `Episodes 11–20`. Preserve the episode identity contract: `(story_id, season_number, episode_number)`. Store ten individually numbered planned episode titles and script summaries in structured data. Do not create ten fake completed episode rows.
    - If a block is later condensed into one listening episode, retain the block plan separately and use a normal numeric episode record for the condensed listening unit. Do not silently create ten published identities from one condensed script.
 
 3. **Requested episode range**
@@ -101,18 +100,18 @@ Do not start image generation, image upload or database loading until the earlie
 9. **Explicit approval, load and link**
    - Do not perform this stage during the initial Draft Pipeline trigger.
    - Wait for explicit user approval of the Draft Workspace.
-   - Load the approved story and the requested episode range using the approved SQL/draft loader.
-   - Load wiki content where included.
+   - Load the approved story, full episodes and roadmap blocks using the approved SQL/draft loader.
+   - Load Wiki content where included; keep private Story Bible material Studio-only.
    - Assign the story through the database-driven `genres → story_genres → stories` relationship.
    - Upload/link cover, banner and episode artwork only after the corresponding creative records exist.
    - Use relative Supabase Storage paths, never signed URLs, in database fields.
 
 10. **Verify after commit**
    - Verify one story row and exactly the intended episode rows for the requested range.
-   - Verify episode numbers are contiguous and the episode key is correct.
+   - Verify full Episodes 1–10 have scripts and each roadmap block contains ten individually numbered plans.
    - Verify category assignment.
    - Verify wiki records and links where included.
-   - Verify each artwork path exists, resolves publicly and displays on the website.
+   - Verify each draft artwork path exists and displays in Studio. Verify public queries do not return draft or private material.
    - For a new or changed bridge, first run the four-asset acceptance batch: cover, banner and Episodes 1–2.
    - Verify rerunning the load does not create duplicates or erase audio/production fields.
    - Report the first failed stage; do not silently continue.
@@ -172,18 +171,18 @@ A Draft Pipeline run is complete only when the report includes:
 |---|---|
 | Concept and season direction | Complete / blocked |
 | Requested episode range | Complete / blocked |
-| Wiki/story bible | Complete / optional / blocked |
+| Private Story Bible / draft Wiki | Complete / optional / blocked |
 | Character continuity | Complete / blocked |
 | Visual briefs | Complete / blocked |
 | Cover and banner | Created / linked / blocked |
-| Ten episode images | Created / linked / blocked |
+| Requested draft artwork | Created / linked / blocked |
 | Story and episode load | Verified / blocked |
 | Category assignment | Verified / blocked |
 | Website display | Verified / blocked |
 | Rerun/idempotency check | Verified / not yet tested |
 | Draft Pipeline complete | Yes / No |
 
-The review-only Draft Pipeline package is complete when the requested creative and validation outputs are prepared. A committed/public pipeline is complete only when the database, Storage and website verification has also been completed.
+The Draft Pipeline package is complete when the requested creative package, draft load and Studio verification are complete. It is never complete merely because records have been marked `published`.
 
 ## 7. Reusable instruction
 
@@ -195,7 +194,7 @@ Use this instruction when starting a new draft:
 >
 > Work in this order: concept and season architecture; spoiler-light episode blocks; Episodes 1–10; wiki/story bible; character and visual continuity; episode production cards and continuity checks; visual briefs; one cover, one banner and low-resolution draft images for Episodes 1–10; draft SQL/data mapping. Do not create later episode artwork until the relevant block is approved and artwork is requested on demand.
 >
-> Do not upload files or load the database during this review-only step. Images may be generated as draft concepts/placeholders, but external upload and database commit require explicit approval. Use status `draft`. Word count is informational only. Do not use Review or Published approval rules. Report completion at each stage and stop at the first failed stage.
+> After explicit approval, load records and test assets as `draft` and verify them through Studio. Never publish. Use status `draft`. Word count is informational only. Do not use Review or Published approval rules. Report completion at each stage and stop at the first failed stage.
 
 ## 8. Supporting specifications
 
