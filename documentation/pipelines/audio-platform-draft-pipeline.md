@@ -17,7 +17,7 @@ The Draft Pipeline creates a complete, reviewable Draft Workspace before any ext
 - Episodes 1–10;
 - a private wiki/story bible derived from the story and episodes;
 - character and visual-continuity guidance;
-- one cover, one banner and ten low-resolution episode images;
+- one cover, one banner and initial artwork for Episodes 1–10; later episode artwork is generated on demand when those episodes are approved for production;
 - database records, category assignment and artwork links prepared for a later commit;
 - a review package that can be discussed and revised before loading;
 - website verification after explicit approval and commit.
@@ -71,8 +71,9 @@ Do not start image generation, image upload or database loading until the earlie
    - Select one clear event per image. Do not combine unrelated scenes.
 
 7. **Draft artwork**
-   - Generate one cover, one banner and ten low-resolution episode placeholders.
-   - Use the character continuity record and episode visual briefs.
+   - Generate one cover, one banner and initial low-resolution episode artwork for Episodes 1–10.
+   - Do not generate artwork for Episodes 11–100 during the initial Draft Pipeline run. Those later images are created on demand when the relevant ten-episode block is approved for production.
+   - Use the character continuity record, Wiki/story bible and episode visual briefs.
    - The images are deliberately replaceable and are for testing the complete website pipeline.
    - Do not embed titles, episode numbers, logos, watermarks, borders, UI or generated text.
    - The image set must show character consistency, emotional variety and the important visual states of the opening batch.
@@ -113,7 +114,7 @@ Artwork has three separate operational stages:
 | Draft/Review placeholder | Test the complete website and database path | May be uploaded and linked |
 | Production | Final approved artwork for publication | Linked after final approval |
 
-The standard quick-draft set is **one cover + one banner + ten episode images**.
+The standard initial quick-draft set is **one cover + one banner + ten episode images for Episodes 1–10**. Artwork for later episodes is **on demand**, after the relevant draft block is approved for production.
 
 JPEG/JPG is the standard format for ordinary low-resolution Draft/Review placeholders. The generator may emit PNG, but the upload workflow must perform a real JPEG conversion and verify the resulting file before upload. PNG is retained only when transparency is genuinely required or a later approved production decision calls for it.
 
@@ -179,7 +180,7 @@ Use this instruction when starting a new draft:
 >
 > Create the complete review-only Draft Workspace for “[TITLE]” in the “[CATEGORY]” category. Follow the authoritative runbook in `documentation/pipelines/audio-platform-draft-pipeline.md`.
 >
-> Work in this order: concept and season architecture; spoiler-light episode blocks; Episodes 1–10; wiki/story bible; character and visual continuity; episode production cards and continuity checks; visual briefs; one cover, one banner and ten low-resolution draft images; draft SQL/data mapping.
+> Work in this order: concept and season architecture; spoiler-light episode blocks; Episodes 1–10; wiki/story bible; character and visual continuity; episode production cards and continuity checks; visual briefs; one cover, one banner and low-resolution draft images for Episodes 1–10; draft SQL/data mapping. Do not create later episode artwork until the relevant block is approved and artwork is requested on demand.
 >
 > Do not upload files or load the database during this review-only step. Images may be generated as draft concepts/placeholders, but external upload and database commit require explicit approval. Use status `draft`. Word count is informational only. Do not use Review or Published approval rules. Report completion at each stage and stop at the first failed stage.
 
