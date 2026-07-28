@@ -4,7 +4,7 @@
 
 The Audio Platform Image Review Pipeline reviews, creates, replaces, uploads and verifies artwork for an existing Audio Platform story.
 
-The pipeline can process one image or a batch of images, including:
+It can process one image or many images, including:
 
 - story covers;
 - story banners;
@@ -13,7 +13,7 @@ The pipeline can process one image or a batch of images, including:
 - replacement artwork for existing assets;
 - character-reference and continuity images.
 
-The pipeline may use the existing:
+The pipeline may use:
 
 - story title, summary and premise;
 - episode title, summary and script;
@@ -23,6 +23,50 @@ The pipeline may use the existing:
 - existing approved artwork;
 - episode visual briefs;
 - Episode Artwork Production Specification.
+
+## Source-of-Truth Rule
+
+Supabase is the authoritative source for image creation and review.
+
+No image generation or image review should begin until the relevant story, episode, roadmap, Story Bible and Wiki records have been loaded to Supabase and read back successfully.
+
+The image prompt and visual brief must be built from the Supabase records rather than from temporary conversation text.
+
+This ensures that artwork reflects the current stored version of:
+
+- story summaries;
+- episode summaries and scripts;
+- character descriptions;
+- settings and locations;
+- emotional beats;
+- roadmap-block details;
+- Wiki continuity;
+- Story Bible rules.
+
+Where Supabase data is incomplete, inconsistent or unavailable, the affected image must be marked as blocked rather than generated from assumptions.
+
+## Relationship to the Draft Pipeline
+
+The Audio Platform Draft Pipeline may create fast, low-resolution draft concepts after its Supabase load and verification steps.
+
+Draft concepts exist to establish:
+
+- mood;
+- visual direction;
+- character feel;
+- setting;
+- episode atmosphere.
+
+The Draft Pipeline should not spend significant time refining production artwork.
+
+The Image Review Pipeline is responsible for:
+
+- reviewing those concepts;
+- checking them against the stored story data;
+- replacing weak or inaccurate images;
+- refining approved concepts;
+- producing final artwork;
+- uploading and verifying production assets.
 
 ## Trigger Phrase
 
@@ -57,9 +101,15 @@ A single request may contain multiple asset types.
 | Banner | Story | Review only |
 | Episode artwork | Episodes 3, 5 and 7 | Create and upload |
 
-## 2. Retrieve Story Context
+## 2. Retrieve and Verify Supabase Context
 
-Before assessing or generating an image, retrieve the relevant information from the database and specifications.
+Before assessing or generating an image:
+
+1. retrieve the relevant Supabase records;
+2. confirm that the expected story, episode, roadmap and Wiki records exist;
+3. read the records back;
+4. verify that the content is sufficient for image creation;
+5. use the retrieved data to prepare the visual brief.
 
 For story-level images, use:
 
@@ -132,7 +182,8 @@ Every new or replacement image requires a visual brief containing:
 - lighting and palette;
 - character continuity notes;
 - details that must not appear;
-- intended artwork stage.
+- intended artwork stage;
+- Supabase source records used.
 
 Each image should normally show one clear story moment.
 
@@ -204,13 +255,13 @@ Example paths:
 
 When upload is authorised:
 
-1. Send the approved production image through the supported artwork upload process.
-2. Upload the image to Supabase Storage.
-3. Register or update the corresponding `media_assets` record.
-4. Link the asset to the correct story, episode or roadmap block.
-5. Store a relative Storage path in the database.
-6. Preserve unrelated existing database fields.
-7. Replace the existing object safely where the asset is being revised.
+1. send the approved production image through the supported artwork upload process;
+2. upload the image to Supabase Storage;
+3. register or update the corresponding `media_assets` record;
+4. link the asset to the correct story, episode or roadmap block;
+5. store a relative Storage path in the database;
+6. preserve unrelated existing database fields;
+7. replace the existing object safely where the asset is being revised.
 
 The database stores the path, not the image bytes.
 
@@ -256,7 +307,8 @@ Proceed with the remaining batch only after Storage, database and website verifi
 
 | Area | Result |
 |---|---|
-| Story context retrieved | Complete / blocked |
+| Supabase records retrieved | Complete / blocked |
+| Supabase source verified | Complete / blocked |
 | Existing artwork reviewed | Complete / not applicable |
 | Visual briefs prepared | Complete / blocked |
 | Concepts created | Complete / not required |
@@ -273,11 +325,13 @@ Proceed with the remaining batch only after Storage, database and website verifi
 
 > **Audio Platform Image Review Pipeline**
 >
-> Review the requested story, cover, banner, episode or roadmap artwork using the existing story summaries, episode content, private Story Bible, Studio Wiki, visual briefs and character-continuity records.
+> Retrieve and verify the relevant story, episode, roadmap, Story Bible and Wiki records from Supabase before reviewing or generating artwork. Supabase is the source of truth for image creation.
+>
+> Review the requested story, cover, banner, episode or roadmap artwork using those stored records, existing visual briefs, approved character references and continuity requirements.
 >
 > Identify missing, inaccurate, duplicated or unsuitable artwork. Prepare visual briefs and create replacement concepts where required. Preserve approved character identity and story continuity.
 >
-> Once I approve an image and authorise upload, prepare the production JPEG, upload it through the supported artwork process, register it in `media_assets`, link it to the correct story or episode, and verify Storage, database and Studio display. Process each image independently and report the first failure for each asset.
+> Once I approve an image and authorise upload, prepare the production JPEG, upload it through the supported artwork process, register it in `media_assets`, link it to the correct story or episode, and verify Storage, database, Studio and website display. Process each image independently and report the first failure for each asset.
 
 ## Pipeline Position
 
