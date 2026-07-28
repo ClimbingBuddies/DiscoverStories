@@ -34,7 +34,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
   let episodesQuery = supabase
     .from("episodes")
     .select(
-      "id, season_number, episode_number, title, summary, word_count, duration_seconds, episode_status, audio_url, artwork_path"
+      "id, season_number, episode_number, episode_end_number, title, summary, word_count, duration_seconds, episode_status, audio_url, artwork_path"
     )
     .eq("story_id", story.id)
     .order("season_number")
@@ -50,7 +50,6 @@ export default async function StoryPage({ params, searchParams }: Props) {
     throw new Error(error.message);
   }
 
-  // Get total count of published episodes to determine if there's a next page
   let countQuery = supabase
     .from("episodes")
     .select("id", { count: "exact", head: true })
