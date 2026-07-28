@@ -1,22 +1,23 @@
 import { supabase } from "@/lib/supabase";
 import StoryLibrary from "@/components/StoryLibrary";
 import { isStudioModeEnabled } from "@/lib/studio-mode";
+import { applyContentVisibility } from "@/lib/content-visibility";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const studioModeEnabled = await isStudioModeEnabled();
 
-  let storyQuery = supabase
-    .from("stories")
-    .select(
-      "id, slug, title, short_description, description, content_status, scheduled_at, cover_image_path, banner_image_path, created_at, genres ( slug, name )"
-    )
-    .order("created_at", { ascending: false });
-
-  if (!studioModeEnabled) {
-    storyQuery = storyQuery.eq("content_status", "published");
-  }
+  const storyQuery = applyContentVisibility(
+    supabase
+      .from("stories")
+      .select(
+        "id, slug, title, short_description, description, content_status, scheduled_at, cover_image_path, banner_image_path, created_at, genres ( slug, name )"
+      )
+      .order("created_at", { ascending: false }),
+    studioModeEnabled,
+    "content_status"
+  );
 
   const { data: stories, error } = await storyQuery;
 
@@ -24,14 +25,14 @@ export default async function Home() {
   let episodeRows: Array<{ story_id: string; season_number: number | null }> = [];
 
   if (storyIds.length > 0) {
-    let episodeQuery = supabase
-      .from("episodes")
-      .select("story_id, season_number")
-      .in("story_id", storyIds);
-
-    if (!studioModeEnabled) {
-      episodeQuery = episodeQuery.eq("episode_status", "published");
-    }
+    const episodeQuery = applyContentVisibility(
+      supabase
+        .from("episodes")
+        .select("story_id, season_number")
+        .in("story_id", storyIds),
+      studioModeEnabled,
+      "episode_status"
+    );
 
     const { data, error: episodeError } = await episodeQuery;
 
@@ -61,11 +62,13 @@ export default async function Home() {
     {} as Record<string, number>
   );
 
-  const storiesWithEpisodeCount = stories?.map((story) => ({
-    ...story,
-    episodeCount: episodeCountByStory[story.id] ?? 0,
-    seasonNumber: seasonNumberByStory[story.id] ?? 1,\n    genres: story.genres ?? [],
-  })) ?? [];
+  const storiesWithEpisodeCount =
+    stories?.map((story) => ({
+      ...story,
+      episodeCount: episodeCountByStory[story.id] ?? 0,
+      seasonNumber: seasonNumberByStory[story.id] ?? 1,
+      genres: story.genres ?? [],
+    })) ?? [];
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
