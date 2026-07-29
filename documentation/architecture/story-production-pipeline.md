@@ -37,11 +37,24 @@ The story is the primary creative asset. Artwork, audio, wiki pages and website 
 6. **Recommendations are not database constraints.** Creative guidance such as word-count ranges is reported, not enforced by SQL.
 7. **Published stories may have no episodes.** This is a supported state used for catalogue, layout and empty-state testing.
 8. **One narrator is the default, not a permanent limitation.** The platform retains provider and multi-voice experimentation while keeping the normal workflow economical.
+9. **IP screening precedes substantial drafting.** A story title, concept, ownership position and material licences are screened before the platform commits to a full initial episode batch, detailed roadmap, high-resolution artwork or production audio.
+10. **A title problem is not automatically a story problem.** The platform prefers renaming, differentiation and controlled reworking where the underlying concept remains worthwhile.
 
 ## 4. Pipeline stages
 
+### Stage 0 — IP and trade mark screening
+
+- Capture a short story intake before substantial development.
+- Screen the title and sensible variations across relevant markets and Australian trade mark records.
+- Review originality, comparable works, ownership and third-party material.
+- Permit limited concept development only until the story is cleared, conditionally cleared or approved under a working title.
+- Route title problems through renaming or rework before abandoning an otherwise worthwhile story.
+- Recheck IP, ownership and trade mark status during Review and immediately before public release.
+- Follow `documentation/pipelines/audio-platform-ip-trademark-pipeline.md`.
+
 ### Stage A — Story development
 
+- Require an approved IP Pipeline handover before beginning substantial drafting.
 - Approve the story brief.
 - Build the private story bible.
 - Plan the 100-episode roadmap.
@@ -82,6 +95,7 @@ The story is the primary creative asset. Artwork, audio, wiki pages and website 
 
 ### Stage F — Release
 
+- Confirm the Review-stage and public-release IP checks are complete.
 - `content_status` controls public visibility.
 - Production readiness and release lifecycle are separate from visibility.
 - A story may be publicly visible with no episodes.
@@ -125,6 +139,7 @@ Never overwrite an approved historical asset merely to reuse its filename. Creat
 - Audio fields are preserved when story prose is reloaded.
 - Word counts are calculated and displayed, not used as SQL acceptance thresholds.
 - Old architecture documents are removed or rewritten rather than retained as competing live standards.
+- The IP and Trade Mark Pipeline currently defines process and future data requirements only; it does not authorise an unreviewed Supabase schema change.
 
 ## 8. Reference implementation
 
@@ -136,3 +151,5 @@ Never overwrite an approved historical asset merely to reuse its filename. Creat
 - concept/refine/production artwork stages,
 - production bundle reuse,
 - single-narrator provider experiments.
+
+Its title, originality position, ownership evidence and trade mark strategy must also be recorded through the Audio Platform IP and Trade Mark Pipeline before substantial commercial expansion.
