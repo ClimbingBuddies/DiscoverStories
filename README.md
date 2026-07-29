@@ -16,7 +16,9 @@ The project supports:
 The current operating model is documented in:
 
 - [`documentation/architecture/story-production-pipeline.md`](documentation/architecture/story-production-pipeline.md)
+- [`documentation/pipelines/audio-platform-ip-trademark-pipeline.md`](documentation/pipelines/audio-platform-ip-trademark-pipeline.md) — pre-draft title, originality, ownership, licensing and trade mark screening
 - [`documentation/pipelines/audio-platform-draft-pipeline.md`](documentation/pipelines/audio-platform-draft-pipeline.md) — authoritative ten-episode Draft Pipeline runbook
+- [`documentation/pipelines/audio-platform-review-pipeline.md`](documentation/pipelines/audio-platform-review-pipeline.md) — story quality and progression review
 - [`documentation/architecture/production-knowledge-model.md`](documentation/architecture/production-knowledge-model.md)
 - [`documentation/specifications/episode-artwork-production-specification.md`](documentation/specifications/episode-artwork-production-specification.md)
 - [`documentation/specifications/episode-artwork-production-guide.md`](documentation/specifications/episode-artwork-production-guide.md)
@@ -56,6 +58,7 @@ Database changes are stored as reviewed SQL migrations under [`database/`](datab
 
 Important rules:
 
+- New story concepts complete the IP and Trade Mark Pipeline before substantial drafting, final artwork, production audio or public branding.
 - Story and wiki loaders must be safe to rerun.
 - Creative recommendations such as word-count ranges are reported, not enforced by SQL.
 - A published story may intentionally contain no episodes for catalogue and empty-state testing.
