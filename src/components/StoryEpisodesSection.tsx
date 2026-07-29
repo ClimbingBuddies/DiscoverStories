@@ -141,7 +141,7 @@ export default function StoryEpisodesSection({
       ) : null}
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-semibold text-white">Episode blocks</p>
             <p className="text-sm text-zinc-400">
@@ -149,18 +149,23 @@ export default function StoryEpisodesSection({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {hasPreviousPage ? (
-              <button
-                type="button"
-                onClick={() => navigateToPage(previousPage)}
-                className="rounded-full border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-emerald-500 hover:text-emerald-300"
-              >
-                ← Previous 10
-              </button>
-            ) : null}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:justify-end">
+            <button
+              type="button"
+              onClick={() => navigateToPage(previousPage)}
+              disabled={!hasPreviousPage}
+              aria-hidden={!hasPreviousPage}
+              className={`w-[7.5rem] shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition ${
+                hasPreviousPage
+                  ? "border-zinc-700 text-zinc-200 hover:border-emerald-500 hover:text-emerald-300"
+                  : "pointer-events-none border-transparent bg-transparent text-transparent"
+              }`}
+            >
+              ← Previous 10
+            </button>
 
-            {paginationItems.map((item, index) => {
+            <div className="flex shrink-0 items-center gap-2">
+              {paginationItems.map((item, index) => {
               if (item === "ellipsis") {
                 return (
                   <span key={`ellipsis-${index}`} className="px-2 text-sm text-zinc-500">
@@ -176,7 +181,7 @@ export default function StoryEpisodesSection({
                   key={item}
                   type="button"
                   onClick={() => navigateToPage(item)}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${
+                  className={`h-10 min-w-10 rounded-full px-3 py-2 text-sm font-medium transition ${
                     isActive
                       ? "bg-emerald-500 text-zinc-950"
                       : "border border-zinc-700 text-zinc-200 hover:border-emerald-500 hover:text-emerald-300"
@@ -186,16 +191,21 @@ export default function StoryEpisodesSection({
                 </button>
               );
             })}
+            </div>
 
-            {hasNextPage ? (
-              <button
-                type="button"
-                onClick={() => navigateToPage(nextPage)}
-                className="rounded-full border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-emerald-500 hover:text-emerald-300"
-              >
-                Next 10 →
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => navigateToPage(nextPage)}
+              disabled={!hasNextPage}
+              aria-hidden={!hasNextPage}
+              className={`w-[7.5rem] shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition ${
+                hasNextPage
+                  ? "border-zinc-700 text-zinc-200 hover:border-emerald-500 hover:text-emerald-300"
+                  : "pointer-events-none border-transparent bg-transparent text-transparent"
+              }`}
+            >
+              Next 10 →
+            </button>
           </div>
         </div>
       </div>
