@@ -35,165 +35,39 @@ jobs:
           queue="$RUNNER_TEMP/artwork-queue.jsonl"
           : > "$queue"
 
-          batch_files=()
-          manifest_files=()
-
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             target="production-queue/${{ inputs.queue_path }}"
             if [[ -f "$target" && "$target" == *.json ]]; then
-              batch_files=("$target")
+              jq -c '.items[]' "$target" >> "$queue"
             else
               mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
-              if [[ ${#batch_files[@]} -eq 0 ]]; then
-                mapfile -t manifest_files < <(find "$target" -name manifest.json -type f | sort)
-              fi
-            fi
-          else
-            mapfile -t changed_queue_files < <(
-              git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" |
-                grep -E '^production-queue/.*/(batch\.json|manifest\.json)
-
-          test -s "$queue"
-          jq -e 'has("storySlug") and has("assetRole") and has("imageBase64")' "$queue" >/dev/null
-          echo "queue=$queue" >> "$GITHUB_OUTPUT"
-          echo "count=$(wc -l < "$queue" | tr -d ' ')" >> "$GITHUB_OUTPUT"
-
-      - name: Request short-lived GitHub identity token
-        id: oidc
-        shell: bash
-        run: |
-          set -euo pipefail
-          response=$(curl -sS --fail-with-body \
-            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=supabase-story-artwork")
-          token=$(jq -r '.value' <<< "$response")
-          test -n "$token"
-          echo "::add-mask::$token"
-          echo "token=$token" >> "$GITHUB_OUTPUT"
-
-      - name: Install image conversion tools
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
-
-      - name: Upload and link artwork batch
-        shell: bash
-        run: |
-          set -uo pipefail
-          results="$RUNNER_TEMP/upload-results.jsonl"
-          failures="$RUNNER_TEMP/upload-failures.jsonl"
-          : > "$results"
-          : > "$failures"
-          item_number=0
-          declare -A episode_hashes=()
-          if command -v magick >/dev/null 2>&1; then
-            image_convert=(magick)
-          else
-            image_convert=(convert)
-          fi
-
-          while IFS= read -r item; do
-            item_number=$((item_number + 1))
-            source_file="$RUNNER_TEMP/story-artwork-${item_number}.source"
-            image_file="$RUNNER_TEMP/story-artwork-${item_number}.jpg"
-            if ! jq -r '.imageBase64' <<< "$item" | base64 --decode > "$source_file" || [[ ! -s "$source_file" ]]; then
-              jq -cn --argjson item "$item_number" --arg error "Base64 decode failed" '{item:$item,error:$error}' >> "$failures"
-              continue
-            fi
-            if ! "${image_convert[@]}" "$source_file" -auto-orient -strip -resize '1280x1280>' -quality 82 "$image_file" || [[ "$(identify -quiet -format '%m' "$image_file")" != "JPEG" ]]; then
-              jq -cn --argjson item "$item_number" --arg error "JPEG conversion or validation failed" '{item:$item,error:$error}' >> "$failures"
-              continue
-            fi
-            # Reject exact duplicate episode artwork before any Storage upload.
-            # Cover and banner may share a visual direction, but two episode assets
-            # in the same batch must not contain identical converted JPEG bytes.
-            asset_role=$(jq -r '.assetRole' <<< "$item")
-            if [[ "$asset_role" == episode* ]]; then
-              image_hash=$(sha256sum "$image_file" | awk '{print $1}')
-              duplicate_item="${episode_hashes[$image_hash]-}"
-              if [[ -n "$duplicate_item" ]]; then
-                jq -cn --argjson item "$item_number" --arg assetRole "$asset_role" \
-                  --arg duplicateOf "$duplicate_item" --arg hash "$image_hash" \
-                  --arg error "Duplicate episode artwork bytes; rejected before upload" \
-                  '{item:$item,assetRole:$assetRole,duplicateOf:$duplicateOf,sha256:$hash,error:$error}' >> "$failures"
-                continue
-              fi
-              episode_hashes["$image_hash"]="$asset_role"
-            fi
-
-            story_slug=$(jq -r '.storySlug' <<< "$item")
-            asset_role=$(jq -r '.assetRole' <<< "$item")
-            stage=$(jq -r '.stage // "concept"' <<< "$item")
-            workflow_status=$(jq -r '.workflowStatus // "draft"' <<< "$item")
-            version_number=$(jq -r '.versionNumber // 1' <<< "$item")
-            season_number=$(jq -r '.seasonNumber // empty' <<< "$item")
-            episode_number=$(jq -r '.episodeNumber // empty' <<< "$item")
-            generation_notes=$(jq -r '.generationNotes // "ChatGPT generated draft concept transferred through the Story Pipeline."' <<< "$item")
-
-            args=(
-              -sS --fail-with-body
-              -X POST "$SUPABASE_FUNCTION_URL"
-              -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}"
-              -F "action=upload"
-              -F "storySlug=$story_slug"
-              -F "assetRole=$asset_role"
-              -F "stage=$stage"
-              -F "workflowStatus=$workflow_status"
-              -F "versionNumber=$version_number"
-              -F "generationNotes=$generation_notes"
-              -F "file=@$image_file;type=image/jpeg"
-            )
-
-            if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
-            if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
-
-            uploaded=false
-            result=""
-            for attempt in 1 2 3; do
-              if result=$(curl "${args[@]}") && jq -e '.uploaded == true and (.storagePath | length > 0)' <<< "$result" >/dev/null; then
-                uploaded=true
-                break
-              fi
-              sleep $((attempt * 2))
-            done
-            if [[ "$uploaded" == true ]]; then
-              jq -c . <<< "$result" >> "$results"
-            else
-              jq -cn --argjson item "$item_number" --arg storySlug "$story_slug" --arg assetRole "$asset_role" --arg error "Upload failed after three attempts" '{item:$item,storySlug:$storySlug,assetRole:$assetRole,error:$error}' >> "$failures"
-            fi
-          done < "${{ steps.queue.outputs.queue }}"
-
-          jq -s --slurpfile failures "$failures" '{status:(if ($failures[0] | length) == 0 then "complete" else "partial" end), uploaded:length, failed:($failures[0] | length), results:., failures:$failures[0]}' "$results" > "$RUNNER_TEMP/upload-result.json"
-          if [[ -s "$failures" ]]; then
-            echo "::error::One or more artwork items failed. Rerun only the failed queue items from the result manifest."
-            exit 1
-          fi
-
-      - name: Upload result manifest
-        uses: actions/upload-artifact@v4
-        with:
-          name: story-artwork-upload-result
-          path: ${{ runner.temp }}/upload-result.json
-          retention-days: 7
- |
-                sort || true
-            )
-            for changed_file in "${changed_queue_files[@]}"; do
-              if [[ "$changed_file" == */batch.json ]]; then
-                batch_files+=("$changed_file")
+              if [[ ${#batch_files[@]} -gt 0 ]]; then
+                for batch in "${batch_files[@]}"; do
+                  jq -c '.items[]' "$batch" >> "$queue"
+                done
               else
-                manifest_files+=("$changed_file")
+                while IFS= read -r manifest; do
+                  folder=$(dirname "$manifest")
+                  image_base64=$(tr -d '\\n\\r' < "$folder/image.b64")
+                  jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
+                done < <(find "$target" -name manifest.json -type f | sort)
               fi
-            done
+            fi
+          else
+            while IFS= read -r changed_file; do
+              if [[ "$changed_file" == */batch.json ]]; then
+                jq -c '.items[]' "$changed_file" >> "$queue"
+              elif [[ "$changed_file" == */manifest.json ]]; then
+                folder=$(dirname "$changed_file")
+                image_base64=$(tr -d '\\n\\r' < "$folder/image.b64")
+                jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$changed_file" >> "$queue"
+              fi
+            done < <(
+              git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" |
+                grep -E '^production-queue/.*/(batch\\.json|manifest\\.json)' |
+                sort -u || true
+            )
           fi
-
-          for batch in "${batch_files[@]}"; do
-            jq -c '.items[]' "$batch" >> "$queue"
-          done
-
-          for manifest in "${manifest_files[@]}"; do
-            folder=$(dirname "$manifest")
-            image_base64=$(tr -d '\n\r' < "$folder/image.b64")
-            jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
-          done
 
           test -s "$queue"
           jq -e 'has("storySlug") and has("assetRole") and has("imageBase64")' "$queue" >/dev/null
