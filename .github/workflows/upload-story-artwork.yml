@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out queued artwork
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Prepare queue
         id: queue
