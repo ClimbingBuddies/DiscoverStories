@@ -3,15 +3,15 @@
 **Status:** Current project standard  
 **Scope:** Quality assessment, continuity review and progression decisions  
 **Owner:** Audio Platform  
-**Last updated:** 28 Jul 2026
+**Last updated:** 29 Jul 2026
 
-This is the authoritative runbook for assessing an Audio Platform draft before it progresses. The Draft Pipeline creates and structurally checks material. The Review Pipeline assesses it. The Public Pipeline releases it.
+This is the authoritative runbook for assessing an Audio Platform Review Candidate before it progresses. The Initial Draft Process creates the first story package. Creative Development explores, diagnoses, revises and synchronises it. The Review Pipeline assesses one exact synced revision. The Public Pipeline releases approved material.
 
 ## 1. Review purpose
 
 The Review Pipeline answers:
 
-> Is this story package strong enough, coherent enough and ready for the next authorised stage?
+> Is this exact synced story package strong enough, coherent enough and ready for the next authorised stage?
 
 It must assess both:
 
@@ -20,25 +20,52 @@ It must assess both:
 
 A Review run must not quietly rewrite the story. It records evidence, required corrections and one explicit decision.
 
-## 2. Review entry criteria
+## 2. Review entry command and candidate control
 
-Begin Review only when the relevant Draft package is available:
+The preferred handoff command is:
 
-- approved brief;
+> **Audio Platform Submit to Review Pipeline**
+
+That command must first:
+
+1. identify the currently agreed working revision;
+2. perform a Supabase Draft Sync when accepted changes are unsynced, or verify the existing synced version;
+3. verify all in-scope story, episode, roadmap, Wiki/continuity and artwork links;
+4. nominate that exact synced revision as the Review Candidate;
+5. begin this Review Pipeline only after verification succeeds.
+
+If sync or verification fails, Review must not begin.
+
+The direct command:
+
+> **Audio Platform Begin Review Pipeline**
+
+may be used only when an exact synced Review Candidate has already been identified and verified. It does not perform creative revisions and must not silently resync a different version.
+
+## 3. Review entry criteria
+
+Begin Review only when the nominated Review Candidate contains the relevant package:
+
+- approved working brief;
 - private Story Bible;
 - 100-episode roadmap;
-- Episodes 1–10 as full prose for the initial batch, or the selected later range;
+- Episodes 1–10 as full prose for the initial formal batch, or the selected later range;
 - episode production cards;
 - Studio Wiki/continuity material where included;
-- artwork or production metadata where those are in scope.
+- artwork or production metadata where those are in scope;
+- Supabase verification evidence identifying the exact synced revision.
 
 Episodes 11–100 may be reviewed as roadmap blocks. A roadmap block contains ten planned episode summaries and does not require ten completed episode rows.
 
-## 3. Mandatory Review sequence
+Exploratory ideas that were discussed but not accepted are not part of the Review Candidate.
+
+## 4. Mandatory Review sequence
 
 ### 1. Confirm scope and source material
 
-Record the story, season, episode range or roadmap block, Draft run and revision being assessed. Read the source brief and private Story Bible before judging the prose.
+Record the story, season, episode range or roadmap block, synced Draft revision and Review Candidate being assessed. Read the source brief and private Story Bible before judging the prose.
+
+Confirm that the reviewed package matches the verified Supabase candidate. If the working material has changed since submission, stop and return to Creative Development or resubmit the candidate.
 
 ### 2. Check brief compliance
 
@@ -50,11 +77,13 @@ Apply the authoritative [Story Quality Index](../specifications/story-quality-in
 
 For the initial batch, read Episodes 1–10 as one opening arc and assess them against the roadmap. Score all ten categories, record evidence and calculate the total.
 
-The SQI is a gate measurement, not a generation target:
+The formal Review SQI is a gate measurement, not a generation target:
 
 - **80 or higher** is required for Approve batch or Promote;
 - no category may be below half of its maximum;
 - critical findings block progression regardless of score.
+
+Creative Development SQI diagnostics may be included as history, but they do not replace the formal Review SQI.
 
 ### 4. Review narrative and continuity evidence
 
@@ -96,11 +125,11 @@ Record the SQI, evidence, strengths, weaknesses, findings, corrections, unresolv
 - continuity;
 - production.
 
-## 4. Review decisions
+## 5. Review decisions
 
 | Decision | Meaning |
 |---|---|
-| **Revise** | Correct identified material before reassessment |
+| **Revise** | Return identified material to Audio Platform Creative Development before reassessment |
 | **Hold** | Pause because the brief, concept, roadmap or evidence needs further consideration |
 | **Approve batch** | Accept the assessed batch and authorise the next development batch |
 | **Promote** | Authorise the assessed material to enter the Public Pipeline; publication is still separate |
@@ -108,7 +137,13 @@ Record the SQI, evidence, strengths, weaknesses, findings, corrections, unresolv
 
 A score alone never changes status or publishes content. The decision must be explicit.
 
-## 5. Batch Review Record
+A **Revise** decision returns the story to:
+
+> **Audio Platform Begin Creative Development**
+
+After corrections, the revised candidate must be synced, verified and resubmitted before formal reassessment.
+
+## 6. Batch Review Record
 
 Every Review run must contain:
 
@@ -116,7 +151,8 @@ Every Review run must contain:
 |---|---|
 | Story | Story id, slug and title |
 | Scope | Season, episode range or roadmap block |
-| Source | Draft run/version assessed |
+| Source | Exact synced Draft revision and Review Candidate assessed |
+| Sync verification | Verification result and relevant identifiers |
 | Brief findings | Compliance and interpretation findings |
 | SQI | Ten category scores, total and assessment notes |
 | Quality findings | Evidence-linked output findings |
@@ -127,10 +163,12 @@ Every Review run must contain:
 | Decision | Revise, Hold, Approve batch, Promote or Stop |
 | Reviewer | Reviewer and date |
 
-## 6. Completion rules
+## 7. Completion rules
 
 A Review run is complete only when:
 
+- the exact synced Review Candidate is identified;
+- candidate verification passed before Review began;
 - the scope is recorded;
 - the source material was read;
 - every SQI category has a score and evidence;
@@ -142,14 +180,31 @@ A Review run is complete only when:
 
 The Review Pipeline may authorise progression, but it does not publish. Publication belongs exclusively to the Public Pipeline.
 
-## 7. Re-review
+## 8. Re-review
 
 After corrections, reassess only the affected categories when the change is contained. Recalculate the full SQI whenever a correction changes the brief, central relationship, opening arc, major reveal, roadmap direction or episode ending.
 
 Always retain the previous assessment so SQI movement can be seen over time.
 
-## 8. Reusable instruction
+Corrections must return through Creative Development. The revised working draft must then be synced, verified and resubmitted as a new Review Candidate.
 
-> **Audio Platform Review Pipeline**
+## 9. Reusable instructions
+
+### Preferred submission and review
+
+> **Audio Platform Submit to Review Pipeline**
 >
-> Review “[TITLE]” using the authoritative Review Pipeline and Story Quality Index. Assess the approved brief, private Story Bible, roadmap and the requested episode range. Read Episodes 1–10 as one opening arc. Score every SQI category with evidence, identify brief/interpretation/output/continuity/production findings, complete the Wiki and production checks, and record one decision: Revise, Hold, Approve batch, Promote or Stop. Do not publish.
+> Sync any agreed unsynced changes for “[TITLE]” to Supabase as `draft`, verify that Supabase represents the exact current revision, nominate that synced revision as the Review Candidate and begin the Audio Platform Review Pipeline. Do not begin Review if sync or verification fails. Do not publish.
+
+### Review an existing candidate
+
+> **Audio Platform Begin Review Pipeline**
+>
+> Review the already identified and verified Review Candidate for “[TITLE]” using the authoritative Review Pipeline and Story Quality Index. Confirm the exact synced source, assess the approved brief, private Story Bible, roadmap and requested episode range, score every SQI category with evidence, identify brief/interpretation/output/continuity/production findings, complete the Wiki and production checks, and record one decision: Revise, Hold, Approve batch, Promote or Stop. Do not revise, resync or publish.
+
+## 10. Supporting processes
+
+- Draft router: `documentation/pipelines/audio-platform-draft-pipeline.md`
+- Initial Draft: `documentation/pipelines/audio-platform-initial-draft-process.md`
+- Creative Development: `documentation/pipelines/audio-platform-creative-development-process.md`
+- Story Quality Index: `documentation/specifications/story-quality-index.md`
