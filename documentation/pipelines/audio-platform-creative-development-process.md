@@ -3,7 +3,7 @@
 **Status:** Current project standard  
 **Scope:** Repeatable development, diagnosis, revision and draft synchronisation  
 **Owner:** Audio Platform  
-**Last updated:** 29 Jul 2026
+**Last updated:** 30 Jul 2026
 
 This process improves an existing Audio Platform story after its Initial Draft. It is deliberately repeatable and may be applied to the whole story or to one specific element.
 
@@ -54,7 +54,9 @@ The command may nominate:
 - one character, relationship, mystery or theme;
 - one episode or episode range;
 - one roadmap block;
-- the Story Bible, Wiki, continuity or reveal plan;
+- Private Canon as an independent Creative Development task;
+- the Wiki or a separate on-demand/periodic Wiki refresh;
+- continuity or reveal planning;
 - artwork or visual direction;
 - one or more SQI findings.
 
@@ -118,7 +120,27 @@ Do not change unrelated material merely because it was discussed. Identify downs
 
 **Default effect:** working draft changes; no Supabase update.
 
-### 3.4 Supabase Draft Sync
+### 3.4 Private Canon Development
+
+Use this operation to create or revise authoritative truths, constraints, secrets and proposed decisions independently from story prose.
+
+Private Canon may read episodes, roadmap and Wiki for context, but changes only Private Canon unless the user explicitly approves another scope. It records `proposed`, `confirmed`, `superseded` or `retired` states.
+
+**Default effect:** Private Canon working material only; no episode, roadmap, Wiki or Supabase change.
+
+### 3.5 Private Canon Sync
+
+Use the explicit command:
+
+> **Audio Platform Private Canon Sync**
+
+This performs the independent idempotent Private Canon upsert and verifies that canon remains Studio-only. It must not change Wiki, episodes or roadmap unless they are explicitly included.
+
+### 3.6 Wiki Refresh
+
+A Wiki refresh may run periodically or on demand. It reads confirmed Private Canon plus the nominated story/episode scope, compares the existing Wiki and prepares Draft Wiki changes with reveal controls. It never changes Private Canon.
+
+### 3.7 Supabase Draft Sync
 
 Use the explicit command:
 
@@ -148,6 +170,9 @@ Interpret ordinary language as follows:
 | discuss, explore, consider, compare | Explore and Discuss |
 | assess, run SQI, score, diagnose | SQI Diagnostic |
 | apply, revise, update the story | Apply Agreed Revisions |
+| develop or update Private Canon | Private Canon Development |
+| sync Private Canon | Independent Private Canon Sync |
+| refresh or update Wiki from canon/story | Wiki Refresh |
 | sync, upload, insert, update Supabase | Supabase Draft Sync |
 | submit to Review | Sync/verify candidate and hand off to Review |
 
@@ -237,4 +262,5 @@ Every Creative Development run should report:
 - Story creation: `documentation/specifications/story-creation-specification.md`
 - Story SQL insert: `documentation/specifications/story-sql-insert-specification.md`
 - Wiki SQL insert: `documentation/specifications/wiki-sql-insert-specification.md`
+- Private Canon loading: `documentation/specifications/private-canon-loading-specification.md`
 - Story Quality Index: `documentation/specifications/story-quality-index.md`
