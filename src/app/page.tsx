@@ -78,6 +78,23 @@ export default async function Home() {
           </p>
         </div>
 
+        {studioModeEnabled ? (
+          <div className="mb-8 flex flex-wrap gap-3">
+            <a
+              href="/StudioCanon"
+              className="inline-flex items-center justify-center rounded-full border border-violet-400/50 bg-violet-400/10 px-5 py-3 text-sm font-semibold text-violet-200 transition hover:border-violet-300 hover:bg-violet-400/20"
+            >
+              Private Canon Library
+            </a>
+            <a
+              href="/StudioWorkflow"
+              className="inline-flex items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-300"
+            >
+              Studio Workflow
+            </a>
+          </div>
+        ) : null}
+
         {error ? (
           <p className="rounded-lg bg-red-950 p-4 text-red-300">
             Supabase error: {error.message}
