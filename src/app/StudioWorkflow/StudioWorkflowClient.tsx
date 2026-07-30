@@ -62,11 +62,11 @@ const stages: Stage[] = [
       },
       {
         title: "Develop selected scope",
-        text: "Expand or rewrite episodes, roadmap blocks, arcs and artwork briefs.",
+        text: "Expand or rewrite episodes, roadmap blocks, arcs and artwork briefs. Each remains an independently scoped task.",
       },
       {
-        title: "Maintain story truth",
-        text: "Update Private Canon during development and periodically prepare Wiki changes.",
+        title: "Develop Private Canon independently",
+        text: "Create or revise authoritative truths without changing episodes, roadmap or Wiki. Use story content plus confirmed canon to refresh the Wiki periodically or on demand.",
       },
     ],
     exitGate:
@@ -91,7 +91,7 @@ const stages: Stage[] = [
       },
       {
         title: "Review together",
-        text: "Assess episodes, roadmap, Wiki, Private Canon and artwork.",
+        text: "Assess episodes, roadmap, Wiki, Private Canon and artwork as separate reviewable objects.",
       },
       {
         title: "Make the decision",
