@@ -115,6 +115,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
           <StoryEpisodesSection
             story={{ slug: story.slug, title: story.title }}
             wikiEnabled={wikiEnabled}
+            studioModeEnabled={studioModeEnabled}
             initialPage={page}
             initialEpisodes={initialEpisodes}
             episodes={episodes ?? []}
