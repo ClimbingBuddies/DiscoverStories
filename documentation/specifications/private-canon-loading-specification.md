@@ -33,7 +33,7 @@ Only proposed and confirmed records appear in the normal Studio view.
 
 ## Visibility
 
-Private Canon is always Studio-only.
+Private Canon is always Studio-only in the website interface.
 
 - It is never returned through the public Wiki procedure.
 - It is never shown while Studio is off.
@@ -41,7 +41,11 @@ Private Canon is always Studio-only.
 - Published status never makes Private Canon public.
 - Superseded and retired records are excluded from the normal view.
 
-The current Studio toggle is the temporary review mechanism. Authenticated Studio access remains the future security model.
+### Temporary Studio-toggle access
+
+Until Studio authentication is implemented, `public.get_studio_private_canon(story_slug, studio_mode)` may be executed by the anonymous website role and returns records only when `studio_mode = true`. This is an explicitly approved temporary review mechanism, not an authentication boundary: a caller who invokes the procedure directly can supply `true`.
+
+Therefore Private Canon must currently be treated as review-private rather than securely confidential. Do not store credentials, personal data or other sensitive information in it. The planned login change must replace this caller-supplied flag with authenticated, authorised Studio access and remove anonymous execution.
 
 ## Independent Supabase sync
 
@@ -50,6 +54,10 @@ Use:
 > **Audio Platform Private Canon Sync — [STORY] — [CANON SCOPE] — Supabase Draft — do not update Wiki, episodes or roadmap.**
 
 The database procedure `public.sync_private_canon(...)` performs an idempotent upsert using `(story_id, canon_key)`. Execution is restricted to the service role. A combined sync is allowed only when every content type is explicitly named in the approved scope.
+
+## Category behaviour
+
+Private Canon category selectors are database-driven through `private_canon_category_types`. A record whose category is blank, inactive or unrecognised is retained and displayed under **Other** in Studio. New recognised category rows and new canon records appear without a website code change.
 
 ## Wiki refresh relationship
 
@@ -69,14 +77,15 @@ Verify:
 - every record has `is_public = false`;
 - only valid canon states exist;
 - the Studio read returns intended active records;
+- blank and unrecognised categories appear under **Other**;
 - the public Wiki returns no Private Canon;
 - rerunning creates no duplicates;
 - Wiki, episodes and roadmap were not changed.
 
 ## Website contract
 
-In Studio mode, **Private Canon** appears beside **Wiki** and opens `/stories/[slug]/private-canon`. The route returns not found while Studio is off and displays proposed and confirmed records with visible state badges.
+In Studio mode, **Private Canon** appears beside **Wiki** and opens `/stories/[slug]/private-canon`. The route returns not found while Studio is off and displays proposed and confirmed records with visible state badges. The browser starts with every category closed and opens one category at a time using the Studio Workflow interaction pattern.
 
 ## Definition of done
 
-A Private Canon task is complete when its scope is explicit, records sync independently and idempotently, public visibility is prevented, the Studio page displays the intended records, and no unrelated story or Wiki records changed.
+A Private Canon task is complete when its scope is explicit, records sync independently and idempotently, public Wiki visibility is prevented, the Studio page displays the intended records, the temporary access limitation is documented, and no unrelated story or Wiki records changed.
