@@ -332,7 +332,6 @@ export default async function StoryWikiIndex({
             </section>
           ) : null}
 
-        </div>
       </div>
     </main>
   );
