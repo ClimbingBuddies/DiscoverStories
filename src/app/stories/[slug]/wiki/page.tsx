@@ -313,12 +313,17 @@ export default async function StoryWikiIndex({
         />
 
         {wiki.locked_entries.length > 0 && wiki.settings.show_locked_placeholders ? (
-            <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-              <h2 className="text-2xl font-semibold text-white">Locked entries</h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">
-                Some entries are locked until you complete the matching episode.
-              </p>
-              <div className="mt-5 space-y-3">
+            <details className="group rounded-3xl border border-zinc-800 bg-zinc-900">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-3xl p-6 transition hover:bg-zinc-800/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+                <span>
+                  <span className="block text-2xl font-semibold text-white">Locked entries</span>
+                  <span className="mt-2 block text-sm leading-6 text-zinc-400">
+                    Some entries are locked until you complete the matching episode.
+                  </span>
+                </span>
+                <span aria-hidden="true" className="text-xl text-emerald-300 transition-transform group-open:rotate-180">⌄</span>
+              </summary>
+              <div className="space-y-3 px-6 pb-6">
                 {wiki.locked_entries.map((locked, index) => (
                   locked.unlock_episode ? (
                     <Link
@@ -344,7 +349,7 @@ export default async function StoryWikiIndex({
                   )
                 ))}
               </div>
-            </section>
+            </details>
           ) : null}
 
       </div>
