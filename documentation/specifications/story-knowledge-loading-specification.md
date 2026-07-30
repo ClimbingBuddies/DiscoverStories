@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-This specification governs idempotent loading of reusable story knowledge. The same stable entities support public wiki pages, private continuity work and production retrieval.
+This specification governs idempotent loading of reusable story knowledge. Wiki and Private Canon now use separate loading procedures: the Wiki is reader-facing, while Private Canon is an independent Studio-only source of truth.
 
 ## 2. Dependency order
 
@@ -19,10 +19,10 @@ Recommended load order:
 5. `wiki_character_profiles`
 6. `wiki_entry_relationships`
 7. `episode_wiki_entries`
-8. `story_canon_rules`
-9. `story_canon_rule_internal`
-10. `character_knowledge`
-11. `wiki_entry_visual_profiles`
+8. `character_knowledge`
+9. `wiki_entry_visual_profiles`
+
+Private Canon is not part of this Wiki load order. Load it independently under `private-canon-loading-specification.md` using `story_canon_rules` and the stable `(story_id, canon_key)` identity.
 
 ## 3. Stable identities
 
@@ -32,12 +32,13 @@ Recommended load order:
 - full-episode appearance: `(episode_id, wiki_entry_id)`
 - roadmap-block appearance: `(roadmap_block_episode_id, wiki_entry_id, planned_episode_number)`
 - character and visual profile: parent `wiki_entry_id`
+- Private Canon: `(story_id, canon_key)` under its independent loading procedure
 
 Titles and descriptions may change without creating a new entity.
 
 ## 4. Public and private separation
 
-Public fields contain only reader-safe wording. Internal tables contain:
+Public fields contain only reader-safe wording. Wiki internal tables may contain:
 
 - AI context,
 - continuity rules,
@@ -86,3 +87,9 @@ Verify:
 ## 10. Definition of done
 
 A story knowledge load is complete when it can be safely rerun, preserves spoiler boundaries, resolves all stable entities and episode links, and provides compact reusable context for future writing and production.
+
+## 11. Private Canon boundary
+
+Private Canon may be developed and synced without changing Wiki, episodes or roadmap. A Wiki refresh may later read confirmed Private Canon plus story content and prepare Draft Wiki changes. Neither operation silently writes to the other object.
+
+See: `documentation/specifications/private-canon-loading-specification.md`.
