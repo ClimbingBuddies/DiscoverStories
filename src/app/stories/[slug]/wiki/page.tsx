@@ -320,14 +320,28 @@ export default async function StoryWikiIndex({
               </p>
               <div className="mt-5 space-y-3">
                 {wiki.locked_entries.map((locked, index) => (
-                  <div
-                    key={`${locked.unlock_season}-${locked.unlock_episode}-${index}`}
-                    className="rounded-3xl border border-zinc-800 bg-zinc-950 p-4"
-                  >
-                    <p className="text-sm text-zinc-300">
-                      Unlocks at Season {locked.unlock_season ?? "?"}, Episode {locked.unlock_episode ?? "?"}
-                    </p>
-                  </div>
+                  locked.unlock_episode ? (
+                    <Link
+                      key={`${locked.unlock_season}-${locked.unlock_episode}-${index}`}
+                      href={`/stories/${wiki.story.slug}/episodes/${locked.unlock_episode}`}
+                      title={`Open Season ${locked.unlock_season ?? "?"}, Episode ${locked.unlock_episode}`}
+                      className="group block rounded-3xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                    >
+                      <p className="flex items-center justify-between gap-4 text-sm text-zinc-300">
+                        <span>
+                          Unlocks at Season {locked.unlock_season ?? "?"}, Episode {locked.unlock_episode}
+                        </span>
+                        <span className="text-emerald-300 transition group-hover:translate-x-0.5">→</span>
+                      </p>
+                    </Link>
+                  ) : (
+                    <div
+                      key={`locked-${index}`}
+                      className="rounded-3xl border border-zinc-800 bg-zinc-950 p-4"
+                    >
+                      <p className="text-sm text-zinc-300">Unlock episode unavailable</p>
+                    </div>
+                  )
                 ))}
               </div>
             </section>
