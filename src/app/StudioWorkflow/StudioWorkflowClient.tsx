@@ -138,15 +138,15 @@ export default function StudioWorkflowClient() {
 
   return (
     <main className="min-h-screen bg-zinc-950 px-4 py-10 text-white sm:px-8 sm:py-14">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8">
+      <div className="mx-auto max-w-5xl lg:max-w-7xl xl:max-w-[90rem]">
+        <header className="mb-8 lg:mb-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Audio Platform
           </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Studio Workflow
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400 sm:text-base">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400 sm:text-base lg:max-w-4xl lg:text-lg lg:leading-8">
             The production path from the first complete draft to publication.
             Select a stage to open its tasks, output and exit decision.
           </p>
@@ -173,14 +173,14 @@ export default function StudioWorkflowClient() {
                     onClick={() =>
                       setSelectedStage(active ? null : stage.number)
                     }
-                    className={`flex min-h-16 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
+                    className={`flex min-h-16 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors lg:min-h-24 lg:gap-4 lg:px-6 lg:py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
                       active
                         ? "border-emerald-400 bg-emerald-400 text-zinc-950 shadow-[0_0_0_1px_rgba(52,211,153,0.15)]"
                         : "border-zinc-800 bg-zinc-900 text-zinc-100 hover:border-zinc-700 hover:bg-zinc-800"
                     }`}
                   >
                     <span
-                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm ${
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm lg:h-11 lg:w-11 lg:text-base ${
                         active
                           ? "border-zinc-950/70 text-zinc-950"
                           : "border-zinc-600 text-zinc-300"
@@ -188,7 +188,7 @@ export default function StudioWorkflowClient() {
                     >
                       {stage.number}
                     </span>
-                    <span className="font-semibold leading-5">{stage.label}</span>
+                    <span className="font-semibold leading-5 lg:text-lg lg:leading-6 xl:text-xl">{stage.label}</span>
                   </button>
                 </div>
               );
@@ -198,38 +198,38 @@ export default function StudioWorkflowClient() {
           {selected && (
             <article
               id="workflow-stage-panel"
-              className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl shadow-black/20 sm:p-5"
+              className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl shadow-black/20 sm:p-5 lg:mt-5 lg:p-8 xl:p-10"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:gap-8">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
                     {selected.eyebrow}
                   </p>
-                  <h2 className="mt-1 text-xl font-semibold text-emerald-400">{selected.title}</h2>
-                  <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400">
+                  <h2 className="mt-1 text-xl font-semibold text-emerald-400 lg:text-3xl">{selected.title}</h2>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400 lg:max-w-5xl lg:text-base lg:leading-7">
                     {selected.introduction}
                   </p>
                 </div>
-                <span className="w-fit shrink-0 rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm text-emerald-300">
+                <span className="w-fit shrink-0 rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm text-emerald-300 lg:px-5 lg:py-2.5 lg:text-base">
                   {selected.status}
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-7 lg:gap-5">
                 {selected.cards.map((card) => (
                   <section
                     key={card.title}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4"
+                    className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 lg:p-6"
                   >
-                    <h3 className="font-semibold">{card.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-400">
+                    <h3 className="font-semibold lg:text-lg">{card.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
                       {card.text}
                     </p>
                   </section>
                 ))}
               </div>
 
-              <div className="mt-4 flex flex-col gap-1 border-t border-zinc-800 pt-4 text-sm sm:flex-row sm:gap-5">
+              <div className="mt-4 flex flex-col gap-1 border-t border-zinc-800 pt-4 text-sm sm:flex-row sm:gap-5 lg:mt-7 lg:pt-6 lg:text-base">
                 <strong>Exit gate</strong>
                 <p className="text-zinc-400">{selected.exitGate}</p>
               </div>
@@ -243,8 +243,8 @@ export default function StudioWorkflowClient() {
           )}
         </section>
 
-        <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <h2 className="font-semibold">Two deliberate loops</h2>
+        <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 lg:mt-10 lg:p-8">
+          <h2 className="font-semibold lg:text-xl">Two deliberate loops</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
               <p className="font-medium text-violet-400">Creative loop</p>
