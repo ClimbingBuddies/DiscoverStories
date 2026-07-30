@@ -282,7 +282,7 @@ export default function WikiObjectBrowser({
                               return (
                                 <Link
                                   key={episode.id}
-                                  href={`/stories/${storySlug}/episodes/${episode.episode_number}/read`}
+                                  href={`/stories/${storySlug}/episodes/${episode.episode_number}`}
                                   title={episode.title}
                                   className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-300"
                                 >
