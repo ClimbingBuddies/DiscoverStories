@@ -265,11 +265,12 @@ export default function WikiObjectBrowser({
 
                     <aside className="space-y-4">
                       {detail.episodes.length > 0 ? (
-                        <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6">
-                          <h3 className="text-xs uppercase tracking-[0.18em] text-emerald-400">
-                            Related episodes
-                          </h3>
-                          <div className="mt-4 flex flex-wrap gap-2">
+                        <details className="group rounded-2xl border border-zinc-800 bg-zinc-950/70">
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-2xl p-6 text-xs uppercase tracking-[0.18em] text-emerald-400 transition hover:bg-zinc-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+                            <span>Related episodes</span>
+                            <span aria-hidden="true" className="text-base transition-transform group-open:rotate-180">⌄</span>
+                          </summary>
+                          <div className="flex flex-wrap gap-2 px-6 pb-6">
                             {detail.episodes.map((episode) => {
                               const isRange = Boolean(
                                 episode.episode_end_number &&
@@ -291,7 +292,7 @@ export default function WikiObjectBrowser({
                               );
                             })}
                           </div>
-                        </section>
+                        </details>
                       ) : null}
 
                       {detail.relationships.length > 0 ? (
