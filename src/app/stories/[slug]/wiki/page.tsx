@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { isStudioModeEnabled } from "@/lib/studio-mode";
+import WikiObjectBrowser, { type WikiBrowserCategory } from "@/components/WikiObjectBrowser";
 
 type SearchParams = {
   spoilers?: string | string[];
@@ -303,42 +304,14 @@ export default async function StoryWikiIndex({
           </div>
         </div>
 
-        <div className="space-y-8">
-          {Object.entries(entryGroups).map(([entryType, entries]) => (
-            <section key={entryType} className="space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-2xl font-semibold text-white">
-                  {humanizeType(entryType)}
-                </h2>
-                <span className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-400">
-                  {entries.length}
-                </span>
-              </div>
+        <WikiObjectBrowser
+          storySlug={wiki.story.slug}
+          entries={wiki.entries}
+          categories={categories}
+          queryString={queryString}
+        />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {entries.map((entry) => (
-                  <Link
-                    key={entry.id}
-                    href={`/stories/${wiki.story.slug}/wiki/${entry.slug}${queryString}`}
-                    className="group overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-400"
-                  >
-                    <h3 className="text-xl font-semibold text-white transition group-hover:text-emerald-300">
-                      {entry.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-6 text-zinc-400">
-                      {entry.short_description ?? entry.introduction ?? "No summary available."}
-                    </p>
-                    <div className="mt-6 flex items-center justify-between text-sm text-emerald-300">
-                      <span>View entry</span>
-                      <span>→</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
-
-          {wiki.locked_entries.length > 0 && wiki.settings.show_locked_placeholders ? (
+        {wiki.locked_entries.length > 0 && wiki.settings.show_locked_placeholders ? (
             <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
               <h2 className="text-2xl font-semibold text-white">Locked entries</h2>
               <p className="mt-2 text-sm leading-6 text-zinc-400">
@@ -358,6 +331,7 @@ export default async function StoryWikiIndex({
               </div>
             </section>
           ) : null}
+
         </div>
       </div>
     </main>
