@@ -46,9 +46,7 @@ export default async function StudioCanonPage() {
           </p>
           <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-4xl font-bold sm:text-5xl">
-                Private Canon
-              </h1>
+              <h1 className="text-4xl font-bold sm:text-5xl">Private Canon</h1>
               <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-300">
                 Canon workspaces are independent from Story, Episodes and Wiki.
                 A workspace may be created and loaded before its Concept Draft,
