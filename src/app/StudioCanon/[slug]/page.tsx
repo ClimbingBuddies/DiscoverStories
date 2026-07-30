@@ -61,8 +61,8 @@ export default async function StudioCanonDetailPage({
               </h1>
               <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-300">
                 Authoritative truths, constraints, secrets, visual rules and
-                proposed decisions. This workspace is loaded independently
-                from Story and Wiki.
+                proposed decisions. This workspace is loaded independently from
+                Story and Wiki.
               </p>
               {!canon.story ? (
                 <p className="mt-4 inline-flex rounded-full bg-amber-400/15 px-4 py-2 text-sm text-amber-200">
