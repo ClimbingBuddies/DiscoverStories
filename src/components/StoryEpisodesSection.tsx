@@ -148,7 +148,7 @@ export default function StoryEpisodesSection({
             ) : null}
             {studioModeEnabled ? (
               <a
-                href={`/stories/${story.slug}/private-canon`}
+                href={`/StudioCanon/${story.slug}`}
                 className="inline-flex items-center justify-center rounded-full border border-violet-400/50 bg-violet-400/10 px-5 py-3 text-sm font-semibold text-violet-200 transition hover:border-violet-300 hover:bg-violet-400/20"
               >
                 Private Canon

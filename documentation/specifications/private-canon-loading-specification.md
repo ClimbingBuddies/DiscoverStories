@@ -1,6 +1,6 @@
 # Private Canon Creation and Data Loading Specification
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** 30 Jul 2026  
 **Status:** Current project standard  
 **Scope:** Private Canon development, review, visual knowledge and Supabase Draft sync
@@ -327,25 +327,48 @@ Publication is always a separate explicit operation. Setting a story to public d
 
 ## 12. Current Supabase data contract
 
-The current text Canon object is stored in `public.story_canon_rules` and is written through:
+Private Canon now uses an independent workspace identity.
+
+### 12.1 Workspace
+
+`public.private_canon_projects` stores:
+
+- the stable Canon workspace `slug` and `title`;
+- an optional `linked_story_id`;
+- its Studio content status and timestamps.
+
+The story link is deliberately optional. A Canon workspace may be created, loaded and reviewed before a row exists in `public.stories`. Linking it later must preserve its identity and records.
+
+Create or update the workspace through:
 
 ```sql
-public.sync_private_canon(
-    p_story_slug text,
-    p_canon_key text,
+public.sync_private_canon_project(
+    p_canon_slug text,
     p_title text,
-    p_rule_category text,
-    p_rule_text text,
-    p_importance text default 'normal',
-    p_canon_state text default 'confirmed',
-    p_content_status text default 'draft',
-    p_spoiler_level integer default 0
+    p_linked_story_slug text default null,
+    p_content_status text default 'draft'
 )
 ```
 
-The approved documentation contract uses `proposed` and `confirmed` only. The existing database may temporarily continue accepting legacy values until a separately approved migration simplifies the constraint and existing data. New Canon loads must not create new `superseded` or `retired` records.
+### 12.2 Canon records
 
-Visual references currently use the existing production-knowledge and media-asset structures where applicable. A future schema enhancement may create stronger first-class Canon-to-asset relationships, but that database change is outside this document update.
+Text Canon remains stored in `public.story_canon_rules` for backward compatibility, but `canon_project_id` is now its required parent. `story_id` is optional and is populated only when the workspace is linked to a story.
+
+The stable record identity is:
+
+```text
+(canon_project_id, canon_key)
+```
+
+Write records through `public.sync_private_canon`. The first argument retains its existing SQL name for compatibility but now resolves the Canon workspace slug rather than requiring a story row.
+
+New Canon loads accept only `proposed` and `confirmed`. Blank, inactive or unknown categories remain visible under **Other** in Studio.
+
+### 12.3 Studio retrieval
+
+- `public.list_studio_private_canon(true)` lists every active Canon workspace, including workspaces with no linked story.
+- `public.get_studio_private_canon(canon_slug, true)` returns the workspace, optional story link, database-driven categories and all active proposed or confirmed records.
+- Story, Wiki and Canon loaders remain separate operations.
 
 ## 13. Data loading process
 
@@ -353,7 +376,7 @@ Visual references currently use the existing production-knowledge and media-asse
 
 Before sync:
 
-1. resolve the story slug;
+1. resolve or create the Canon workspace slug;
 2. confirm the Canon scope and approval;
 3. validate unique `canon_key` values within the package;
 4. accept only `proposed` or `confirmed` for new writes;
@@ -364,7 +387,7 @@ Before sync:
 
 ### 13.2 Idempotent loading
 
-Load each text record through `sync_private_canon` using its stable `canon_key`.
+Create or update the workspace first through `sync_private_canon_project`, then load each text record through `sync_private_canon` using its stable `canon_key`.
 
 Expected behaviour:
 
@@ -380,7 +403,7 @@ Expected behaviour:
 Verify:
 
 - expected record count;
-- no duplicate `(story_id, canon_key)` values;
+- no duplicate `(canon_project_id, canon_key)` values;
 - only approved states are used for current records;
 - Studio categories display correctly, including **Other** fallback;
 - visual references resolve where included;
