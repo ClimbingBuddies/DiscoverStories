@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-This specification governs idempotent loading of reusable story knowledge. Wiki and Private Canon now use separate loading procedures: the Wiki is reader-facing, while Private Canon is an independent Studio-only source of truth.
+This specification governs idempotent loading of reusable story knowledge. Wiki and Private Canon use separate loading procedures: the Wiki is reader-facing, while Private Canon is an independent Studio-only source of truth.
 
 ## 2. Dependency order
 
@@ -49,17 +49,25 @@ Public fields contain only reader-safe wording. Wiki internal tables may contain
 
 A reveal gate does not make private author material public. Private plans remain in internal tables.
 
-## 5. Production use
+## 5. Database-driven categories
+
+Wiki and Private Canon category selectors are derived from current database records rather than hard-coded page lists. New records display automatically. New recognised categories must be defined in the appropriate category source and then appear without a website code change.
+
+Blank, inactive, misspelled or otherwise unrecognised category values must never cause a record to disappear. They are grouped under **Other** in Studio so the data remains reviewable and can be corrected at source.
+
+The website browser starts with every category closed, opens one category at a time and recalculates category counts and search results from the returned records.
+
+## 6. Production use
 
 The knowledge loader identifies reusable entities once. Artwork and audio processes then retrieve only entries linked to the current episode.
 
 A visual profile is added only when recurring visual consistency, an approved reference or substantial repeated prompting makes it useful.
 
-## 6. Episode links
+## 7. Episode links
 
 Every `episode_wiki_entries` row must resolve an episode and wiki entry from the same story. Links identify the default retrieval boundary for production bundles.
 
-## 7. Idempotency
+## 8. Idempotency
 
 - Use upserts against stable keys.
 - Do not delete all wiki records before reloading.
@@ -68,11 +76,11 @@ Every `episode_wiki_entries` row must resolve an episode and wiki entry from the
 - Never seed listener progress.
 - Keep schema migrations separate from content seeds.
 
-## 8. Spoiler control
+## 9. Spoiler control
 
 Published Wiki episode references must resolve to published, reader-safe individual episode IDs. Studio Wiki and private Story Bible references may resolve to a roadmap-block ID plus a planned episode number inside its structured data. Public APIs and RLS enforce visibility; browser hiding alone is insufficient.
 
-## 9. Verification
+## 10. Verification
 
 Verify:
 
@@ -81,14 +89,16 @@ Verify:
 - valid parent and relationship links,
 - same-story episode references,
 - correct public/private classification,
+- recognised categories display using their database label,
+- blank and unrecognised categories display under **Other** in Studio,
 - stable rerun counts,
 - no listener-progress mutation.
 
-## 10. Definition of done
+## 11. Definition of done
 
-A story knowledge load is complete when it can be safely rerun, preserves spoiler boundaries, resolves all stable entities and episode links, and provides compact reusable context for future writing and production.
+A story knowledge load is complete when it can be safely rerun, preserves spoiler boundaries, resolves all stable entities and episode links, retains uncategorised records under **Other**, and provides compact reusable context for future writing and production.
 
-## 11. Private Canon boundary
+## 12. Private Canon boundary
 
 Private Canon may be developed and synced without changing Wiki, episodes or roadmap. A Wiki refresh may later read confirmed Private Canon plus story content and prepare Draft Wiki changes. Neither operation silently writes to the other object.
 
