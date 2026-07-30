@@ -24,6 +24,7 @@ type StoryEpisodesSectionProps = {
     title: string;
   };
   wikiEnabled: boolean;
+  studioModeEnabled: boolean;
   initialPage: number;
   initialEpisodes: EpisodeItem[];
   episodes: EpisodeItem[];
@@ -34,6 +35,7 @@ type StoryEpisodesSectionProps = {
 export default function StoryEpisodesSection({
   story,
   wikiEnabled,
+  studioModeEnabled,
   initialPage,
   initialEpisodes,
   episodes,
@@ -125,18 +127,34 @@ export default function StoryEpisodesSection({
 
   return (
     <div className="space-y-10">
-      {wikiEnabled ? (
+      {wikiEnabled || studioModeEnabled ? (
         <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-sm text-emerald-200">
-          <p className="font-semibold">Story wiki available</p>
-          <p className="mt-2 text-zinc-300">
-            Explore the public story wiki, spoiler-aware and tied to your completed episode progress.
+          <p className="font-semibold">
+            {studioModeEnabled ? "Story knowledge" : "Story wiki available"}
           </p>
-          <a
-            href={`/stories/${story.slug}/wiki`}
-            className="mt-4 inline-flex items-center justify-center rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
-          >
-            View story wiki
-          </a>
+          <p className="mt-2 text-zinc-300">
+            {studioModeEnabled
+              ? "Review the reader-facing Wiki or open the separate, authoritative Private Canon."
+              : "Explore the public story wiki, spoiler-aware and tied to your completed episode progress."}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {wikiEnabled ? (
+              <a
+                href={`/stories/${story.slug}/wiki`}
+                className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
+              >
+                View story Wiki
+              </a>
+            ) : null}
+            {studioModeEnabled ? (
+              <a
+                href={`/stories/${story.slug}/private-canon`}
+                className="inline-flex items-center justify-center rounded-full border border-violet-400/50 bg-violet-400/10 px-5 py-3 text-sm font-semibold text-violet-200 transition hover:border-violet-300 hover:bg-violet-400/20"
+              >
+                Private Canon
+              </a>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
