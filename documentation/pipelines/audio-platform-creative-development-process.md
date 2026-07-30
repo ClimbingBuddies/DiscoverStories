@@ -7,6 +7,41 @@
 
 This process improves an existing Audio Platform story after its Initial Draft. It is deliberately repeatable and may be applied to the whole story or to one specific element.
 
+
+## Studio Workflow
+
+The Audio Platform production lifecycle is:
+
+```mermaid
+flowchart LR
+    A["Initial Draft"]
+    B["Creative Development"]
+    C["Studio Review"]
+    D["Publish"]
+
+    A --> B
+    B -->|"Approved Draft Sync"| C
+    C -->|"Revisions"| B
+    C -->|"Approved"| D
+```
+
+The interactive website version is implemented at `/StudioWorkflow`. All four stages are closed when the page first opens; selecting a stage expands its tasks, output and exit gate.
+
+The process stages describe **what the team is doing**. The related content states describe **what happens to the content**:
+
+```mermaid
+flowchart LR
+    A["Working Draft"]
+    B["Review Version"]
+    C["Approved Version"]
+    D["Published Version"]
+
+    A -->|"Sync"| B
+    B -->|"Revise"| A
+    B -->|"Approve"| C
+    C -->|"Publish"| D
+```
+
 ## 1. Entry command
 
 Use the project-specific command:
