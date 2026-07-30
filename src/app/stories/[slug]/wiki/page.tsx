@@ -181,11 +181,12 @@ export default async function StoryWikiIndex({
     return acc;
   }, {} as Record<number, WikiEpisode[]>);
 
-  const entryGroups = wiki.entries.reduce((acc, entry) => {
-    acc[entry.entry_type] ||= [];
-    acc[entry.entry_type].push(entry);
-    return acc;
-  }, {} as Record<string, WikiEntry[]>);
+  const { data: categoryRows } = await supabase
+    .from("wiki_entry_types")
+    .select("slug, name, sort_order")
+    .order("sort_order", { ascending: true });
+
+  const categories = (categoryRows ?? []) as WikiBrowserCategory[];
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
