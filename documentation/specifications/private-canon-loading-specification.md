@@ -1,316 +1,333 @@
 # Private Canon Creation and Data Loading Specification
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 30 Jul 2026  
 **Status:** Current project standard  
-**Scope:** Studio-only Private Canon creation, review, revision and Supabase Draft sync
+**Scope:** Private Canon development, review, visual knowledge and Supabase Draft sync
 
-> **Core production rule:** Private Canon defines what is true, proposed or constrained within the story world. Episodes and roadmap blocks express Canon dramatically. The Wiki presents only what readers are currently allowed to know.
+> **Core production rule:** Private Canon is the Studio's creative knowledge base for a story. It may be developed before, during or after story creation. It guides creative development, preserves continuity, supports production processes and later provides the source material from which a curated Public Canon may be released.
 
-## 1. Purpose and boundaries
+## 1. Purpose
 
-This specification governs the creation, review and database loading of Private Canon as an independent Studio object. It replaces the earlier assumption that all private continuity material must be loaded through the Wiki process.
+Private Canon exists because the public or Studio Wiki is not sufficient for creative development.
 
-Private Canon may be created or revised without changing story prose, roadmap blocks, episode records, Wiki records or artwork. A Canon task may identify downstream conflicts, but those objects are revised only through their own explicitly approved operations.
+The Wiki is primarily a structured reference and publication object. Private Canon is a working creative object that may contain:
 
-| Included | Handled elsewhere |
-|---|---|
-| Authoritative world and character truths | Episode narrative creation and revision |
-| Proposed creative decisions requiring review | Story and episode SQL loading |
-| Continuity rules, constraints and exceptions | Public Wiki wording and spoiler filtering |
-| Secrets, mysteries and reveal intentions | Artwork generation and asset upload |
-| Character knowledge and mistaken beliefs at a planning level | Audio production and voice instructions |
-| Canon categories, states and importance | Website authentication implementation |
-| Idempotent Supabase Draft sync | Schema migrations unless separately approved |
-| Studio verification and conflict reporting | Automatic rewriting of dependent content |
+- rules of engagement for the story world;
+- character descriptions, traits, motives, boundaries and relationships;
+- world-building rules, history, geography, factions and systems;
+- mysteries, hidden truths and reveal intentions;
+- writing, tone and thematic guidance;
+- visual descriptions and continuity rules;
+- approved or exploratory reference images;
+- image-generation guidance and approved prompt components;
+- production knowledge needed by Story, Artwork, Audio and Review processes;
+- proposed ideas that are still being developed.
 
-## 2. Relationship to other production objects
+Private Canon is independent from Story, Episodes, Roadmap, Wiki and Artwork. A Canon operation may read those objects and identify impacts, but it changes only Canon unless another operation is explicitly approved.
 
-Private Canon is independent but connected to the wider production model.
+## 2. Production model
+
+Private Canon and Story are peer creative objects.
+
+```text
+Story Brief
+     │
+     ├──────────────┐
+     ▼              ▼
+Private Canon  ↔  Story Development
+     │              │
+     └──────┬───────┘
+            ▼
+      Review Pipeline
+            │
+     ┌──────┴───────┐
+     ▼              ▼
+Public Wiki     Public Canon
+```
+
+This is not a strictly linear process.
+
+- Canon may come before Story and provide a framework for development.
+- Story may reveal better ideas and cause Canon to be revised.
+- Canon may be expanded after episodes are drafted to preserve discoveries made during writing.
+- Story, Canon and Wiki may be worked on independently during development.
+- Wiki should normally be developed after relevant Story and Canon material exists.
+- Review is the point at which Story, Canon, Wiki and Artwork are deliberately brought into alignment.
+
+Temporary divergence during drafting is expected. Unresolved divergence at approval or publication is not.
+
+## 3. Relationship to other Studio objects
 
 | Object | Relationship to Private Canon |
 |---|---|
-| Story brief | Establishes the premise, audience, tone, required elements and exclusions that Canon must respect. |
-| Story roadmap | May propose future truths and reveal timing. Confirmed Canon constrains later roadmap development. |
-| Episodes | Establish Canon through dramatized events. Episode evidence may confirm, challenge or supersede a Canon proposal. |
-| Wiki | May derive spoiler-controlled public wording from confirmed Canon. The Wiki never replaces the full private explanation. |
-| Artwork | Uses confirmed visual Canon for character, object and location continuity. Artwork must not create new Canon by accident. |
-| Review Pipeline | Assesses contradictions, weak rules, continuity failures and downstream impacts before Canon is confirmed. |
+| Story brief | Defines the promised experience and initial creative boundaries. Canon may expand the world without contradicting the approved brief. |
+| Story and episodes | Dramatise the audience experience. They may follow existing Canon or generate discoveries that should be added to Canon. |
+| Roadmap | Proposes future development, rules and reveals. Roadmap material may remain provisional until confirmed. |
+| Wiki | Curates structured knowledge for Studio or public reference. It normally follows Story and Canon and must preserve spoiler boundaries. |
+| Artwork | Reads visual Canon, reference images and episode context. Artwork may suggest improvements but must not silently establish new Canon. |
+| Audio | May read pronunciation, voice, atmosphere and performance guidance stored in Canon. |
+| Review Pipeline | Compares the independently developed objects and records contradictions, omissions and required alignment work. |
+| Public Pipeline | Selects approved, spoiler-safe Canon material for release as Public Canon. |
 
-### 2.1 Independence rule
-
-A Private Canon operation writes only Private Canon unless the approved scope explicitly names another object.
+### 3.1 Independence rule
 
 Use:
 
-> **Audio Platform Private Canon Development — [STORY] — [SCOPE] — do not change episodes, roadmap, Wiki or artwork.**
+> **Audio Platform Private Canon Development — [STORY] — [SCOPE] — do not change Story, Episodes, Roadmap, Wiki or Artwork.**
 
 For database loading use:
 
-> **Audio Platform Private Canon Sync — [STORY] — [CANON SCOPE] — Supabase Draft — do not update Wiki, episodes, roadmap or artwork.**
+> **Audio Platform Private Canon Sync — [STORY] — [CANON SCOPE] — Supabase Draft — do not update Story, Episodes, Roadmap, Wiki or Artwork.**
 
-A combined operation is allowed only when every content type and intended write action is explicitly named.
+A combined operation is allowed only when each object and write action is explicitly named.
 
-## 3. Canon content model
+## 4. Canon knowledge model
 
-A Canon record is one stable, reviewable statement. Do not combine several unrelated truths into a single record merely because they share a category.
+Private Canon should support multiple forms of Studio knowledge rather than only immutable rules.
 
-### 3.1 Required record fields
-
-| Field | Requirement |
+| Knowledge domain | Examples |
 |---|---|
-| `canon_key` | Stable lowercase hyphenated identity unique within the story. It must describe the rule rather than its current wording. |
-| `title` | Short Studio-facing name that allows reviewers to scan the Canon browser. |
-| `rule_category` | Database-driven category slug. Unknown, blank or inactive values remain stored and display under **Other**. |
-| `rule_text` | Complete private statement of the truth, proposal, constraint or rule. It may contain spoilers. |
-| `importance` | Production significance, normally `normal`, with higher or lower values only where supported by the current database contract. |
-| `canon_state` | `proposed`, `confirmed`, `superseded` or `retired`. |
-| `content_status` | Normally `draft` during development. Archiving is an explicit action. |
-| `spoiler_level` | Internal sensitivity indicator from 0 upward using the current project convention. It does not make the record public. |
-| `is_public` | Always `false`; enforced by the database. |
+| Story rules | Magic limits, technology, geography, politics, timelines, costs and exceptions |
+| Characters | Appearance, age range, personality, traits, motivations, relationships, voice and behavioural boundaries |
+| World building | History, factions, cultures, locations, objects, institutions and terminology |
+| Narrative guidance | Themes, tone, pacing principles, recurring motifs and things to avoid |
+| Mysteries and reveals | Objective truth, false assumptions, secrets, intended reveal timing and character knowledge |
+| Visual Canon | Approved appearance, clothing, palettes, lighting, environments, symbols and composition guidance |
+| Reference images | Approved portraits, expression studies, clothing references, location references and visual variants |
+| Production guidance | Image prompts, pronunciation, audio direction and reusable task instructions |
+| Development ideas | Proposed concepts that may guide exploration without yet becoming settled truth |
 
-### 3.2 Optional authoring information
+A Canon record should be as focused and independently reviewable as practical. Related records may be grouped through categories and entity links rather than merged into one oversized rule.
 
-The current sync procedure stores the required fields above. A preparation document may additionally record the following for review, even where those details are not yet separate database columns:
+## 5. Canon states
 
-- source or evidence;
-- affected characters, locations, factions, objects or episodes;
-- earliest intended reveal range;
-- known exceptions;
-- rationale for the rule;
-- contradiction notes;
-- downstream objects requiring review;
-- replacement `canon_key` when a record is superseded.
-
-These authoring details must not be silently discarded. Where the current schema cannot store them, retain them in the approved Canon preparation package or create a separately reviewed schema enhancement.
-
-## 4. Canon states and decision authority
+Private Canon uses only two creative states:
 
 | State | Meaning | Production effect |
 |---|---|---|
-| `proposed` | A creative possibility under consideration. | May guide discussion but must not be treated as settled truth. |
-| `confirmed` | Approved authoritative truth. | Future story, episode, Wiki and artwork work must respect it. |
-| `superseded` | Replaced by a newer approved decision. | Retained for history but excluded from the normal Studio browser. |
-| `retired` | Deliberately removed from active Canon without a direct replacement. | Retained for audit/history and excluded from the normal Studio browser. |
+| `proposed` | An idea, rule, description or reference still under development. | May guide exploration but must not be treated as settled truth. |
+| `confirmed` | Approved Studio knowledge for the current working version. | Story, Wiki, Artwork and other production work should respect it unless a new review deliberately changes it. |
 
-Only `proposed` and `confirmed` records appear in the normal Studio view.
+### 5.1 Revision rule
 
-### 4.1 State transition rules
+Do not create a formal state machine for superseding or retiring Canon.
 
-- New uncertain ideas begin as `proposed`.
-- A proposal becomes `confirmed` only after creative review establishes that it fits the story brief, roadmap and existing evidence.
-- Do not overwrite a materially different confirmed truth while pretending it is the same decision.
-- When a new rule replaces an old one, create or confirm the replacement and mark the old record `superseded`.
-- Use `retired` only where the old idea is intentionally removed and no replacement is required.
-- State changes must be explicit in the approved sync scope.
+When Canon changes:
 
-## 5. Canon categories
+- retain the same `canon_key` when the underlying subject remains the same;
+- replace the wording, description or reference with the newly approved version;
+- change `proposed` to `confirmed` when approved;
+- archive or deliberately delete material that is no longer required;
+- use GitHub history, database timestamps and approved review records for change history.
 
-Private Canon categories are controlled by `public.private_canon_category_types`.
+A materially different concept may use a new `canon_key`, but the old record does not require a special `superseded` state.
 
-The category table contains:
+## 6. Canon record requirements
 
-- `slug` — stable lowercase category identity;
-- `name` — Studio display name;
-- `sort_order` — database-controlled display order;
-- `is_active` — whether the category is recognised for normal grouping.
+### 6.1 Required text record fields
 
-### 5.1 Category behaviour
-
-- Use an existing active category when it accurately describes the record.
-- Do not force a rule into an unsuitable category merely to avoid **Other**.
-- A blank, misspelled, inactive or unrecognised category is retained and displayed under **Other** rather than disappearing.
-- New recognised category rows and new Canon records appear in Studio without a website code change.
-- Correcting a category value updates grouping on the next read; it does not require recreating the Canon record.
-- Category maintenance is a separate database administration action and must not be hidden inside an ordinary story Canon seed unless explicitly approved.
-
-### 5.2 Recommended category design
-
-Categories should describe reusable knowledge domains rather than a single record. Typical domains include:
-
-- character;
-- continuity;
-- culture;
-- dreams;
-- ethics;
-- governance;
-- history;
-- map or geography;
-- routes or travel;
-- science;
-- season;
-- setting;
-- storytelling constraints;
-- technology;
-- theme.
-
-Story-specific categories are permitted when they represent a recurring body of Canon, but one-off names should normally remain record titles rather than category types.
-
-## 6. Creation guide
-
-### 6.1 Establish the scope
-
-Before writing Canon, identify:
-
-1. the exact story slug;
-2. the source material being reviewed;
-3. the Canon domains included;
-4. whether records are new, revised, confirmed, superseded or retired;
-5. which objects are read-only context;
-6. whether the task ends at discussion, produces an approved Canon package, or includes Supabase Draft sync.
-
-A scope such as “review all Canon” is too broad unless the story and source range are also defined.
-
-### 6.2 Read the controlling sources
-
-Use the latest approved versions of:
-
-1. the story brief and Story Creation Specification outputs;
-2. existing confirmed and proposed Private Canon;
-3. relevant roadmap planning blocks;
-4. completed or approved episode prose;
-5. existing Wiki entries where they provide evidence of what has already been disclosed;
-6. approved visual references where appearance or location continuity is involved.
-
-Treat source types differently:
-
-- the story brief controls the promised experience;
-- confirmed Canon controls established truth;
-- completed episodes provide dramatic evidence;
-- roadmap blocks describe intended future development and may remain provisional;
-- public Wiki content describes reader knowledge and may be incomplete by design.
-
-### 6.3 Extract candidate Canon
-
-Create candidate records for facts that future work must remember or respect, including:
-
-- world rules and their costs;
-- character identity, motives, boundaries and long-term constraints;
-- historical events and causal relationships;
-- faction goals, powers and limitations;
-- object capabilities and restrictions;
-- geography, routes, travel limits and inaccessible places;
-- mystery answers, false assumptions and reveal intentions;
-- character knowledge, secrets and mistaken beliefs;
-- visual continuity requirements;
-- thematic or storytelling constraints that must remain consistent;
-- explicit exceptions to broader rules.
-
-Do not create Canon for disposable prose details unless losing them would create a continuity problem.
-
-### 6.4 Write atomic rules
-
-Each record should answer one clear question. A useful rule normally contains:
-
-- the subject;
-- what is true or proposed;
-- the relevant limit, cost or exception;
-- the consequence for future writing.
-
-Prefer:
-
-> Mara can perceive dream-routes only while asleep; waking sketches preserve fragments but cannot reproduce the full route.
-
-Avoid:
-
-> Dreams, maps, Mara’s childhood, the old city and several future reveals are all connected.
-
-The second statement is too broad to review, update or supersede safely.
-
-### 6.5 Assign stable keys
-
-A `canon_key` must remain stable when wording changes.
-
-Good examples:
-
-- `mara-dream-route-perception`
-- `silver-bloodline-three-forms`
-- `old-city-official-map-exclusion`
-- `cedric-duty-before-romance`
-
-Avoid:
-
-- sequence numbers with no meaning;
-- titles containing temporary episode numbers;
-- keys based on the current wording of a reveal;
-- duplicate keys with suffixes such as `-new` or `-final`.
-
-When a concept is materially replaced, use a new key and supersede the old record rather than mutating its identity beyond recognition.
-
-### 6.6 Review candidate records
-
-For every proposed or revised record, check:
-
-| Review area | Question |
+| Field | Requirement |
 |---|---|
-| Brief alignment | Does it support the approved premise, tone, audience and exclusions? |
-| Internal consistency | Does it conflict with another confirmed Canon record? |
-| Episode evidence | Has an approved episode already established or contradicted it? |
-| Roadmap impact | Does it preserve the planned arc and reveal sequence? |
-| Character knowledge | Does it distinguish objective truth from what a character believes? |
-| Rule completeness | Are costs, limits and exceptions clear enough to guide future writing? |
-| Reveal control | Is the truth private even when part of it is already public? |
-| Visual continuity | Would artwork created from this rule remain consistent? |
-| Atomicity | Can the record be changed independently without rewriting unrelated truths? |
-| Downstream impact | Which episodes, roadmap blocks, Wiki entries or images require separate review? |
+| `canon_key` | Stable lowercase hyphenated identity unique within the story. It describes the subject rather than temporary wording. |
+| `title` | Short Studio-facing name. |
+| `rule_category` | Database-driven category slug. Blank, inactive or unknown values display under **Other**. |
+| `rule_text` | Complete private statement, description, guidance or proposal. It may contain spoilers. |
+| `importance` | Production significance using the current database contract. |
+| `canon_state` | `proposed` or `confirmed`. |
+| `content_status` | Normally `draft` during development. Archiving is explicit. |
+| `spoiler_level` | Internal sensitivity indicator. It does not make the record public. |
+| `is_public` | `false` for Private Canon. |
 
-### 6.7 Approve the Canon package
+### 6.2 Recommended authoring information
 
-An approved preparation package should contain:
+Where supported directly or through related records, retain:
 
-- story slug and reviewed source range;
+- source or evidence;
+- affected characters, locations, factions, objects or episodes;
+- intended reveal range;
+- known limits and exceptions;
+- rationale;
+- contradiction notes;
+- downstream objects requiring review;
+- associated visual references;
+- approved prompt guidance;
+- asset approval status.
+
+Do not silently discard useful preparation information merely because the current table does not yet contain a dedicated column.
+
+## 7. Visual Canon and reference images
+
+Images are first-class production knowledge when they establish or clarify continuity.
+
+Private Canon may hold or link to:
+
+- approved character portraits;
+- visual variants such as Dream, Working or Exploring versions of a character;
+- expressions and emotional range;
+- clothing and equipment references;
+- age, build, hair, facial and distinguishing-feature guidance;
+- approved locations, objects, symbols and maps;
+- palette, lighting, atmosphere and material references;
+- rejected visual directions that must not be repeated;
+- approved prompt fragments or art-direction notes.
+
+### 7.1 Image Review retrieval order
+
+Before generating or reviewing episode artwork, the Image Review process should read:
+
+1. relevant confirmed visual Canon;
+2. approved reference images and visual profiles;
+3. the exact episode or roadmap context;
+4. character knowledge and reveal restrictions;
+5. existing approved artwork where continuity matters.
+
+Proposed visual Canon may be used for low-resolution exploration, but it must be identified as proposed and must not automatically replace approved references.
+
+Artwork does not become Canon merely because it was generated. A visual decision becomes confirmed Canon only through an explicit Canon or Artwork approval action.
+
+## 8. Canon creation process
+
+### 8.1 Establish scope
+
+Identify:
+
+1. story slug;
+2. Canon domains included;
+3. source material being read;
+4. whether the task is discussion, preparation, review or Supabase sync;
+5. which other objects are read-only context;
+6. whether visual references are included.
+
+### 8.2 Read relevant sources
+
+Read only the material required for the approved scope:
+
+- story brief;
+- existing proposed and confirmed Canon;
+- relevant roadmap blocks;
+- completed or approved story prose;
+- Wiki entries where they show reader knowledge;
+- approved artwork and visual profiles;
+- review findings affecting the Canon scope.
+
+Treat each source appropriately:
+
+- the brief controls the promised experience;
+- confirmed Canon records the current Studio understanding;
+- proposed Canon supports exploration;
+- story prose records what the audience experiences;
+- roadmap records planned development;
+- Wiki records curated knowledge and may be intentionally incomplete;
+- artwork is evidence of an approved visual decision only when explicitly approved.
+
+### 8.3 Create or revise Canon
+
+Create Canon for knowledge that future work must remember, apply or test. Examples include:
+
+- character identity and behavioural boundaries;
+- world rules and consequences;
+- relationships and motivations;
+- visual continuity;
+- mysteries and reveal plans;
+- writing and thematic constraints;
+- reusable image or audio guidance.
+
+Avoid storing disposable prose detail unless forgetting it would create a continuity or production problem.
+
+### 8.4 Review the package
+
+Check each record for:
+
+- fit with the story brief;
+- consistency with confirmed Canon;
+- support or contradiction in Story and Episodes;
+- roadmap impact;
+- distinction between objective truth and character belief;
+- visual continuity;
+- spoiler and reveal control;
+- usefulness to future production;
+- downstream objects requiring separate review.
+
+### 8.5 Approve and sync
+
+An approved Canon package should identify:
+
+- story slug and scope;
 - new records;
 - revised records;
-- state transitions;
-- explicit superseded or retired keys;
+- proposed-to-confirmed changes;
+- records to archive or delete;
+- linked or approved visual references;
 - conflict findings;
 - downstream review list;
-- confirmation that no unrelated content is to be changed;
-- approval to perform Supabase Draft sync, where applicable.
+- approval to perform Supabase Draft sync where applicable.
 
-## 7. Conflict and revision process
+## 9. Independent development and alignment
 
-Canon revision must preserve traceability.
+A Canon operation may discover that another object is inconsistent, but it must not automatically rewrite that object.
 
-### 7.1 Types of conflict
+Possible findings include:
 
-| Conflict | Example | Required response |
-|---|---|---|
-| Canon-to-Canon | Two confirmed rules describe incompatible limits. | Decide which rule remains authoritative; supersede or revise explicitly. |
-| Canon-to-episode | An episode shows a character using a prohibited ability. | Decide whether the episode or Canon is wrong; do not silently change both. |
-| Canon-to-roadmap | A future arc depends on a rule that has been retired. | Flag the affected roadmap block for separate revision. |
-| Canon-to-Wiki | Public wording states something no longer true. | Prepare a separate spoiler-safe Wiki refresh. |
-| Canon-to-artwork | Approved imagery violates appearance or object constraints. | Flag the asset for Artwork Review. |
-| Truth-to-belief | A character’s mistaken belief is recorded as objective truth. | Separate the world truth from character knowledge. |
+| Finding | Response |
+|---|---|
+| Canon and Story disagree | Decide during Creative Development or Review whether Story or Canon should change. |
+| Canon and Roadmap disagree | Flag the affected planning block for separate revision. |
+| Canon and Wiki disagree | Prepare a separate spoiler-safe Wiki update after the underlying truth is resolved. |
+| Canon and Artwork disagree | Send the asset or visual rule to Image Review. |
+| Proposed Canon conflicts with confirmed Canon | Keep it proposed until the creative decision is resolved. |
+| Character belief is recorded as truth | Separate objective Canon from character knowledge. |
 
-### 7.2 Downstream impact rule
+During drafting, temporary inconsistency may be recorded as an open development item. Before approval or publication, relevant inconsistencies must be resolved or explicitly accepted.
 
-A Canon update may produce an impact report, but it must not automatically rewrite:
+## 10. Review Pipeline alignment
 
-- story prose;
-- episodes;
-- roadmap planning blocks;
-- Wiki entries or sections;
-- artwork prompts or files;
-- audio or publication records.
+The Review Pipeline does not assume that Canon, Story and Wiki were created in a fixed order.
 
-Each affected object returns to its own development, revision or sync operation.
+It assesses whether the current Review Candidate is aligned enough for its intended decision.
 
-## 8. Current Supabase data contract
+Review should ask:
 
-The current independent Canon object is stored in `public.story_canon_rules`.
+- Does the Story deliver the brief and respect confirmed Canon?
+- Has Story development created new truths that should be captured in Canon?
+- Does confirmed Canon accurately describe the current Story rather than an abandoned earlier concept?
+- Does the Wiki reflect the approved Story and Canon without exposing restricted knowledge?
+- Does Artwork follow confirmed visual Canon and the actual episode context?
+- Are proposed ideas clearly separated from confirmed knowledge?
 
-The independent implementation adds and enforces:
+Corrections return to the independent process that owns the affected object.
 
-- `canon_key text not null`;
-- `title text not null`;
-- `canon_state text not null`;
-- unique identity on `(story_id, canon_key)`;
-- allowed states of `proposed`, `confirmed`, `superseded` and `retired`;
-- `is_public = false` as a database constraint;
-- removal of anonymous direct table selection.
+## 11. Private Canon and Public Canon
 
-The current write procedure is:
+Private Canon is private during development, not necessarily private forever.
+
+Public Canon is a curated, approved publication derived from the Studio Knowledge Base. It may be released with or after a public story to deepen the audience experience.
+
+Possible Public Canon material includes:
+
+- character guides;
+- approved character and location artwork;
+- maps and timelines;
+- world history;
+- factions, systems and terminology;
+- spoiler-safe or post-story explanations of world rules;
+- behind-the-story material approved for release.
+
+Public Canon must not automatically expose:
+
+- unresolved proposals;
+- rejected ideas;
+- private prompts or provider instructions;
+- internal review notes;
+- SQI diagnostics;
+- unreleased spoilers;
+- private production or security information.
+
+Publication is always a separate explicit operation. Setting a story to public does not automatically publish its Private Canon.
+
+## 12. Current Supabase data contract
+
+The current text Canon object is stored in `public.story_canon_rules` and is written through:
 
 ```sql
 public.sync_private_canon(
@@ -326,237 +343,69 @@ public.sync_private_canon(
 )
 ```
 
-It resolves the story by slug and performs an idempotent upsert on `(story_id, canon_key)`. Execution is restricted to `service_role`.
+The approved documentation contract uses `proposed` and `confirmed` only. The existing database may temporarily continue accepting legacy values until a separately approved migration simplifies the constraint and existing data. New Canon loads must not create new `superseded` or `retired` records.
 
-## 9. Data loading process
+Visual references currently use the existing production-knowledge and media-asset structures where applicable. A future schema enhancement may create stronger first-class Canon-to-asset relationships, but that database change is outside this document update.
 
-### 9.1 Preflight
+## 13. Data loading process
 
-Before writing any record:
+### 13.1 Pre-flight validation
 
-1. Confirm the target story exists exactly once in `public.stories` for the supplied slug.
-2. Read existing Canon for the story and compare incoming keys.
-3. Confirm every incoming state is valid.
-4. Confirm every incoming key is lowercase, stable and unique within the package.
-5. Confirm `is_public` will remain false.
-6. Confirm the sync scope names every record to be added or changed.
-7. Confirm state transitions are deliberate.
-8. Confirm no Wiki, episode, roadmap, artwork or user data write is included.
+Before sync:
 
-If the story does not exist, stop. Story SQL must run first.
+1. resolve the story slug;
+2. confirm the Canon scope and approval;
+3. validate unique `canon_key` values within the package;
+4. accept only `proposed` or `confirmed` for new writes;
+5. validate required fields;
+6. confirm `is_public` remains false;
+7. identify visual assets or links requiring separate loading;
+8. identify archive or delete actions explicitly.
 
-### 9.2 Recommended authoring format
+### 13.2 Idempotent loading
 
-For more than a few records, prepare typed JSON before calling the sync procedure.
+Load each text record through `sync_private_canon` using its stable `canon_key`.
 
-```json
-[
-  {
-    "canon_key": "mara-dream-route-perception",
-    "title": "Dream-route perception",
-    "rule_category": "dreams",
-    "rule_text": "Mara can perceive complete dream-routes only while asleep. Waking sketches preserve fragments and may contain errors.",
-    "importance": "high",
-    "canon_state": "confirmed",
-    "content_status": "draft",
-    "spoiler_level": 2
-  }
-]
-```
+Expected behaviour:
 
-The JSON package is an authoring and review format. The current approved database procedure accepts one Canon record per call unless a separately reviewed bulk procedure is introduced.
+- new key: insert;
+- existing key: update the current record;
+- repeated identical run: no duplicate;
+- revised wording: replace the current value;
+- proposed approval: update state to `confirmed`;
+- archive or deletion: separate explicit action.
 
-### 9.3 Sync execution
+### 13.3 Verification
 
-For each approved record, call `public.sync_private_canon` using the exact story slug and stable key.
+Verify:
 
-```sql
-select public.sync_private_canon(
-    p_story_slug     => 'the-cartographers-dream',
-    p_canon_key      => 'mara-dream-route-perception',
-    p_title          => 'Dream-route perception',
-    p_rule_category  => 'dreams',
-    p_rule_text      => 'Mara can perceive complete dream-routes only while asleep. Waking sketches preserve fragments and may contain errors.',
-    p_importance     => 'high',
-    p_canon_state    => 'confirmed',
-    p_content_status => 'draft',
-    p_spoiler_level  => 2
-);
-```
+- expected record count;
+- no duplicate `(story_id, canon_key)` values;
+- only approved states are used for current records;
+- Studio categories display correctly, including **Other** fallback;
+- visual references resolve where included;
+- Private Canon is not exposed through public anonymous access;
+- no Story, Episode, Roadmap, Wiki or Artwork records changed outside scope.
 
-The procedure:
+## 14. Acceptance checklist
 
-1. resolves `story_id` from the supplied slug;
-2. raises an exception when the story is missing;
-3. inserts a new record or updates the existing `(story_id, canon_key)` record;
-4. updates only the Canon fields supplied by the procedure;
-5. forces `is_public = false`;
-6. updates `updated_at`;
-7. returns the Canon record UUID.
+A Canon operation is complete when:
 
-### 9.4 Idempotency and update behaviour
+- the scope is explicit;
+- Canon is treated as an independent Studio Knowledge Base;
+- Story and Canon are allowed to influence each other without automatic cross-writing;
+- records are classified as proposed or confirmed;
+- changes replace current records rather than creating unnecessary lifecycle states;
+- visual continuity and reference images are included when relevant;
+- Image Review can retrieve relevant confirmed visual Canon;
+- Wiki remains a separate normally downstream curation process;
+- Review alignment requirements are recorded;
+- Public Canon remains a separate curated publication action;
+- Supabase sync is idempotent and verified;
+- public/private controls remain intact.
 
-| Rule | Required behaviour |
-|---|---|
-| Stable identity | Reruns target `(story_id, canon_key)`. |
-| Approved content | Title, category, rule text, importance, state, content status and spoiler level may be updated. |
-| Private enforcement | Every insert and update sets `is_public = false`. |
-| No blanket deletion | Do not delete all Canon before reinserting. |
-| No absent-row retirement | A key missing from the current package is not automatically superseded, retired or archived. |
-| Explicit lifecycle change | Supersede, retire or archive only named records. |
-| No schema mutation | Ordinary Canon sync does not create tables, columns, policies, constraints or functions. |
-| No cross-object mutation | Do not update stories, episodes, roadmap, Wiki, artwork, audio or listener progress. |
+## 15. Definition of Done
 
-### 9.5 Batch safety
+Private Canon is done for the approved scope when the Studio has a clear, usable and verified body of creative knowledge that can guide Story, Artwork, Audio, Wiki and Review work without forcing those objects to be edited together.
 
-The current procedure performs one upsert per call. For a multi-record package:
-
-- validate the full package before the first write;
-- execute through a controlled server-side or administrative process using `service_role`;
-- capture each returned UUID and any failure;
-- do not claim the batch is complete if only part of it was executed;
-- where atomic all-or-nothing loading is required, use a reviewed transaction wrapper or approved bulk sync function rather than relying on independent calls;
-- never expose the service-role key in a browser, repository file, prompt output or client-side code.
-
-## 10. Verification
-
-### 10.1 Database verification
-
-After sync, verify:
-
-- the story slug resolves once;
-- every approved `canon_key` exists once for that story;
-- inserted and updated counts match the approved scope;
-- title, category, rule text, importance, state, status and spoiler level match the package;
-- every record has `is_public = false`;
-- only allowed Canon states exist;
-- rerunning the same package creates no duplicate logical records;
-- no unnamed record was superseded, retired, archived or deleted;
-- Wiki, episodes, roadmap, artwork and user data were unchanged.
-
-Example read-only verification:
-
-```sql
-select
-    s.slug,
-    c.canon_key,
-    c.title,
-    c.rule_category,
-    c.importance,
-    c.canon_state,
-    c.content_status,
-    c.spoiler_level,
-    c.is_public,
-    c.updated_at
-from public.story_canon_rules c
-join public.stories s on s.id = c.story_id
-where s.slug = 'the-cartographers-dream'
-order by c.rule_category, c.title, c.canon_key;
-```
-
-Duplicate check:
-
-```sql
-select c.story_id, c.canon_key, count(*)
-from public.story_canon_rules c
-join public.stories s on s.id = c.story_id
-where s.slug = 'the-cartographers-dream'
-group by c.story_id, c.canon_key
-having count(*) > 1;
-```
-
-### 10.2 Studio verification
-
-Verify the independent Studio read:
-
-- Private Canon appears beside Wiki for the story;
-- the route opens `/stories/[slug]/private-canon` only while Studio is enabled;
-- `proposed` and `confirmed` records display with visible state badges;
-- `superseded`, `retired` and archived records are absent from the normal browser;
-- active recognised categories use database labels and sort order;
-- blank, inactive and unrecognised categories appear under **Other**;
-- all categories begin closed;
-- opening one category closes the previously open category under the Studio Workflow interaction pattern;
-- the public Wiki API returns no Private Canon records.
-
-## 11. Visibility and security
-
-Private Canon is always Studio-only in the website interface.
-
-- It is never returned through the public Wiki procedure.
-- It is never shown while Studio is off.
-- `is_public` must remain false.
-- Published story or episode status never makes Private Canon public.
-- Direct table selection is not granted to the anonymous role.
-- Write access to `public.sync_private_canon` is restricted to `service_role`.
-
-### 11.1 Temporary Studio-toggle limitation
-
-Until Studio authentication is implemented, `public.get_studio_private_canon(story_slug, studio_mode)` may be executed by the anonymous website role and returns records only when `studio_mode = true`.
-
-This is an approved temporary review mechanism, not a true authentication boundary. A caller invoking the procedure directly can supply `true`. Therefore Private Canon must currently be treated as **review-private**, not securely confidential.
-
-Do not store:
-
-- passwords, API keys or credentials;
-- personal or regulated information;
-- legally sensitive confidential material;
-- information whose disclosure would create material harm.
-
-The planned Studio login change must replace the caller-supplied toggle with authenticated, authorised access and remove anonymous execution.
-
-## 12. Wiki refresh relationship
-
-A Wiki refresh is a separate operation. It may read:
-
-- confirmed Private Canon;
-- completed or approved episodes;
-- roadmap information as future planning context;
-- the existing public and Studio Wiki.
-
-It then prepares spoiler-controlled Draft Wiki changes. It never changes Private Canon.
-
-Use:
-
-> **Audio Platform Wiki Refresh — [STORY] — use confirmed Private Canon and [EPISODE/RANGE] — prepare Draft Wiki changes — do not change Private Canon.**
-
-### 12.1 Wiki conversion rules
-
-- Only approved Canon facts should be considered for public wording.
-- Public text must be rewritten for the reader’s current knowledge rather than copied from private rule text.
-- Future outcomes, hidden causes and author instructions remain private.
-- Reveal episodes and spoiler levels belong to the Wiki loading process.
-- A Wiki disagreement does not alter Canon automatically; it becomes a review finding.
-
-## 13. Acceptance checklist
-
-- [ ] The exact story slug and Canon scope are stated.
-- [ ] The source brief and relevant story evidence have been reviewed.
-- [ ] Each Canon record contains one clear truth, proposal or constraint.
-- [ ] Every `canon_key` is stable, lowercase, descriptive and unique within the story.
-- [ ] Categories use database values or deliberately fall under **Other**.
-- [ ] Proposed and confirmed decisions are distinguished.
-- [ ] Superseded and retired records are named explicitly.
-- [ ] Conflicts with existing Canon, episodes, roadmap, Wiki or artwork are recorded.
-- [ ] Downstream changes are listed but not silently performed.
-- [ ] The story exists before sync begins.
-- [ ] Sync uses `public.sync_private_canon` through an authorised service-role process.
-- [ ] No secret or service-role credential appears in the SQL, repository or client.
-- [ ] Every loaded record remains `is_public = false`.
-- [ ] The rerun creates no duplicate `(story_id, canon_key)` records.
-- [ ] Studio grouping, state filtering and **Other** fallback work correctly.
-- [ ] The public Wiki returns no Private Canon.
-- [ ] No Wiki, episode, roadmap, artwork, audio or user data changed unless separately approved.
-
-## 14. Definition of done
-
-A Private Canon Creation and Data Loading task is complete when:
-
-1. its story, sources and scope are explicit;
-2. candidate rules have been written atomically and reviewed against the brief, existing Canon and story evidence;
-3. proposed, confirmed, superseded and retired decisions are unambiguous;
-4. downstream conflicts are documented without silently rewriting other production objects;
-5. approved records have been synced independently and idempotently to Supabase Draft using stable `(story_id, canon_key)` identities;
-6. every record remains private;
-7. database and Studio verification prove the intended result; and
-8. a rerun produces no duplicate logical records or unrelated changes.
+It remains open to revision throughout development. Review seeks alignment, not premature immutability. Publication may later transform an approved subset into Public Canon.
