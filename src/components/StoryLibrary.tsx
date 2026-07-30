@@ -135,7 +135,6 @@ export default function StoryLibrary({ stories, initialStudioMode = false }: { s
   const handleSelect = (slug: string) => {
     try {
       window.localStorage.setItem(LAST_SELECTED_KEY, slug);
-      setLastSelectedSlug(slug);
       setProgressMap((current) => {
         if (current[slug]) return current;
         const next = { ...current, [slug]: { episode: "Episode 4", percentage: 61 } };
