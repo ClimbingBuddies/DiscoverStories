@@ -178,17 +178,8 @@ export default function PrivateCanonObjectBrowser({
               {selectedRecord ? selected.category.name : "All categories"}
             </button>
 
-            <div className={selectedRecord ? "hidden sm:flex sm:items-end sm:justify-between sm:gap-4" : "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"}>
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Private Canon category</p>
-                <h2 className="mt-1 text-2xl font-semibold text-amber-300 sm:text-3xl">
-                  {selected.category.name}
-                </h2>
-                <p className="mt-1 text-sm text-zinc-500 sm:hidden">
-                  {selected.records.length} {selected.records.length === 1 ? "record" : "records"}
-                </p>
-              </div>
-              <label className="w-full sm:max-w-sm">
+            <div className={selectedRecord ? "hidden sm:flex sm:justify-end" : "flex"}>
+              <label className="w-full sm:ml-auto sm:max-w-sm">
                 <span className="sr-only">Search {selected.category.name}</span>
                 <input
                   type="search"
@@ -205,8 +196,13 @@ export default function PrivateCanonObjectBrowser({
             <section className="p-5 sm:hidden">
               <RecordDetails record={selectedRecord} />
             </section>
-          ) : (
-            <div className="grid gap-3 p-4 sm:mt-6 sm:grid-cols-2 sm:gap-4 sm:p-0">
+          ) : null}
+
+          <div
+            className={`grid gap-3 p-4 sm:mt-6 sm:grid-cols-2 sm:gap-4 sm:p-0 ${
+              selectedRecord ? "hidden sm:grid" : ""
+            }`}
+          >
               {visibleRecords.map((record) => (
                 <section key={record.id} className="hidden rounded-xl border border-zinc-800 bg-zinc-950/70 p-6 sm:block">
                   <RecordDetails record={record} />
@@ -232,8 +228,7 @@ export default function PrivateCanonObjectBrowser({
                   </span>
                 </button>
               ))}
-            </div>
-          )}
+          </div>
 
           {!selectedRecord && visibleRecords.length === 0 ? (
             <p className="m-4 rounded-xl border border-zinc-800 bg-zinc-950/70 p-5 text-sm text-zinc-400 sm:m-0 sm:mt-6">
