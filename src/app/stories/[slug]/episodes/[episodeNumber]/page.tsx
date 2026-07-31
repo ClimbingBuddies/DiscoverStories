@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import TextReaderButton from "@/components/TextReaderButton";
+import EducationReader from "@/components/EducationReader";
 import QuickPlayPlayer from "@/components/QuickPlay/QuickPlayPlayer";
+import TextReaderButton from "@/components/TextReaderButton";
+import { isEducationDocument } from "@/lib/education-content";
 import { isStudioModeEnabled } from "@/lib/studio-mode";
 
 type Props = {
@@ -13,40 +15,26 @@ export default async function EpisodeReadPage({ params }: Props) {
   const studioModeEnabled = await isStudioModeEnabled();
   const { slug, episodeNumber } = await params;
   const episodeIndex = Number(episodeNumber);
-  if (!Number.isInteger(episodeIndex) || episodeIndex <= 0) {
-    notFound();
-  }
+  if (!Number.isInteger(episodeIndex) || episodeIndex <= 0) notFound();
 
   let storyQuery = supabase
     .from("stories")
     .select("id, slug, title")
     .eq("slug", slug);
-
-  if (!studioModeEnabled) {
-    storyQuery = storyQuery.eq("content_status", "published");
-  }
+  if (!studioModeEnabled) storyQuery = storyQuery.eq("content_status", "published");
 
   const { data: story } = await storyQuery.single();
-
-  if (!story) {
-    notFound();
-  }
+  if (!story) notFound();
 
   let episodeQuery = supabase
     .from("episodes")
-    .select("id, episode_number, title, summary, script_text, audio_url")
+    .select("id, episode_number, title, summary, script_text, audio_url, reader_content_json")
     .eq("story_id", story.id)
     .eq("episode_number", episodeIndex);
-
-  if (!studioModeEnabled) {
-    episodeQuery = episodeQuery.eq("episode_status", "published");
-  }
+  if (!studioModeEnabled) episodeQuery = episodeQuery.eq("episode_status", "published");
 
   const { data: episode, error } = await episodeQuery.single();
-
-  if (!episode || error) {
-    notFound();
-  }
+  if (!episode || error) notFound();
 
   let nextEpisodeQuery = supabase
     .from("episodes")
@@ -55,24 +43,21 @@ export default async function EpisodeReadPage({ params }: Props) {
     .gt("episode_number", episodeIndex)
     .order("episode_number", { ascending: true })
     .limit(1);
-
-  if (!studioModeEnabled) {
-    nextEpisodeQuery = nextEpisodeQuery.eq("episode_status", "published");
-  }
+  if (!studioModeEnabled) nextEpisodeQuery = nextEpisodeQuery.eq("episode_status", "published");
 
   const { data: nextEpisode } = await nextEpisodeQuery.single();
-
   const nextEpisodeNumber = nextEpisode?.episode_number ?? null;
   const content = episode.script_text?.trim() || episode.summary || "No readable content is available for this episode.";
+  const readerDocument = isEducationDocument(episode.reader_content_json)
+    ? episode.reader_content_json
+    : null;
 
-  // Load quick-play voice pack for this story (server-side)
   const { data: storyVoices } = await supabase
     .from("story_quick_play_voices")
     .select("id, voice_profile_id, display_name, description, is_default, display_order")
     .eq("story_slug", slug)
     .order("display_order", { ascending: true });
 
-  // Load speaker -> voice mapping for this story (server-side)
   const { data: speakerVoices } = await supabase
     .from("story_speaker_voices")
     .select("id, story_id, speaker_tag, voice_profile_id")
@@ -82,23 +67,21 @@ export default async function EpisodeReadPage({ params }: Props) {
   let voiceProfiles = null;
   let voiceRules = null;
   if (storyVoices && storyVoices.length > 0) {
-    const narratorProfileIds = (storyVoices as { voice_profile_id: string }[]).map((v) => v.voice_profile_id);
-    const speakerProfileIds = (speakerVoices as { voice_profile_id: string }[] | null)?.map((v) => v.voice_profile_id) ?? [];
+    const narratorProfileIds = (storyVoices as { voice_profile_id: string }[]).map((voice) => voice.voice_profile_id);
+    const speakerProfileIds = (speakerVoices as { voice_profile_id: string }[] | null)?.map((voice) => voice.voice_profile_id) ?? [];
     const profileIds = [...new Set([...narratorProfileIds, ...speakerProfileIds])];
 
-    const { data: vp } = await supabase
+    const { data: profiles } = await supabase
       .from("voice_profiles")
       .select("id, name, speech_rate, speech_pitch, language_code")
       .in("id", profileIds);
-
-    const { data: vr } = await supabase
+    const { data: rules } = await supabase
       .from("voice_profile_rules")
       .select("id, voice_profile_id, priority, voice_name_contains, provider_contains, language_code, local_only")
       .in("voice_profile_id", profileIds)
       .order("priority", { ascending: true });
-
-    voiceProfiles = vp ?? [];
-    voiceRules = vr ?? [];
+    voiceProfiles = profiles ?? [];
+    voiceRules = rules ?? [];
   }
 
   return (
@@ -107,12 +90,8 @@ export default async function EpisodeReadPage({ params }: Props) {
         <div className="flex flex-col gap-4 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
           <div className="flex flex-col gap-2">
             <p className="text-xs uppercase tracking-[0.24em] text-emerald-400">Read episode</p>
-            <h1 className="text-2xl font-bold leading-tight text-white sm:text-3xl">
-              {story.title}
-            </h1>
-            <p className="text-sm text-zinc-500">
-              Episode {episode.episode_number}: {episode.title}
-            </p>
+            <h1 className="text-2xl font-bold leading-tight text-white sm:text-3xl">{story.title}</h1>
+            <p className="text-sm text-zinc-500">Episode {episode.episode_number}: {episode.title}</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -123,7 +102,14 @@ export default async function EpisodeReadPage({ params }: Props) {
               Back to story
             </Link>
             <TextReaderButton text={content} />
-
+            {studioModeEnabled && readerDocument ? (
+              <Link
+                href={`/studio/education/${story.slug}/episodes/${episode.episode_number}`}
+                className="inline-flex items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/15"
+              >
+                Edit Reader
+              </Link>
+            ) : null}
             {nextEpisodeNumber ? (
               <Link
                 href={`/stories/${story.slug}/episodes/${nextEpisodeNumber}`}
@@ -137,11 +123,7 @@ export default async function EpisodeReadPage({ params }: Props) {
           {episode.audio_url ? (
             <div className="rounded-[1.5rem] border border-emerald-400/20 bg-zinc-950/80 p-4 sm:p-5">
               <p className="mb-3 text-sm font-semibold text-white">Listen to this episode</p>
-              <audio
-                controls
-                src={episode.audio_url}
-                className="w-full rounded-xl"
-              >
+              <audio controls src={episode.audio_url} className="w-full rounded-xl">
                 Your browser does not support the audio element.
               </audio>
             </div>
@@ -166,12 +148,12 @@ export default async function EpisodeReadPage({ params }: Props) {
         </div>
 
         <div className="flex flex-col overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-900">
-          <article className="max-h-[calc(100vh-15rem)] overflow-y-auto p-6 sm:p-8">
-            <div className="prose prose-invert max-w-none space-y-6 text-zinc-200">
-              <div className="whitespace-pre-wrap text-base leading-7">
-                {content}
-              </div>
-            </div>
+          <article className="max-h-[calc(100vh-15rem)] overflow-y-auto">
+            {readerDocument ? (
+              <EducationReader document={readerDocument} />
+            ) : (
+              <div className="whitespace-pre-wrap p-6 text-base leading-7 text-zinc-200 sm:p-8">{content}</div>
+            )}
           </article>
         </div>
       </div>
