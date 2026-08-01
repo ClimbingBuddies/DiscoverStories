@@ -16,32 +16,32 @@ type Stage = {
 const stages: Stage[] = [
   {
     number: 1,
-    label: "Initial Draft",
+    label: "Canon & Concept Draft",
     eyebrow: "Stage 1",
-    title: "Initial Draft",
-    status: "Working material",
+    title: "Canon and Concept Draft",
+    status: "Independent foundations",
     introduction:
-      "Create the coherent starting package that gives Creative Development something substantial to improve.",
+      "Begin with Private Canon, the Concept Draft, or both. Canon may be created and synced before any Story, Episode or Wiki record exists.",
     cards: [
       {
-        title: "Story foundation",
-        text: "Premise, audience, dramatic question and stable story identity.",
+        title: "Create Canon first",
+        text: "Establish the independent Canon workspace, then add proposed or confirmed world, character, continuity, visual and production knowledge.",
       },
       {
-        title: "Opening material",
-        text: "Episodes 1–10 at the agreed initial-draft depth.",
+        title: "Create the Concept Draft",
+        text: "Develop the story foundation, Episodes 1–10 and their initial images when the creative direction is ready.",
       },
       {
-        title: "Long-range plan",
-        text: "Roadmap blocks for Episodes 11–100.",
+        title: "Plan Episodes 11–100",
+        text: "Store the long-range plan in roadmap blocks without turning planned ranges into playable episodes.",
       },
       {
-        title: "Creative foundations",
-        text: "Characters, world, art direction and initial canon.",
+        title: "Consult Canon for artwork",
+        text: "Artwork reads relevant confirmed Canon, approved visual identity and the exact episode context. It never silently establishes new Canon.",
       },
     ],
     exitGate:
-      "Initial package is complete enough for deliberate development.",
+      "The selected Canon and Concept Draft foundations are coherent enough for deliberate development.",
   },
   {
     number: 2,
@@ -50,27 +50,27 @@ const stages: Stage[] = [
     title: "Creative Development",
     status: "Repeatable cycle",
     introduction:
-      "Improve selected material through focused, repeatable creative operations without automatically changing the review version.",
+      "Develop Story, Private Canon, Wiki and Artwork as separately owned objects. Each may read the others, but no operation silently rewrites another object.",
     cards: [
       {
-        title: "Explore and discuss",
-        text: "Test ideas, alternatives, story problems and character choices.",
+        title: "Explore and assess",
+        text: "Test ideas, alternatives and story problems, then run a targeted Story Quality Index diagnostic when useful.",
       },
       {
-        title: "Assess quality",
-        text: "Run a targeted Story Quality Index diagnostic.",
+        title: "Develop the selected object",
+        text: "Expand or revise only the approved Story, episode, roadmap, Canon, Wiki or artwork scope.",
       },
       {
-        title: "Develop selected scope",
-        text: "Expand or rewrite episodes, roadmap blocks, arcs and artwork briefs. Each remains an independently scoped task.",
+        title: "Sync independently",
+        text: "Private Canon Sync, Story Draft Sync and Wiki Load are separate operations that may run one after another or independently.",
       },
       {
-        title: "Develop Private Canon independently",
-        text: "Create or revise authoritative truths without changing episodes, roadmap or Wiki. Use story content plus confirmed canon to refresh the Wiki periodically or on demand.",
+        title: "Reconcile deliberately",
+        text: "Report conflicts and downstream effects for approval. Canon changes do not silently publish Wiki content or rewrite episodes.",
       },
     ],
     exitGate:
-      "The exact scope is approved for Supabase Draft Sync and Studio review.",
+      "Each approved object has an explicit sync scope and is ready for Studio review.",
   },
   {
     number: 3,
@@ -147,9 +147,15 @@ export default function StudioWorkflowClient() {
             Studio Workflow
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400 sm:text-base lg:max-w-4xl lg:text-lg lg:leading-8">
-            The production path from the first complete draft to publication.
+            The production path from Canon-first foundations and Concept Draft through review to publication.
             Select a stage to open its tasks, output and exit decision.
           </p>
+          <a
+            href="/StudioCanon"
+            className="mt-5 inline-flex items-center justify-center rounded-full border border-violet-400/50 bg-violet-400/10 px-5 py-3 text-sm font-semibold text-violet-200 transition hover:border-violet-300 hover:bg-violet-400/20"
+          >
+            Open Private Canon Library
+          </a>
         </header>
 
         <section aria-label="Studio production workflow">
