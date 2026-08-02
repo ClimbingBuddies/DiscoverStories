@@ -22,6 +22,23 @@ Deno.serve(async (request) => {
     }
 
     const storySlug = objectName.split("/")[0];
+    if (/\/canon\/[^/]+\/[^/]+\.[a-z0-9]+$/i.test(objectName)) {
+      const canonSlug = storySlug;
+      const objectSlug = objectName.split("/")[2];
+      const project = await db.from("private_canon_projects").select("id").eq("slug", canonSlug).single();
+      if (project.error || !project.data) throw new Error(`Private Canon workspace '${canonSlug}' not found.`);
+      const rule = await db.from("story_canon_rules").select("id").eq("canon_project_id", project.data.id).eq("canon_key", objectSlug).single();
+      if (rule.error || !rule.data) throw new Error(`Canon object '${objectSlug}' not found.`);
+      const publicUrl = `${url}/storage/v1/object/public/${bucket}/${objectName}`;
+      const asset = await db.from("media_assets").select("id").eq("storage_path", objectName).maybeSingle();
+      let mediaAssetId = asset.data?.id;
+      const values = { story_id: null, episode_id: null, asset_type: "character_reference", storage_provider: "supabase", storage_path: objectName, public_url: publicUrl, mime_type: mimeType, file_size_bytes: Number(metadata.size ?? 0) || null, lifecycle_status: "draft", version_number: 1, is_approved: false, updated_at: new Date().toISOString() };
+      if (mediaAssetId) await db.from("media_assets").update(values).eq("id", mediaAssetId);
+      else { const inserted = await db.from("media_assets").insert(values).select("id").single(); if (inserted.error) throw inserted.error; mediaAssetId = inserted.data.id; }
+      const linked = await db.from("private_canon_assets").upsert({ canon_project_id: project.data.id, canon_rule_id: rule.data.id, media_asset_id: mediaAssetId, asset_role: "reference", review_status: "draft", updated_at: new Date().toISOString() }, { onConflict: "media_asset_id" });
+      if (linked.error) throw linked.error;
+      return Response.json({ updated: true, objectName, canon: true });
+    }
     const story = await db.from("stories").select("id").eq("slug", storySlug).single();
     if (story.error) throw new Error(`Story '${storySlug}' not found: ${story.error.message}`);
     const publicUrl = `${url}/storage/v1/object/public/${bucket}/${objectName}`;
