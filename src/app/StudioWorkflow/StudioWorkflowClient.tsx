@@ -85,16 +85,16 @@ const lifecycleSteps = ["Upload", "Draft", "Review", "Approved", "Published", "A
 const stages: Stage[] = [
   {
     number: 1,
-    label: "Canon & Concept Draft",
+    label: "Private Canon",
     eyebrow: "Stage 1",
-    title: "Canon and Concept Draft",
+    title: "Private Canon — Starting Point",
     status: "Independent foundations",
     introduction:
-      "Begin with Private Canon, the Concept Draft, or both. Canon may be created and synced before any Story, Episode or Wiki record exists.",
+      "Begin with Private Canon. It is the independent source for characters, places, rules, continuity, visual references and proposed decisions. A Concept Draft may follow, or be developed alongside it.",
     cards: [
       {
-        title: "Create Canon first",
-        text: "Establish the independent Canon workspace, then add proposed or confirmed world, character, continuity, visual and production knowledge.",
+        title: "Open the Canon workspace",
+        text: "Review or extend the private workspace before story, episode or Wiki content is written. Canon can exist first and remain independently reviewable.",
       },
       {
         title: "Create the Concept Draft",

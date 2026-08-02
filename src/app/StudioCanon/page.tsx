@@ -38,16 +38,16 @@ export default async function StudioCanonPage() {
   const workspaces = (data ?? []) as CanonWorkspace[];
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
-      <div className="mx-auto max-w-6xl space-y-10">
-        <header className="rounded-[2rem] border border-violet-400/20 bg-zinc-900 p-8 sm:p-12">
+    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-white">
+      <div className="mx-auto max-w-6xl space-y-7">
+        <header className="rounded-[2rem] border border-violet-400/20 bg-zinc-900 p-6 sm:p-8">
           <p className="text-sm uppercase tracking-[0.24em] text-violet-300">
             Studio only
           </p>
           <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-4xl font-bold sm:text-5xl">Private Canon</h1>
-              <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-300">
+              <h1 className="text-3xl font-bold sm:text-4xl">Private Canon</h1>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-300">
                 Canon workspaces are independent from Story, Episodes and Wiki.
                 A workspace may be created and loaded before its Concept Draft,
                 then linked to the story later.
@@ -97,7 +97,7 @@ export default async function StudioCanonPage() {
                       : "Canon first · no story yet"}
                   </span>
                 </div>
-                <h2 className="mt-4 text-2xl font-semibold">
+                <h2 className="mt-3 text-xl font-semibold">
                   {workspace.title}
                 </h2>
                 <p className="mt-2 text-sm text-zinc-400">

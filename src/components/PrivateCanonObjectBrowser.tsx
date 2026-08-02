@@ -178,7 +178,17 @@ export default function PrivateCanonObjectBrowser({
               {selectedRecord ? selected.category.name : "All categories"}
             </button>
 
-            <div className={selectedRecord ? "hidden sm:flex sm:justify-end" : "flex"}>
+            {!selectedRecord ? (
+            <div className="mb-4 flex items-center justify-between gap-4 sm:mb-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300/80">Selected category</p>
+                <h2 className="mt-1 text-xl font-semibold text-white sm:text-2xl">{selected.category.name}</h2>
+              </div>
+              <span className="shrink-0 text-sm text-zinc-500">{selected.records.length} {selected.records.length === 1 ? "record" : "records"}</span>
+            </div>
+          ) : null}
+
+          <div className={selectedRecord ? "hidden sm:flex sm:justify-end" : "flex"}>
               <label className="w-full sm:ml-auto sm:max-w-sm">
                 <span className="sr-only">Search {selected.category.name}</span>
                 <input
