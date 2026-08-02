@@ -82,7 +82,9 @@ export default async function ReadPage({ params }: Props) {
         .filter((item): item is PlannedEpisode => {
           if (!item || typeof item !== "object") return false;
           const candidate = item as { episode_number?: unknown; title?: unknown };
-          return Number.isInteger(candidate.episode_number) && typeof candidate.title === "string";
+          return typeof candidate.episode_number === "number"
+            && Number.isInteger(candidate.episode_number)
+            && typeof candidate.title === "string";
         })
         .map((item) => ({ episode_number: item.episode_number, title: item.title }))
     : [];
