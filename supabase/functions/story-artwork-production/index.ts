@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "npm:@supabase/supabase-js@2.55.0";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -7,7 +7,7 @@ const bucket = Deno.env.get("SUPABASE_STORAGE_BUCKET") ?? "story-images";
 const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const allowedStatuses = new Set(["draft", "review"]);
 const allowedStages = new Set(["concept", "refined", "production"]);
-const allowedRoles = new Set(["cover", "banner", "episode"]);
+const allowedRoles = new Set(["cover", "banner", "episode", "canon"]);
 const allowedMimes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function respond(body: unknown, status = 200) {
@@ -52,7 +52,13 @@ function canonicalPath(args: { slug: string; role: string; stage: string; versio
   const suffix = args.stage === "production" ? "" : `-${args.stage}-${String(args.version).padStart(2, "0")}`;
   if (args.role === "cover") return `${args.slug}/${args.slug}-cover${suffix}.${args.extension}`;
   if (args.role === "banner") return `${args.slug}/${args.slug}-banner${suffix}.${args.extension}`;
+  if (args.role === "canon") throw new Error("Canon paths require a Canon object slug.");
   return `${args.slug}/episodes/${args.slug}-s${String(args.season).padStart(2, "0")}e${String(args.episode).padStart(2, "0")}${suffix}.${args.extension}`;
+}
+function cleanObjectSlug(value: unknown) {
+  const result = String(value ?? "").trim().toLowerCase();
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(result)) throw new Error("Invalid canonObjectSlug.");
+  return result;
 }
 async function storyBySlug(slug: string) {
   const result = await db.from("stories").select("id,slug,content_status,cover_image_path,banner_image_path").eq("slug", slug).single();
@@ -89,14 +95,26 @@ async function uploadAsset(form: FormData) {
   const version = positive(form.get("versionNumber") ?? 1, "versionNumber");
   const notes = String(form.get("generationNotes") ?? "").trim();
   const file = form.get("file");
-  if (!allowedRoles.has(role)) throw new Error("assetRole must be cover, banner or episode.");
+  if (!allowedRoles.has(role)) throw new Error("assetRole must be cover, banner, episode or canon.");
   if (!allowedStages.has(stage)) throw new Error("stage must be concept, refined or production.");
   if (!allowedStatuses.has(workflowStatus)) throw new Error("workflowStatus must be draft or review.");
   if (!(file instanceof File)) throw new Error("A file upload is required.");
   if (!allowedMimes.has(file.type)) throw new Error("Only JPEG, PNG and WebP images are accepted.");
   if (file.size < 1 || file.size > 12 * 1024 * 1024) throw new Error("Image must be between 1 byte and 12 MB.");
 
-  const story = await storyBySlug(slug);
+  const story = role === "canon" ? null : await storyBySlug(slug);
+  const canonObjectSlug = role === "canon" ? cleanObjectSlug(form.get("canonObjectSlug")) : null;
+  const canonProjectSlug = role === "canon" ? cleanSlug(form.get("canonProjectSlug") ?? slug) : null;
+  let canonProject: { id: string } | null = null;
+  let canonRule: { id: string } | null = null;
+  if (role === "canon") {
+    const project = await db.from("private_canon_projects").select("id").eq("slug", canonProjectSlug).single();
+    if (project.error || !project.data) throw new Error(`Private Canon workspace '${canonProjectSlug}' was not found.`);
+    canonProject = project.data;
+    const rule = await db.from("story_canon_rules").select("id").eq("canon_project_id", canonProject.id).eq("canon_key", canonObjectSlug).single();
+    if (rule.error || !rule.data) throw new Error(`Canon object '${canonObjectSlug}' was not found.`);
+    canonRule = rule.data;
+  }
   let episode: { id: string } | null = null;
   let seasonNumber: number | undefined;
   let episodeNumber: number | undefined;
@@ -112,7 +130,9 @@ async function uploadAsset(form: FormData) {
   const actualMime = detectedMime(bytes);
   if (actualMime !== file.type) throw new Error(`Image content does not match declared MIME type (${file.type}).`);
   if (stage !== "production" && actualMime !== "image/jpeg") throw new Error("Draft and review artwork must be genuine JPEG data.");
-  const storagePath = canonicalPath({ slug, role, stage, version, season: seasonNumber, episode: episodeNumber, extension: ext(actualMime) });
+  const storagePath = role === "canon"
+    ? `${canonProjectSlug}/canon/${canonObjectSlug}/${canonObjectSlug}-${stage}-${String(version).padStart(2, "0")}.${ext(actualMime)}`
+    : canonicalPath({ slug, role, stage, version, season: seasonNumber, episode: episodeNumber, extension: ext(actualMime) });
   const stored = await db.storage.from(bucket).upload(storagePath, bytes, {
     contentType: actualMime,
     cacheControl: stage === "production" ? "31536000" : "3600",
@@ -122,11 +142,11 @@ async function uploadAsset(form: FormData) {
 
   const publicUrl = db.storage.from(bucket).getPublicUrl(storagePath).data.publicUrl;
   const lifecycleStatus = stage === "production" ? "approved" : stage;
-  const assetType = stage === "concept" ? "concept_image" : stage === "refined" ? "refined_image" : role === "cover" ? "cover_image" : role === "banner" ? "story_banner" : "episode_image";
+  const assetType = role === "canon" ? "character_reference" : stage === "concept" ? "concept_image" : stage === "refined" ? "refined_image" : role === "cover" ? "cover_image" : role === "banner" ? "story_banner" : "episode_image";
   const now = new Date().toISOString();
   try {
     const assetId = await registerAsset({
-      story_id: episode ? null : story.id,
+      story_id: episode ? null : story?.id ?? null,
       episode_id: episode?.id ?? null,
       asset_type: assetType,
       storage_provider: "supabase",
@@ -141,7 +161,24 @@ async function uploadAsset(form: FormData) {
       updated_at: now,
     }, storagePath);
 
-    if (role === "cover") {
+    if (role === "canon") {
+      const linked = await db.from("private_canon_assets").upsert({
+        canon_project_id: canonProject!.id,
+        canon_rule_id: canonRule!.id,
+        media_asset_id: assetId,
+        asset_role: String(form.get("canonAssetRole") ?? "reference"),
+        review_status: stage === "production" ? "approved" : stage === "refined" ? "review" : "draft",
+        consistency_notes: String(form.get("consistencyNotes") ?? "").trim() || null,
+        refinement_direction: String(form.get("refinementDirection") ?? "").trim() || null,
+        updated_at: now,
+      }, { onConflict: "media_asset_id" });
+      if (linked.error) throw new Error(`Canon asset registration failed: ${linked.error.message}`);
+    }
+
+    if (role === "canon") {
+      // Canon assets are linked through private_canon_assets; they must not
+      // alter story or episode artwork columns.
+    } else if (role === "cover") {
       const result = await db.from("stories").update({ cover_image_path: storagePath, cover_image_url: publicUrl, updated_at: now }).eq("id", story.id);
       if (result.error) throw result.error;
     } else if (role === "banner") {
@@ -157,8 +194,8 @@ async function uploadAsset(form: FormData) {
     const verified = await db.storage.from(bucket).list(folder, { search: filename, limit: 10 });
     if (verified.error || !verified.data?.some((row) => row.name === filename)) throw new Error("Storage verification failed.");
 
-    await setWorkflowStatus(slug, workflowStatus);
-    return { uploaded: true, assetId, storySlug: slug, storyStatus: workflowStatus, assetRole: role, productionStage: stage, seasonNumber: seasonNumber ?? null, episodeNumber: episodeNumber ?? null, storagePath, publicUrl, mediaAsset: { assetType, lifecycleStatus, isApproved: stage === "production", versionNumber: version } };
+    if (story) await setWorkflowStatus(slug, workflowStatus);
+    return { uploaded: true, assetId, storySlug: slug, storyStatus: story ? workflowStatus : null, assetRole: role, productionStage: stage, seasonNumber: seasonNumber ?? null, episodeNumber: episodeNumber ?? null, storagePath, publicUrl, mediaAsset: { assetType, lifecycleStatus, isApproved: stage === "production", versionNumber: version } };
   } catch (error) {
     await db.storage.from(bucket).remove([storagePath]);
     throw error;
