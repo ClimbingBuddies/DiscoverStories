@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type Stage = {
@@ -12,6 +13,74 @@ type Stage = {
   cards: { title: string; text: string }[];
   exitGate: string;
 };
+
+type ArchitectureView = "storage" | "access" | "lifecycle";
+
+const architectureViews: {
+  id: ArchitectureView;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: "storage",
+    label: "Storage structure",
+    description: "The single physical hierarchy used to organise every story asset.",
+  },
+  {
+    id: "access",
+    label: "Access resolution",
+    description: "The permission layer applied over the same physical file path.",
+  },
+  {
+    id: "lifecycle",
+    label: "Asset lifecycle",
+    description: "The controlled path from upload through publication and archive.",
+  },
+];
+
+const storageBranches = [
+  {
+    id: "story-assets",
+    label: "Story assets",
+    path: "story/",
+    children: ["cover/", "banner/", "references/"],
+  },
+  {
+    id: "canon",
+    label: "Private Canon",
+    path: "canon/",
+    children: ["characters/", "locations/", "objects/", "visual-tests/"],
+  },
+  {
+    id: "wiki",
+    label: "Wiki",
+    path: "wiki/",
+    children: ["characters/", "locations/", "concepts/"],
+  },
+  {
+    id: "seasons",
+    label: "Seasons",
+    path: "seasons/{season_id}/",
+    children: [
+      "season/cover/",
+      "season/references/",
+      "episodes/{episode_id}/artwork/",
+      "episodes/{episode_id}/reader/",
+      "episodes/{episode_id}/audio/",
+      "episodes/{episode_id}/attachments/",
+    ],
+  },
+];
+
+const accessRules = [
+  { role: "Owner / administrator", result: "Full access", tone: "emerald" },
+  { role: "Editor", result: "Read, create and update", tone: "cyan" },
+  { role: "Reviewer", result: "Read draft and approved assets", tone: "violet" },
+  { role: "Reader", result: "Approved assets only", tone: "amber" },
+  { role: "No membership", result: "Published assets or access denied", tone: "zinc" },
+];
+
+const lifecycleSteps = ["Upload", "Draft", "Review", "Approved", "Published", "Archived"];
 
 const stages: Stage[] = [
   {
@@ -134,7 +203,18 @@ const stages: Stage[] = [
 
 export default function StudioWorkflowClient() {
   const [selectedStage, setSelectedStage] = useState<number | null>(null);
+  const [architectureView, setArchitectureView] =
+    useState<ArchitectureView>("storage");
+  const [expandedStorage, setExpandedStorage] = useState<string[]>(["seasons"]);
   const selected = stages.find((stage) => stage.number === selectedStage);
+
+  function toggleStorageBranch(id: string) {
+    setExpandedStorage((current) =>
+      current.includes(id)
+        ? current.filter((branchId) => branchId !== id)
+        : [...current, id],
+    );
+  }
 
   return (
     <main className="min-h-screen bg-zinc-950 px-4 py-10 text-white sm:px-8 sm:py-14">
@@ -150,12 +230,12 @@ export default function StudioWorkflowClient() {
             The production path from Canon-first foundations and Concept Draft through review to publication.
             Select a stage to open its tasks, output and exit decision.
           </p>
-          <a
+          <Link
             href="/StudioCanon"
             className="mt-5 inline-flex items-center justify-center rounded-full border border-violet-400/50 bg-violet-400/10 px-5 py-3 text-sm font-semibold text-violet-200 transition hover:border-violet-300 hover:bg-violet-400/20"
           >
             Open Private Canon Library
-          </a>
+          </Link>
         </header>
 
         <section aria-label="Studio production workflow">
@@ -265,6 +345,199 @@ export default function StudioWorkflowClient() {
                 Requested changes return to Creative Development and require a
                 new explicit Draft Sync.
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:mt-10">
+          <div className="border-b border-zinc-800 p-5 lg:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
+              Platform architecture
+            </p>
+            <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight lg:text-3xl">
+                  Story Storage Architecture
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
+                  Explore how a single private bucket is organised by Story, Season and Episode,
+                  then see how access and publishing rules are applied without changing the file path.
+                </p>
+              </div>
+              <span className="w-fit rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm font-medium text-emerald-300">
+                Private bucket: stories
+              </span>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-[18rem_1fr]">
+            <nav className="border-b border-zinc-800 p-3 lg:border-b-0 lg:border-r lg:p-4" aria-label="Storage architecture views">
+              <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                {architectureViews.map((view) => {
+                  const active = architectureView === view.id;
+                  return (
+                    <button
+                      key={view.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setArchitectureView(view.id)}
+                      className={`rounded-xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
+                        active
+                          ? "border-emerald-500/60 bg-emerald-400/10"
+                          : "border-transparent bg-zinc-950/40 hover:border-zinc-700 hover:bg-zinc-950/70"
+                      }`}
+                    >
+                      <span className={`block font-semibold ${active ? "text-emerald-300" : "text-zinc-200"}`}>
+                        {view.label}
+                      </span>
+                      <span className="mt-1 hidden text-xs leading-5 text-zinc-500 lg:block">
+                        {view.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+
+            <div className="min-h-[34rem] bg-zinc-950/45 p-4 sm:p-6 lg:p-8">
+              {architectureView === "storage" && (
+                <div>
+                  <div className="mb-6">
+                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Physical hierarchy</p>
+                    <h3 className="mt-1 text-xl font-semibold">Bucket → Story → Season → Episode</h3>
+                    <p className="mt-2 text-sm leading-6 text-zinc-400">
+                      Select a branch to reveal its folders. Access roles do not create additional folders.
+                    </p>
+                  </div>
+
+                  <div className="mx-auto max-w-4xl rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
+                    <div className="rounded-xl border border-emerald-500/50 bg-emerald-400/10 p-4">
+                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Private bucket</span>
+                      <p className="mt-1 font-mono text-lg font-semibold text-emerald-200">stories</p>
+                    </div>
+                    <div className="ml-5 border-l border-zinc-700 py-4 pl-5 sm:ml-8 sm:pl-8">
+                      <div className="rounded-xl border border-violet-500/40 bg-violet-400/10 p-4">
+                        <span className="text-xs uppercase tracking-[0.14em] text-violet-300">Story ownership boundary</span>
+                        <p className="mt-1 font-mono font-semibold text-violet-100">{"{story_id}"}/</p>
+                      </div>
+                      <div className="mt-3 grid gap-2">
+                        {storageBranches.map((branch) => {
+                          const open = expandedStorage.includes(branch.id);
+                          return (
+                            <div key={branch.id} className="rounded-xl border border-zinc-800 bg-zinc-900/80">
+                              <button
+                                type="button"
+                                aria-expanded={open}
+                                onClick={() => toggleStorageBranch(branch.id)}
+                                className="flex w-full items-center justify-between gap-4 p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-400"
+                              >
+                                <span>
+                                  <span className="block font-semibold text-zinc-100">{branch.label}</span>
+                                  <span className="mt-0.5 block font-mono text-xs text-zinc-500">{branch.path}</span>
+                                </span>
+                                <span className={`text-xl text-zinc-500 transition-transform ${open ? "rotate-45" : ""}`} aria-hidden="true">+</span>
+                              </button>
+                              {open && (
+                                <div className="border-t border-zinc-800 px-4 py-3">
+                                  <div className="grid gap-2 sm:grid-cols-2">
+                                    {branch.children.map((child) => (
+                                      <div key={child} className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-300">
+                                        {child}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {architectureView === "access" && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Security overlay</p>
+                  <h3 className="mt-1 text-xl font-semibold">Access is resolved from the story</h3>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                    The application reads the story identifier from the object path, then checks ownership,
+                    membership, asset status and story visibility. The object remains in the same location.
+                  </p>
+
+                  <div className="mt-7 grid gap-4 xl:grid-cols-[1fr_auto_1fr] xl:items-center">
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+                      <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Requested object</p>
+                      <p className="mt-3 break-all font-mono text-sm leading-6 text-emerald-300">
+                        {"{story_id}"}/seasons/{"{season_id}"}/episodes/{"{episode_id}"}/artwork/scene-01.jpg
+                      </p>
+                    </div>
+                    <div className="hidden text-2xl text-zinc-600 xl:block" aria-hidden="true">→</div>
+                    <div className="rounded-2xl border border-violet-500/30 bg-violet-400/10 p-5">
+                      <p className="text-xs uppercase tracking-[0.15em] text-violet-300">Policy decision</p>
+                      <p className="mt-2 font-semibold">Check story membership and asset status</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                    {accessRules.map((rule) => (
+                      <div key={rule.role} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+                        <p className="text-sm font-semibold text-zinc-200">{rule.role}</p>
+                        <p className="mt-2 text-xs leading-5 text-zinc-500">{rule.result}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 rounded-xl border border-amber-500/25 bg-amber-400/5 p-4 text-sm leading-6 text-amber-100/80">
+                    Public, shared and private are database visibility states—not additional storage folders.
+                  </div>
+                </div>
+              )}
+
+              {architectureView === "lifecycle" && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Controlled publishing</p>
+                  <h3 className="mt-1 text-xl font-semibold">One asset, changing workflow status</h3>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                    Workflow state belongs to the media record. Progressing an asset does not require moving it
+                    between Private, Public or ToBeFiled folders.
+                  </p>
+
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-6 xl:items-center">
+                    {lifecycleSteps.map((step, index) => (
+                      <div key={step} className="relative">
+                        <div className={`rounded-xl border p-4 text-center ${
+                          step === "Published"
+                            ? "border-emerald-500/50 bg-emerald-400/10 text-emerald-200"
+                            : "border-zinc-800 bg-zinc-950 text-zinc-200"
+                        }`}>
+                          <span className="text-xs text-zinc-500">{index + 1}</span>
+                          <p className="mt-1 font-semibold">{step}</p>
+                        </div>
+                        {index < lifecycleSteps.length - 1 && (
+                          <span className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-zinc-600 xl:block" aria-hidden="true">→</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+                      <p className="font-semibold">Storage path</p>
+                      <p className="mt-1 text-sm leading-6 text-zinc-500">Remains stable throughout the lifecycle.</p>
+                    </div>
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+                      <p className="font-semibold">Media record</p>
+                      <p className="mt-1 text-sm leading-6 text-zinc-500">Stores workflow status, role and approval.</p>
+                    </div>
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+                      <p className="font-semibold">Reader resolution</p>
+                      <p className="mt-1 text-sm leading-6 text-zinc-500">Displays only the permitted approved version.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
