@@ -10,6 +10,7 @@ This folder contains SQL migrations, seed data, and automation scripts used by t
 - `003_seed_life_inside_the_dyson_wiki.sql` - Seed story data for "Life Inside the Dyson" and associated wiki content.
 - `003_seed_story.sql` - Additional seed data for published stories.
 - `004_schema_updates.sql` - Schema updates and migration SQL.
+- `023_storage_foundation.sql` - Adds durable seasons, story membership, the private `stories` bucket, and its initial RLS policies without moving legacy assets.
 - `005_seed_life_inside_the_dyson_wiki.sql` - Extended seed data for the Dyson story wiki.
 - `006_public_wiki_api (1).sql` - Public wiki API and RPC helpers.
 - `007_image_upload_automation.sql` - Image upload automation schema for Supabase storage/webhook sync.
