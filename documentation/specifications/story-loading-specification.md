@@ -52,7 +52,10 @@ The loader must not overwrite:
 - `created_at` or audit ownership,
 - production bundles,
 - art-direction records,
-- audio-generation run history.
+- audio-generation run history,
+- planning-block review notes, reviewer responses or review-note status.
+
+Review notes are stored independently in `planning_block_review_notes`. Their absence from a story or episode load never means they should be retired or deleted.
 
 ## 6. Word count
 
@@ -70,8 +73,16 @@ New rows default to draft unless publication is explicitly authorised. A publish
 - No signed storage URLs when a relative path is available.
 - No secrets or service keys in SQL.
 - No assumption that absence from the current batch means retirement.
+- No deletion or rewriting of review history during ordinary story loads.
+- No automatic source-content change merely because a review note is accepted.
 
-## 9. Verification
+## 9. Planning-block review notes
+
+Planning-block and planned-episode comments follow `planning-block-review-notes-specification.md`.
+
+A loader may revise a planning block after an accepted recommendation only when the revision is explicitly authorised through Creative Development and Draft Sync. After sync, the associated review note may be marked resolved separately. The loader must not infer note resolution from a successful data load.
+
+## 10. Verification
 
 Post-commit verification reports:
 
@@ -82,8 +93,9 @@ Post-commit verification reports:
 - word count,
 - artwork path,
 - presence of audio without exposing or modifying it,
-- missing or duplicate intended rows.
+- missing or duplicate intended rows,
+- confirmation that existing planning-block review notes were preserved when they are in scope.
 
-## 10. Definition of done
+## 11. Definition of done
 
-A story load is complete when it is safe to rerun, updates the intended narrative batch or roadmap block without duplicates, preserves production outputs and returns clear verification evidence.
+A story load is complete when it is safe to rerun, updates the intended narrative batch or roadmap block without duplicates, preserves production outputs and review history, and returns clear verification evidence.
