@@ -15,6 +15,30 @@ type Stage = {
 };
 
 type ArchitectureView = "storage" | "access" | "lifecycle";
+type LayerKind = "Supporting layer" | "Cross-cutting control" | "Optional output";
+
+type WorkflowLayer = {
+  id: string;
+  label: string;
+  kind: LayerKind;
+  summary: string;
+  workflow: string;
+  dependencies: string;
+  tone: string;
+};
+
+const workflowLayers: WorkflowLayer[] = [
+  { id: "canon", label: "Private Canon", kind: "Supporting layer", summary: "Characters, locations, rules, timelines, secrets and visual references.", workflow: "Define → Review → Link to story → Revise", dependencies: "Informs Story and Artwork; remains Studio-only.", tone: "violet" },
+  { id: "story", label: "Story", kind: "Supporting layer", summary: "Concept, season architecture, episode plans, drafts and revisions.", workflow: "Brief → Plan → Draft → Revise → Approve", dependencies: "Reads Canon; feeds Review, Wiki and Audio.", tone: "emerald" },
+  { id: "artwork", label: "Artwork", kind: "Supporting layer", summary: "Cover, banner, episode artwork and reference-led visual development.", workflow: "Brief → Reference → Generate → Review → Approve", dependencies: "Reads Canon and episode context; links to media records.", tone: "amber" },
+  { id: "wiki", label: "Wiki", kind: "Optional output", summary: "Public-facing entries with spoiler controls and episode links.", workflow: "Select → Prepare → Review → Publish", dependencies: "Follows approved Story and Canon decisions.", tone: "cyan" },
+  { id: "audio", label: "Audio", kind: "Optional output", summary: "Voice, synthesis, audio files and duration metadata.", workflow: "Approved text → Produce → Review → Publish", dependencies: "Requires approved narrative content.", tone: "pink" },
+  { id: "reader", label: "Reader / Media", kind: "Optional output", summary: "Formatted education content, images, equations and embedded media.", workflow: "Draft → Format → Review → Publish", dependencies: "Uses approved media records and reader metadata.", tone: "blue" },
+  { id: "continuity", label: "Continuity", kind: "Cross-cutting control", summary: "Checks links, conflicts, approvals and downstream effects.", workflow: "Check → Report → Resolve → Re-check", dependencies: "Applies across Canon, Story, Artwork and outputs.", tone: "zinc" },
+  { id: "access", label: "Access & versioning", kind: "Cross-cutting control", summary: "Applies role, visibility, approval and version rules.", workflow: "Resolve → Permit → Audit", dependencies: "Applies to every record and stored asset.", tone: "zinc" },
+];
+
+
 
 const architectureViews: {
   id: ArchitectureView;
@@ -202,11 +226,11 @@ const stages: Stage[] = [
 ];
 
 export default function StudioWorkflowClient() {
-  const [selectedStage, setSelectedStage] = useState<number | null>(null);
+  const [selectedStage, setSelectedStage] = useState<number | null>(null);\n  const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const [architectureView, setArchitectureView] =
     useState<ArchitectureView>("storage");
   const [expandedStorage, setExpandedStorage] = useState<string[]>(["seasons"]);
-  const selected = stages.find((stage) => stage.number === selectedStage);
+  const selected = stages.find((stage) => stage.number === selectedStage);\n  const selectedLayerDetails = workflowLayers.find((layer) => layer.id === selectedLayer);
 
   function toggleStorageBranch(id: string) {
     setExpandedStorage((current) =>
@@ -326,6 +350,74 @@ export default function StudioWorkflowClient() {
             <p className="mt-4 text-center text-sm text-zinc-500">
               Select a stage to view its details.
             </p>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 lg:mt-10 lg:p-8">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">Layered production model</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight lg:text-3xl">Core spine with selectable layers</h2>
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
+                The spine shows the production decision points. Layers are independent workspaces or controls that can be opened, added and progressed without pretending they are one linear sequence.
+              </p>
+            </div>
+            <span className="w-fit rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm text-emerald-300">4 core stages · 8 layers</span>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-400/5 p-4 sm:p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-400">Core production spine</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-4">
+              {["Develop", "Review", "Approve", "Publish"].map((step, index) => (
+                <div key={step} className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-emerald-500/50 text-sm text-emerald-300">{index + 1}</span>
+                  <span className="font-semibold text-zinc-100">{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            {(["Supporting layer", "Cross-cutting control", "Optional output"] as LayerKind[]).map((kind) => (
+              <div key={kind}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-semibold text-zinc-100">{kind}</h3>
+                  <span className="text-xs text-zinc-500">{workflowLayers.filter((layer) => layer.kind === kind).length} available</span>
+                </div>
+                <div className="grid gap-2">
+                  {workflowLayers.filter((layer) => layer.kind === kind).map((layer) => {
+                    const active = selectedLayer === layer.id;
+                    return (
+                      <button key={layer.id} type="button" aria-expanded={active} onClick={() => setSelectedLayer(active ? null : layer.id)}
+                        className={`rounded-xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${active ? "border-emerald-400 bg-emerald-400/10" : "border-zinc-800 bg-zinc-950/60 hover:border-zinc-700"}`}>
+                        <span className="flex items-center justify-between gap-3">
+                          <span className={`font-semibold ${active ? "text-emerald-300" : "text-zinc-100"}`}>{layer.label}</span>
+                          <span className="text-zinc-500">{active ? "−" : "+"}</span>
+                        </span>
+                        <span className="mt-1 block text-sm leading-6 text-zinc-400">{layer.summary}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {selectedLayerDetails && (
+            <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-zinc-950 p-5 sm:p-6" aria-live="polite">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-400">{selectedLayerDetails.kind}</p>
+                  <h3 className="mt-1 text-xl font-semibold text-zinc-100">{selectedLayerDetails.label}</h3>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">{selectedLayerDetails.summary}</p>
+                </div>
+                <button type="button" onClick={() => setSelectedLayer(null)} className="w-fit rounded-full border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-zinc-500">Close layer</button>
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"><p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Layer workflow</p><p className="mt-2 font-medium text-emerald-300">{selectedLayerDetails.workflow}</p></div>
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"><p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Dependency / boundary</p><p className="mt-2 text-sm leading-6 text-zinc-300">{selectedLayerDetails.dependencies}</p></div>
+              </div>
+            </div>
           )}
         </section>
 
