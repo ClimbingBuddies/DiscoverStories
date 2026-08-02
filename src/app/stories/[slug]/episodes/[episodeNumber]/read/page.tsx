@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EducationReader from "@/components/EducationReader";
+import MakePlanningBlockNote from "@/components/MakePlanningBlockNote";
 import { isEducationDocument } from "@/lib/education-content";
 import { isStudioModeEnabled } from "@/lib/studio-mode";
 import { supabase } from "@/lib/supabase";
 
 type Props = {
   params: Promise<{ slug: string; episodeNumber: string }>;
+};
+
+type PlannedEpisode = {
+  episode_number: number;
+  title: string;
 };
 
 export default async function ReadPage({ params }: Props) {
@@ -52,6 +58,35 @@ export default async function ReadPage({ params }: Props) {
     ? episode.reader_content_json
     : null;
 
+  let planningBlock: {
+    id: string;
+    episode_start: number;
+    episode_end: number;
+    episode_summaries: unknown;
+  } | null = null;
+
+  if (studioModeEnabled && readerDocument && episode.episode_end_number) {
+    const { data } = await supabase
+      .from("story_episode_planning_blocks")
+      .select("id, episode_start, episode_end, episode_summaries")
+      .eq("story_id", story.id)
+      .eq("season_number", episode.season_number)
+      .eq("episode_start", episode.episode_number)
+      .eq("episode_end", episode.episode_end_number)
+      .maybeSingle();
+    planningBlock = data;
+  }
+
+  const plannedEpisodes = Array.isArray(planningBlock?.episode_summaries)
+    ? planningBlock.episode_summaries
+        .filter((item): item is PlannedEpisode => {
+          if (!item || typeof item !== "object") return false;
+          const candidate = item as { episode_number?: unknown; title?: unknown };
+          return Number.isInteger(candidate.episode_number) && typeof candidate.title === "string";
+        })
+        .map((item) => ({ episode_number: item.episode_number, title: item.title }))
+    : [];
+
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-900 px-6 py-4 sm:px-8">
@@ -96,13 +131,14 @@ export default async function ReadPage({ params }: Props) {
           >
             ← Back
           </Link>
-          {studioModeEnabled && readerDocument && episode.episode_end_number ? (
-            <Link
-              href={`/studio/education/${slug}/episodes/${episode.episode_number}`}
-              className="flex-1 rounded-lg border border-cyan-400/50 bg-cyan-500/10 px-4 py-3 text-center font-medium text-cyan-200 transition-colors hover:bg-cyan-400/15"
-            >
-              Review Notes
-            </Link>
+          {studioModeEnabled && planningBlock ? (
+            <MakePlanningBlockNote
+              storyId={story.id}
+              planningBlockId={planningBlock.id}
+              episodeStart={planningBlock.episode_start}
+              episodeEnd={planningBlock.episode_end}
+              plannedEpisodes={plannedEpisodes}
+            />
           ) : null}
           {episode.audio_url ? (
             <Link
