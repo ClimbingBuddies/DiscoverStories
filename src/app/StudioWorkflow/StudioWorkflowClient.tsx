@@ -14,230 +14,365 @@ type Stage = {
   exitGate: string;
 };
 
-type ArchitectureView = "storage" | "access" | "lifecycle";
-type LayerKind = "Supporting layer" | "Cross-cutting control" | "Optional output";
+type DomainId = "story" | "image" | "canon" | "wiki" | "security";
 
-type WorkflowLayer = {
-  id: string;
-  label: string;
-  kind: LayerKind;
-  summary: string;
-  workflow: string;
-  dependencies: string;
-  tone: string;
-};
-
-const workflowLayers: WorkflowLayer[] = [
-  { id: "canon", label: "Private Canon", kind: "Supporting layer", summary: "Characters, locations, rules, timelines, secrets and visual references.", workflow: "Define → Review → Link to story → Revise", dependencies: "Informs Story and Artwork; remains Studio-only.", tone: "violet" },
-  { id: "story", label: "Story", kind: "Supporting layer", summary: "Concept, season architecture, episode plans, drafts and revisions.", workflow: "Brief → Plan → Draft → Revise → Approve", dependencies: "Reads Canon; feeds Review, Wiki and Audio.", tone: "emerald" },
-  { id: "artwork", label: "Artwork", kind: "Supporting layer", summary: "Cover, banner, episode artwork and reference-led visual development.", workflow: "Brief → Reference → Generate → Review → Approve", dependencies: "Reads Canon and episode context; links to media records.", tone: "amber" },
-  { id: "wiki", label: "Wiki", kind: "Optional output", summary: "Public-facing entries with spoiler controls and episode links.", workflow: "Select → Prepare → Review → Publish", dependencies: "Follows approved Story and Canon decisions.", tone: "cyan" },
-  { id: "audio", label: "Audio", kind: "Optional output", summary: "Voice, synthesis, audio files and duration metadata.", workflow: "Approved text → Produce → Review → Publish", dependencies: "Requires approved narrative content.", tone: "pink" },
-  { id: "reader", label: "Reader / Media", kind: "Optional output", summary: "Formatted education content, images, equations and embedded media.", workflow: "Draft → Format → Review → Publish", dependencies: "Uses approved media records and reader metadata.", tone: "blue" },
-  { id: "continuity", label: "Continuity", kind: "Cross-cutting control", summary: "Checks links, conflicts, approvals and downstream effects.", workflow: "Check → Report → Resolve → Re-check", dependencies: "Applies across Canon, Story, Artwork and outputs.", tone: "zinc" },
-  { id: "access", label: "Access & versioning", kind: "Cross-cutting control", summary: "Applies role, visibility, approval and version rules.", workflow: "Resolve → Permit → Audit", dependencies: "Applies to every record and stored asset.", tone: "zinc" },
-];
-
-
-
-const architectureViews: {
-  id: ArchitectureView;
+type WorkflowDomain = {
+  id: DomainId;
   label: string;
   description: string;
-}[] = [
-  {
-    id: "storage",
-    label: "Storage structure",
-    description: "The single physical hierarchy used to organise every story asset.",
-  },
-  {
-    id: "access",
-    label: "Access resolution",
-    description: "The permission layer applied over the same physical file path.",
-  },
-  {
-    id: "lifecycle",
-    label: "Asset lifecycle",
-    description: "The controlled path from upload through publication and archive.",
-  },
-];
+  stages: Stage[];
+};
 
-const storageBranches = [
+const domains: WorkflowDomain[] = [
   {
-    id: "story-assets",
-    label: "Story assets",
-    path: "story/",
-    children: ["cover/", "banner/", "references/"],
+    id: "story",
+    label: "Story Creation",
+    description: "Narrative design, episode planning, drafting and publishing.",
+    stages: [
+      {
+        number: 1,
+        label: "Private",
+        eyebrow: "Story • Private",
+        title: "Private Story Foundations",
+        status: "Internal planning",
+        introduction: "Define concept, season shape, and episode intent before broader review.",
+        cards: [
+          { title: "Set story brief", text: "Capture premise, audience, and desired tone." },
+          { title: "Outline arc", text: "Map season arc and episode-level progression." },
+          { title: "Track dependencies", text: "Link canon assumptions and unresolved questions." },
+          { title: "Prepare draft scope", text: "Choose what moves into the creative stage." },
+        ],
+        exitGate: "The story concept and scope are clear enough to draft.",
+      },
+      {
+        number: 2,
+        label: "Creative",
+        eyebrow: "Story • Creative",
+        title: "Creative Story Development",
+        status: "Drafting in progress",
+        introduction: "Write, revise and structure narrative content with explicit scope control.",
+        cards: [
+          { title: "Draft chapters", text: "Produce narrative draft content for selected episodes." },
+          { title: "Refine voice", text: "Adjust pacing, tone and dialogue consistency." },
+          { title: "Evaluate quality", text: "Run editorial checks before review packaging." },
+          { title: "Bundle review version", text: "Prepare a fixed candidate for review." },
+        ],
+        exitGate: "A review-ready narrative version has been locked.",
+      },
+      {
+        number: 3,
+        label: "Review",
+        eyebrow: "Story • Review",
+        title: "Story Review",
+        status: "Decision point",
+        introduction: "Assess the fixed story version and determine approve or return changes.",
+        cards: [
+          { title: "Read as audience", text: "Validate clarity, momentum and emotional coherence." },
+          { title: "Check continuity", text: "Confirm canon and timeline consistency." },
+          { title: "Record feedback", text: "Document exact changes instead of broad notes." },
+          { title: "Approve or return", text: "Move forward or reopen a defined creative scope." },
+        ],
+        exitGate: "Story version is explicitly approved for publication.",
+      },
+      {
+        number: 4,
+        label: "Public",
+        eyebrow: "Story • Public",
+        title: "Story Publication",
+        status: "Released output",
+        introduction: "Publish only approved story records and verify the visible output.",
+        cards: [
+          { title: "Confirm payload", text: "Publish only records tied to the approved version." },
+          { title: "Protect private notes", text: "Keep internal planning and drafts hidden." },
+          { title: "Release", text: "Promote approved records to the live environment." },
+          { title: "Validate", text: "Confirm the public reader shows the intended version." },
+        ],
+        exitGate: "The correct public story experience is verified live.",
+      },
+    ],
+  },
+  {
+    id: "image",
+    label: "Image Creation",
+    description: "Cover, banner and episode artwork generation and release.",
+    stages: [
+      {
+        number: 1,
+        label: "Private",
+        eyebrow: "Image • Private",
+        title: "Private Image Brief",
+        status: "Reference setup",
+        introduction: "Define visual intent, references and constraints before generation.",
+        cards: [
+          { title: "Set style direction", text: "Pick reference language and quality target." },
+          { title: "Collect canon cues", text: "Lock character, location and object constraints." },
+          { title: "Plan asset list", text: "Define cover, banner and episode image needs." },
+          { title: "Approve prompt scope", text: "Confirm what enters creative production." },
+        ],
+        exitGate: "Visual brief is approved for artwork generation.",
+      },
+      {
+        number: 2,
+        label: "Creative",
+        eyebrow: "Image • Creative",
+        title: "Creative Image Production",
+        status: "Generation cycle",
+        introduction: "Generate options, iterate and curate toward production quality.",
+        cards: [
+          { title: "Generate variants", text: "Produce candidate assets for required slots." },
+          { title: "Refine composition", text: "Adjust framing, readability and focal hierarchy." },
+          { title: "Run quality checks", text: "Screen for artifacts and consistency issues." },
+          { title: "Prepare review set", text: "Package selected assets with notes." },
+        ],
+        exitGate: "Final candidate set is ready for formal review.",
+      },
+      {
+        number: 3,
+        label: "Review",
+        eyebrow: "Image • Review",
+        title: "Image Review",
+        status: "Selection and sign-off",
+        introduction: "Review selected assets against story intent and canon accuracy.",
+        cards: [
+          { title: "Assess fit", text: "Validate story alignment and recognizability." },
+          { title: "Check consistency", text: "Compare across episodes and format sizes." },
+          { title: "Capture fixes", text: "Return precise edit requests where needed." },
+          { title: "Approve set", text: "Mark final assets for release." },
+        ],
+        exitGate: "Approved artwork set is frozen for publication.",
+      },
+      {
+        number: 4,
+        label: "Public",
+        eyebrow: "Image • Public",
+        title: "Image Publication",
+        status: "Live media",
+        introduction: "Publish approved image assets and verify delivery in the experience.",
+        cards: [
+          { title: "Attach media links", text: "Bind approved assets to story and episode records." },
+          { title: "Publish assets", text: "Promote approved files to public visibility." },
+          { title: "Verify rendering", text: "Confirm correct images appear in UI contexts." },
+          { title: "Archive alternates", text: "Retain non-selected variants as internal references." },
+        ],
+        exitGate: "Public image delivery is accurate and complete.",
+      },
+    ],
   },
   {
     id: "canon",
-    label: "Private Canon",
-    path: "canon/",
-    children: ["characters/", "locations/", "objects/", "visual-tests/"],
+    label: "Canon Creation",
+    description: "Private continuity design and controlled synchronization.",
+    stages: [
+      {
+        number: 1,
+        label: "Private",
+        eyebrow: "Canon • Private",
+        title: "Private Canon Foundations",
+        status: "Internal source of truth",
+        introduction: "Define people, places, rules and timeline anchors privately.",
+        cards: [
+          { title: "Create entities", text: "Add foundational canon records and relationships." },
+          { title: "Set constraints", text: "Capture immutable rules and exclusions." },
+          { title: "Version decisions", text: "Record proposal and approval history." },
+          { title: "Scope sync", text: "Choose canon records for downstream use." },
+        ],
+        exitGate: "Canon scope is consistent and ready for controlled use.",
+      },
+      {
+        number: 2,
+        label: "Creative",
+        eyebrow: "Canon • Creative",
+        title: "Creative Canon Expansion",
+        status: "Iterative modeling",
+        introduction: "Expand and refine canon as story and artwork needs evolve.",
+        cards: [
+          { title: "Add depth", text: "Extend biographies, history and location context." },
+          { title: "Resolve conflicts", text: "Consolidate contradictory or duplicate records." },
+          { title: "Link references", text: "Attach visual and narrative anchors." },
+          { title: "Freeze candidate", text: "Prepare a reviewable canon slice." },
+        ],
+        exitGate: "Canon candidate is coherent for review.",
+      },
+      {
+        number: 3,
+        label: "Review",
+        eyebrow: "Canon • Review",
+        title: "Canon Review",
+        status: "Governance checkpoint",
+        introduction: "Review canon candidate for continuity reliability and downstream safety.",
+        cards: [
+          { title: "Continuity audit", text: "Check timeline and relationship consistency." },
+          { title: "Impact review", text: "Identify affected story and media records." },
+          { title: "Request amendments", text: "Capture changes as explicit actions." },
+          { title: "Approve slice", text: "Mark records ready for controlled release." },
+        ],
+        exitGate: "Approved canon slice is ready for controlled publication.",
+      },
+      {
+        number: 4,
+        label: "Public",
+        eyebrow: "Canon • Public",
+        title: "Canon Publication",
+        status: "Selective exposure",
+        introduction: "Publish only canon records intended for external consumption.",
+        cards: [
+          { title: "Filter for public", text: "Exclude private-only canon details and spoilers." },
+          { title: "Sync approved records", text: "Promote selected canon to public-facing systems." },
+          { title: "Validate references", text: "Ensure links resolve for story and wiki pages." },
+          { title: "Monitor drift", text: "Track divergence between private and public canon." },
+        ],
+        exitGate: "Public canon slice is consistent and intentionally limited.",
+      },
+    ],
   },
   {
     id: "wiki",
     label: "Wiki",
-    path: "wiki/",
-    children: ["characters/", "locations/", "concepts/"],
-  },
-  {
-    id: "seasons",
-    label: "Seasons",
-    path: "seasons/{season_id}/",
-    children: [
-      "season/cover/",
-      "season/references/",
-      "episodes/{episode_id}/artwork/",
-      "episodes/{episode_id}/reader/",
-      "episodes/{episode_id}/audio/",
-      "episodes/{episode_id}/attachments/",
-    ],
-  },
-];
-
-const accessRules = [
-  { role: "Owner / administrator", result: "Full access", tone: "emerald" },
-  { role: "Editor", result: "Read, create and update", tone: "cyan" },
-  { role: "Reviewer", result: "Read draft and approved assets", tone: "violet" },
-  { role: "Reader", result: "Approved assets only", tone: "amber" },
-  { role: "No membership", result: "Published assets or access denied", tone: "zinc" },
-];
-
-const lifecycleSteps = ["Upload", "Draft", "Review", "Approved", "Published", "Archived"];
-
-const stages: Stage[] = [
-  {
-    number: 1,
-    label: "Private Canon",
-    eyebrow: "Stage 1",
-    title: "Private Canon — Starting Point",
-    status: "Independent foundations",
-    introduction:
-      "Begin with Private Canon. It is the independent source for characters, places, rules, continuity, visual references and proposed decisions. A Concept Draft may follow, or be developed alongside it.",
-    cards: [
+    description: "Audience-facing knowledge pages with spoiler and lifecycle controls.",
+    stages: [
       {
-        title: "Open the Canon workspace",
-        text: "Review or extend the private workspace before story, episode or Wiki content is written. Canon can exist first and remain independently reviewable.",
+        number: 1,
+        label: "Private",
+        eyebrow: "Wiki • Private",
+        title: "Private Wiki Drafting",
+        status: "Unpublished entries",
+        introduction: "Draft and structure entries before public release decisions.",
+        cards: [
+          { title: "Create entries", text: "Draft pages for characters, places and concepts." },
+          { title: "Assign spoiler levels", text: "Tag visibility boundaries by story progress." },
+          { title: "Link sources", text: "Reference canon and approved story records." },
+          { title: "Prepare review batch", text: "Group entries for editorial review." },
+        ],
+        exitGate: "Wiki draft batch is ready for review.",
       },
       {
-        title: "Create the Concept Draft",
-        text: "Develop the story foundation, Episodes 1–10 and their initial images when the creative direction is ready.",
+        number: 2,
+        label: "Creative",
+        eyebrow: "Wiki • Creative",
+        title: "Creative Wiki Refinement",
+        status: "Editorial shaping",
+        introduction: "Improve readability, structure and cross-linking quality.",
+        cards: [
+          { title: "Refine copy", text: "Improve clarity and tone for the target audience." },
+          { title: "Strengthen links", text: "Add and validate internal navigation paths." },
+          { title: "Align terminology", text: "Normalize terms across related pages." },
+          { title: "Lock candidate", text: "Freeze a reviewable wiki set." },
+        ],
+        exitGate: "Wiki candidate set is stable for review.",
       },
       {
-        title: "Plan Episodes 11–100",
-        text: "Store the long-range plan in roadmap blocks without turning planned ranges into playable episodes.",
+        number: 3,
+        label: "Review",
+        eyebrow: "Wiki • Review",
+        title: "Wiki Review",
+        status: "Editorial sign-off",
+        introduction: "Review wiki entries for accuracy, spoilers and navigation quality.",
+        cards: [
+          { title: "Accuracy check", text: "Validate facts against approved canon and story." },
+          { title: "Spoiler check", text: "Ensure release-safe visibility settings." },
+          { title: "Usability check", text: "Test discoverability and cross-page flow." },
+          { title: "Approve entries", text: "Sign off selected pages for publication." },
+        ],
+        exitGate: "Approved wiki entries are publication-ready.",
       },
       {
-        title: "Consult Canon for artwork",
-        text: "Artwork reads relevant confirmed Canon, approved visual identity and the exact episode context. It never silently establishes new Canon.",
-      },
-    ],
-    exitGate:
-      "The selected Canon and Concept Draft foundations are coherent enough for deliberate development.",
-  },
-  {
-    number: 2,
-    label: "Creative Development",
-    eyebrow: "Stage 2",
-    title: "Creative Development",
-    status: "Repeatable cycle",
-    introduction:
-      "Develop Story, Private Canon, Wiki and Artwork as separately owned objects. Each may read the others, but no operation silently rewrites another object.",
-    cards: [
-      {
-        title: "Explore and assess",
-        text: "Test ideas, alternatives and story problems, then run a targeted Story Quality Index diagnostic when useful.",
-      },
-      {
-        title: "Develop the selected object",
-        text: "Expand or revise only the approved Story, episode, roadmap, Canon, Wiki or artwork scope.",
-      },
-      {
-        title: "Sync independently",
-        text: "Private Canon Sync, Story Draft Sync and Wiki Load are separate operations that may run one after another or independently.",
-      },
-      {
-        title: "Reconcile deliberately",
-        text: "Report conflicts and downstream effects for approval. Canon changes do not silently publish Wiki content or rewrite episodes.",
+        number: 4,
+        label: "Public",
+        eyebrow: "Wiki • Public",
+        title: "Wiki Publication",
+        status: "Live knowledge",
+        introduction: "Publish approved entries and validate public navigation and safety.",
+        cards: [
+          { title: "Publish entries", text: "Release selected entries to public visibility." },
+          { title: "Verify spoiler controls", text: "Confirm hidden details remain protected." },
+          { title: "Validate links", text: "Check internal and story references on live pages." },
+          { title: "Observe usage", text: "Monitor readership and correction feedback." },
+        ],
+        exitGate: "Wiki release is accurate, navigable and safe.",
       },
     ],
-    exitGate:
-      "Each approved object has an explicit sync scope and is ready for Studio review.",
   },
   {
-    number: 3,
-    label: "Studio Review",
-    eyebrow: "Stage 3",
-    title: "Studio Review",
-    status: "Fixed review version",
-    introduction:
-      "Assess a verified Supabase version without silently changing the material being reviewed.",
-    cards: [
+    id: "security",
+    label: "Security",
+    description: "Access, policy resolution, and version governance across workflows.",
+    stages: [
       {
-        title: "Draft sync",
-        text: "Load only the approved scope as Draft or Review.",
+        number: 1,
+        label: "Private",
+        eyebrow: "Security • Private",
+        title: "Private Security Baseline",
+        status: "Policy definition",
+        introduction: "Define roles, scopes and default policy behavior for internal workflows.",
+        cards: [
+          { title: "Define roles", text: "Specify owner, editor, reviewer and reader powers." },
+          { title: "Set boundaries", text: "Mark private-only objects and restricted paths." },
+          { title: "Design audits", text: "Define event logging and traceability expectations." },
+          { title: "Prepare controls", text: "Select controls to validate in creative stages." },
+        ],
+        exitGate: "Security baseline is approved for operational use.",
       },
       {
-        title: "Verify visibility",
-        text: "Confirm the records exist and the Studio website can display them.",
+        number: 2,
+        label: "Creative",
+        eyebrow: "Security • Creative",
+        title: "Security Control Development",
+        status: "Control implementation",
+        introduction: "Implement and refine policy checks with explicit environment scoping.",
+        cards: [
+          { title: "Implement checks", text: "Apply membership, role and visibility constraints." },
+          { title: "Test enforcement", text: "Simulate requests across role matrices." },
+          { title: "Review audit paths", text: "Confirm events include needed forensic data." },
+          { title: "Package candidate", text: "Prepare control set for security review." },
+        ],
+        exitGate: "Security candidate controls pass internal validation.",
       },
       {
-        title: "Review together",
-        text: "Assess episodes, roadmap, Wiki, Private Canon and artwork as separate reviewable objects.",
+        number: 3,
+        label: "Review",
+        eyebrow: "Security • Review",
+        title: "Security Review",
+        status: "Risk checkpoint",
+        introduction: "Review controls for principle-of-least-privilege and policy correctness.",
+        cards: [
+          { title: "Privilege audit", text: "Check over-permissive access paths." },
+          { title: "Policy verification", text: "Validate expected deny and allow outcomes." },
+          { title: "Fix findings", text: "Return exact remediation tasks where needed." },
+          { title: "Approve release", text: "Authorize control set for deployment." },
+        ],
+        exitGate: "Security controls are approved for production exposure.",
       },
       {
-        title: "Make the decision",
-        text: "Approve the version or return a defined scope to Creative Development.",
+        number: 4,
+        label: "Public",
+        eyebrow: "Security • Public",
+        title: "Security Rollout",
+        status: "Live enforcement",
+        introduction: "Release approved controls and verify live enforcement and observability.",
+        cards: [
+          { title: "Deploy controls", text: "Promote approved policy set to live runtime." },
+          { title: "Run verification", text: "Execute post-release access validation checks." },
+          { title: "Monitor events", text: "Observe logs for unexpected deny/allow behavior." },
+          { title: "Stabilize", text: "Apply rapid fixes for any verified policy gaps." },
+        ],
+        exitGate: "Production security behavior is validated and stable.",
       },
     ],
-    exitGate:
-      "The fixed review version is explicitly approved for publication.",
-  },
-  {
-    number: 4,
-    label: "Publish",
-    eyebrow: "Stage 4",
-    title: "Publish",
-    status: "Public release",
-    introduction:
-      "Release only the approved public content while keeping internal planning and Private Canon protected.",
-    cards: [
-      {
-        title: "Readiness check",
-        text: "Confirm the reviewed version, artwork links and publication requirements.",
-      },
-      {
-        title: "Visibility check",
-        text: "Keep roadmap-only content non-playable and Private Canon Studio-only.",
-      },
-      {
-        title: "Publish approved records",
-        text: "Change only the explicitly approved public records.",
-      },
-      {
-        title: "Verify the release",
-        text: "Confirm the public website displays the correct version.",
-      },
-    ],
-    exitGate:
-      "The intended public release has been checked and verified.",
   },
 ];
 
 export default function StudioWorkflowClient() {
-  const [selectedStage, setSelectedStage] = useState<number | null>(null);\n  const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
-  const [architectureView, setArchitectureView] =
-    useState<ArchitectureView>("storage");
-  const [expandedStorage, setExpandedStorage] = useState<string[]>(["seasons"]);
-  const selected = stages.find((stage) => stage.number === selectedStage);\n  const selectedLayerDetails = workflowLayers.find((layer) => layer.id === selectedLayer);
+  const [selectedDomain, setSelectedDomain] = useState<DomainId>("story");
+  const [selectedStage, setSelectedStage] = useState<number | null>(1);
+  const [topLayerExpanded, setTopLayerExpanded] = useState(false);
+  const activeDomain =
+    domains.find((domain) => domain.id === selectedDomain) ?? domains[0];
+  const selected = activeDomain.stages.find((stage) => stage.number === selectedStage);
 
-  function toggleStorageBranch(id: string) {
-    setExpandedStorage((current) =>
-      current.includes(id)
-        ? current.filter((branchId) => branchId !== id)
-        : [...current, id],
-    );
+  function selectDomain(domainId: DomainId) {
+    setSelectedDomain(domainId);
+    setSelectedStage(domainId === "story" ? 1 : null);
+    setTopLayerExpanded(domainId !== "story");
   }
 
   return (
@@ -262,164 +397,155 @@ export default function StudioWorkflowClient() {
           </Link>
         </header>
 
-        <section aria-label="Studio production workflow">
-          <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] md:items-center">
-            {stages.map((stage, index) => {
-              const active = selectedStage === stage.number;
-              return (
-                <div key={stage.number} className="contents">
-                  {index > 0 && (
-                    <span
-                      className="hidden text-center text-zinc-600 md:block"
-                      aria-hidden="true"
-                    >
-                      →
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    aria-expanded={active}
-                    aria-controls="workflow-stage-panel"
-                    onClick={() =>
-                      setSelectedStage(active ? null : stage.number)
-                    }
-                    className={`flex min-h-16 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors lg:min-h-24 lg:gap-4 lg:px-6 lg:py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
-                      active
-                        ? "border-emerald-400 bg-emerald-400 text-zinc-950 shadow-[0_0_0_1px_rgba(52,211,153,0.15)]"
-                        : "border-zinc-800 bg-zinc-900 text-zinc-100 hover:border-zinc-700 hover:bg-zinc-800"
-                    }`}
-                  >
-                    <span
-                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm lg:h-11 lg:w-11 lg:text-base ${
+        <section className={`mb-8 rounded-2xl border p-4 lg:mb-10 lg:p-5 transition-all duration-300 ${
+          selectedDomain === "story"
+            ? "border-zinc-800 bg-zinc-900/35 opacity-70"
+            : "border-zinc-800 bg-zinc-900/60"
+        }`}>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            Top Layer
+          </p>
+          {selectedDomain === "story" && !topLayerExpanded ? (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-zinc-950/55 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-emerald-200">Story Creation active</p>
+                <p className="text-xs text-zinc-400">The story stages are open below. Expand to switch domains.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTopLayerExpanded(true)}
+                className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-950/70"
+              >
+                Change
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                {domains.map((domain) => {
+                  const active = domain.id === selectedDomain;
+                  return (
+                    <button
+                      key={domain.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => selectDomain(domain.id)}
+                      className={`rounded-xl border px-4 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
                         active
-                          ? "border-zinc-950/70 text-zinc-950"
-                          : "border-zinc-600 text-zinc-300"
+                          ? "border-emerald-400 bg-emerald-400/10 text-emerald-200"
+                          : "border-zinc-800 bg-zinc-950/50 text-zinc-200 hover:border-zinc-700"
                       }`}
                     >
-                      {stage.number}
-                    </span>
-                    <span className="font-semibold leading-5 lg:text-lg lg:leading-6 xl:text-xl">{stage.label}</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {selected && (
-            <article
-              id="workflow-stage-panel"
-              className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl shadow-black/20 sm:p-5 lg:mt-5 lg:p-8 xl:p-10"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:gap-8">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                    {selected.eyebrow}
-                  </p>
-                  <h2 className="mt-1 text-xl font-semibold text-emerald-400 lg:text-3xl">{selected.title}</h2>
-                  <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400 lg:max-w-5xl lg:text-base lg:leading-7">
-                    {selected.introduction}
-                  </p>
-                </div>
-                <span className="w-fit shrink-0 rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm text-emerald-300 lg:px-5 lg:py-2.5 lg:text-base">
-                  {selected.status}
-                </span>
+                      <span className="block font-semibold">{domain.label}</span>
+                    </button>
+                  );
+                })}
               </div>
+              <p className="mt-3 text-sm text-zinc-400">{activeDomain.description}</p>
+            </>
+          )}
+        </section>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-7 lg:gap-5">
-                {selected.cards.map((card) => (
-                  <section
-                    key={card.title}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 lg:p-6"
-                  >
-                    <h3 className="font-semibold lg:text-lg">{card.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
-                      {card.text}
+        {selectedDomain === "story" ? (
+          <section aria-label="Studio production workflow" className="rounded-2xl border border-emerald-500/20 bg-zinc-900/80 p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.08)] lg:p-6">
+            <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] md:items-center">
+              {activeDomain.stages.map((stage, index) => {
+                const active = selectedStage === stage.number;
+                return (
+                  <div key={stage.number} className="contents">
+                    {index > 0 && (
+                      <span
+                        className="hidden text-center text-zinc-600 md:block"
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      aria-expanded={active}
+                      aria-controls="workflow-stage-panel"
+                      onClick={() => setSelectedStage(active ? null : stage.number)}
+                      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors lg:min-h-24 lg:gap-4 lg:px-6 lg:py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
+                        active
+                          ? "border-emerald-400 bg-emerald-400 text-zinc-950 shadow-[0_0_0_1px_rgba(52,211,153,0.15)]"
+                          : "border-zinc-800 bg-zinc-900 text-zinc-100 hover:border-zinc-700 hover:bg-zinc-800"
+                      }`}
+                    >
+                      <span
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm lg:h-11 lg:w-11 lg:text-base ${
+                          active
+                            ? "border-zinc-950/70 text-zinc-950"
+                            : "border-zinc-600 text-zinc-300"
+                        }`}
+                      >
+                        {stage.number}
+                      </span>
+                      <span className="font-semibold leading-5 lg:text-lg lg:leading-6 xl:text-xl">
+                        {stage.label}
+                      </span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selected && (
+              <article
+                id="workflow-stage-panel"
+                className="mt-3 rounded-2xl border border-emerald-500/25 bg-zinc-950/90 p-4 shadow-2xl shadow-black/25 sm:p-5 lg:mt-5 lg:p-8 xl:p-10"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:gap-8">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+                      {selected.eyebrow}
                     </p>
-                  </section>
-                ))}
-              </div>
+                    <h2 className="mt-1 text-xl font-semibold text-emerald-400 lg:text-3xl">
+                      {selected.title}
+                    </h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400 lg:max-w-5xl lg:text-base lg:leading-7">
+                      {selected.introduction}
+                    </p>
+                  </div>
+                  <span className="w-fit shrink-0 rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm text-emerald-300 lg:px-5 lg:py-2.5 lg:text-base">
+                    {selected.status}
+                  </span>
+                </div>
 
-              <div className="mt-4 flex flex-col gap-1 border-t border-zinc-800 pt-4 text-sm sm:flex-row sm:gap-5 lg:mt-7 lg:pt-6 lg:text-base">
-                <strong>Exit gate</strong>
-                <p className="text-zinc-400">{selected.exitGate}</p>
-              </div>
-            </article>
-          )}
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-7 lg:gap-5">
+                  {selected.cards.map((card) => (
+                    <section
+                      key={card.title}
+                      className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 lg:p-6"
+                    >
+                      <h3 className="font-semibold lg:text-lg">{card.title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
+                        {card.text}
+                      </p>
+                    </section>
+                  ))}
+                </div>
 
-          {!selected && (
-            <p className="mt-4 text-center text-sm text-zinc-500">
-              Select a stage to view its details.
-            </p>
-          )}
-        </section>
+                <div className="mt-4 flex flex-col gap-1 border-t border-zinc-800 pt-4 text-sm sm:flex-row sm:gap-5 lg:mt-7 lg:pt-6 lg:text-base">
+                  <strong>Exit gate</strong>
+                  <p className="text-zinc-400">{selected.exitGate}</p>
+                </div>
+              </article>
+            )}
 
-        <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 lg:mt-10 lg:p-8">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">Layered production model</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight lg:text-3xl">Core spine with selectable layers</h2>
-              <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
-                The spine shows the production decision points. Layers are independent workspaces or controls that can be opened, added and progressed without pretending they are one linear sequence.
+            {!selected && (
+              <p className="mt-4 text-center text-sm text-zinc-500">
+                Select a stage to view its details.
               </p>
-            </div>
-            <span className="w-fit rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm text-emerald-300">4 core stages · 8 layers</span>
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-400/5 p-4 sm:p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-400">Core production spine</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-4">
-              {["Develop", "Review", "Approve", "Publish"].map((step, index) => (
-                <div key={step} className="flex items-center gap-2">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-emerald-500/50 text-sm text-emerald-300">{index + 1}</span>
-                  <span className="font-semibold text-zinc-100">{step}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            {(["Supporting layer", "Cross-cutting control", "Optional output"] as LayerKind[]).map((kind) => (
-              <div key={kind}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold text-zinc-100">{kind}</h3>
-                  <span className="text-xs text-zinc-500">{workflowLayers.filter((layer) => layer.kind === kind).length} available</span>
-                </div>
-                <div className="grid gap-2">
-                  {workflowLayers.filter((layer) => layer.kind === kind).map((layer) => {
-                    const active = selectedLayer === layer.id;
-                    return (
-                      <button key={layer.id} type="button" aria-expanded={active} onClick={() => setSelectedLayer(active ? null : layer.id)}
-                        className={`rounded-xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${active ? "border-emerald-400 bg-emerald-400/10" : "border-zinc-800 bg-zinc-950/60 hover:border-zinc-700"}`}>
-                        <span className="flex items-center justify-between gap-3">
-                          <span className={`font-semibold ${active ? "text-emerald-300" : "text-zinc-100"}`}>{layer.label}</span>
-                          <span className="text-zinc-500">{active ? "−" : "+"}</span>
-                        </span>
-                        <span className="mt-1 block text-sm leading-6 text-zinc-400">{layer.summary}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {selectedLayerDetails && (
-            <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-zinc-950 p-5 sm:p-6" aria-live="polite">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-400">{selectedLayerDetails.kind}</p>
-                  <h3 className="mt-1 text-xl font-semibold text-zinc-100">{selectedLayerDetails.label}</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">{selectedLayerDetails.summary}</p>
-                </div>
-                <button type="button" onClick={() => setSelectedLayer(null)} className="w-fit rounded-full border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-zinc-500">Close layer</button>
-              </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"><p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Layer workflow</p><p className="mt-2 font-medium text-emerald-300">{selectedLayerDetails.workflow}</p></div>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"><p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Dependency / boundary</p><p className="mt-2 text-sm leading-6 text-zinc-300">{selectedLayerDetails.dependencies}</p></div>
-              </div>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-zinc-400">
+            <p className="text-sm">
+              Stage details open when <span className="font-semibold text-zinc-200">Story Creation</span> is selected.
+            </p>
+          </section>
+        )}
 
         <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 lg:mt-10 lg:p-8">
           <h2 className="font-semibold lg:text-xl">Two deliberate loops</h2>
@@ -427,209 +553,14 @@ export default function StudioWorkflowClient() {
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
               <p className="font-medium text-violet-400">Creative loop</p>
               <p className="mt-1 text-sm leading-6 text-zinc-400">
-                Explore, develop and assess as often as needed before approving
-                a scope for review.
+                Explore, develop and assess as often as needed before approving a scope for review.
               </p>
             </div>
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
               <p className="font-medium text-amber-400">Review loop</p>
               <p className="mt-1 text-sm leading-6 text-zinc-400">
-                Requested changes return to Creative Development and require a
-                new explicit Draft Sync.
+                Requested changes return to Creative Development and require a new explicit Draft Sync.
               </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:mt-10">
-          <div className="border-b border-zinc-800 p-5 lg:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
-              Platform architecture
-            </p>
-            <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold tracking-tight lg:text-3xl">
-                  Story Storage Architecture
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400 lg:text-base lg:leading-7">
-                  Explore how a single private bucket is organised by Story, Season and Episode,
-                  then see how access and publishing rules are applied without changing the file path.
-                </p>
-              </div>
-              <span className="w-fit rounded-full border border-emerald-900 bg-emerald-950 px-4 py-2 text-sm font-medium text-emerald-300">
-                Private bucket: stories
-              </span>
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-[18rem_1fr]">
-            <nav className="border-b border-zinc-800 p-3 lg:border-b-0 lg:border-r lg:p-4" aria-label="Storage architecture views">
-              <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                {architectureViews.map((view) => {
-                  const active = architectureView === view.id;
-                  return (
-                    <button
-                      key={view.id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setArchitectureView(view.id)}
-                      className={`rounded-xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
-                        active
-                          ? "border-emerald-500/60 bg-emerald-400/10"
-                          : "border-transparent bg-zinc-950/40 hover:border-zinc-700 hover:bg-zinc-950/70"
-                      }`}
-                    >
-                      <span className={`block font-semibold ${active ? "text-emerald-300" : "text-zinc-200"}`}>
-                        {view.label}
-                      </span>
-                      <span className="mt-1 hidden text-xs leading-5 text-zinc-500 lg:block">
-                        {view.description}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </nav>
-
-            <div className="min-h-[34rem] bg-zinc-950/45 p-4 sm:p-6 lg:p-8">
-              {architectureView === "storage" && (
-                <div>
-                  <div className="mb-6">
-                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Physical hierarchy</p>
-                    <h3 className="mt-1 text-xl font-semibold">Bucket → Story → Season → Episode</h3>
-                    <p className="mt-2 text-sm leading-6 text-zinc-400">
-                      Select a branch to reveal its folders. Access roles do not create additional folders.
-                    </p>
-                  </div>
-
-                  <div className="mx-auto max-w-4xl rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-                    <div className="rounded-xl border border-emerald-500/50 bg-emerald-400/10 p-4">
-                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Private bucket</span>
-                      <p className="mt-1 font-mono text-lg font-semibold text-emerald-200">stories</p>
-                    </div>
-                    <div className="ml-5 border-l border-zinc-700 py-4 pl-5 sm:ml-8 sm:pl-8">
-                      <div className="rounded-xl border border-violet-500/40 bg-violet-400/10 p-4">
-                        <span className="text-xs uppercase tracking-[0.14em] text-violet-300">Story ownership boundary</span>
-                        <p className="mt-1 font-mono font-semibold text-violet-100">{"{story_id}"}/</p>
-                      </div>
-                      <div className="mt-3 grid gap-2">
-                        {storageBranches.map((branch) => {
-                          const open = expandedStorage.includes(branch.id);
-                          return (
-                            <div key={branch.id} className="rounded-xl border border-zinc-800 bg-zinc-900/80">
-                              <button
-                                type="button"
-                                aria-expanded={open}
-                                onClick={() => toggleStorageBranch(branch.id)}
-                                className="flex w-full items-center justify-between gap-4 p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-400"
-                              >
-                                <span>
-                                  <span className="block font-semibold text-zinc-100">{branch.label}</span>
-                                  <span className="mt-0.5 block font-mono text-xs text-zinc-500">{branch.path}</span>
-                                </span>
-                                <span className={`text-xl text-zinc-500 transition-transform ${open ? "rotate-45" : ""}`} aria-hidden="true">+</span>
-                              </button>
-                              {open && (
-                                <div className="border-t border-zinc-800 px-4 py-3">
-                                  <div className="grid gap-2 sm:grid-cols-2">
-                                    {branch.children.map((child) => (
-                                      <div key={child} className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-300">
-                                        {child}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {architectureView === "access" && (
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Security overlay</p>
-                  <h3 className="mt-1 text-xl font-semibold">Access is resolved from the story</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-                    The application reads the story identifier from the object path, then checks ownership,
-                    membership, asset status and story visibility. The object remains in the same location.
-                  </p>
-
-                  <div className="mt-7 grid gap-4 xl:grid-cols-[1fr_auto_1fr] xl:items-center">
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-                      <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Requested object</p>
-                      <p className="mt-3 break-all font-mono text-sm leading-6 text-emerald-300">
-                        {"{story_id}"}/seasons/{"{season_id}"}/episodes/{"{episode_id}"}/artwork/scene-01.jpg
-                      </p>
-                    </div>
-                    <div className="hidden text-2xl text-zinc-600 xl:block" aria-hidden="true">→</div>
-                    <div className="rounded-2xl border border-violet-500/30 bg-violet-400/10 p-5">
-                      <p className="text-xs uppercase tracking-[0.15em] text-violet-300">Policy decision</p>
-                      <p className="mt-2 font-semibold">Check story membership and asset status</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-                    {accessRules.map((rule) => (
-                      <div key={rule.role} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                        <p className="text-sm font-semibold text-zinc-200">{rule.role}</p>
-                        <p className="mt-2 text-xs leading-5 text-zinc-500">{rule.result}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 rounded-xl border border-amber-500/25 bg-amber-400/5 p-4 text-sm leading-6 text-amber-100/80">
-                    Public, shared and private are database visibility states—not additional storage folders.
-                  </div>
-                </div>
-              )}
-
-              {architectureView === "lifecycle" && (
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Controlled publishing</p>
-                  <h3 className="mt-1 text-xl font-semibold">One asset, changing workflow status</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-                    Workflow state belongs to the media record. Progressing an asset does not require moving it
-                    between Private, Public or ToBeFiled folders.
-                  </p>
-
-                  <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-6 xl:items-center">
-                    {lifecycleSteps.map((step, index) => (
-                      <div key={step} className="relative">
-                        <div className={`rounded-xl border p-4 text-center ${
-                          step === "Published"
-                            ? "border-emerald-500/50 bg-emerald-400/10 text-emerald-200"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-200"
-                        }`}>
-                          <span className="text-xs text-zinc-500">{index + 1}</span>
-                          <p className="mt-1 font-semibold">{step}</p>
-                        </div>
-                        {index < lifecycleSteps.length - 1 && (
-                          <span className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-zinc-600 xl:block" aria-hidden="true">→</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                      <p className="font-semibold">Storage path</p>
-                      <p className="mt-1 text-sm leading-6 text-zinc-500">Remains stable throughout the lifecycle.</p>
-                    </div>
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                      <p className="font-semibold">Media record</p>
-                      <p className="mt-1 text-sm leading-6 text-zinc-500">Stores workflow status, role and approval.</p>
-                    </div>
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                      <p className="font-semibold">Reader resolution</p>
-                      <p className="mt-1 text-sm leading-6 text-zinc-500">Displays only the permitted approved version.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </section>
