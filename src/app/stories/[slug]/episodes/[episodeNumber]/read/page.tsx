@@ -96,12 +96,12 @@ export default async function ReadPage({ params }: Props) {
           >
             ← Back
           </Link>
-          {studioModeEnabled && readerDocument ? (
+          {studioModeEnabled && readerDocument && episode.episode_end_number ? (
             <Link
               href={`/studio/education/${slug}/episodes/${episode.episode_number}`}
               className="flex-1 rounded-lg border border-cyan-400/50 bg-cyan-500/10 px-4 py-3 text-center font-medium text-cyan-200 transition-colors hover:bg-cyan-400/15"
             >
-              Edit Reader
+              Review Notes
             </Link>
           ) : null}
           {episode.audio_url ? (
