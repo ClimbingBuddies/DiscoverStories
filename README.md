@@ -2,6 +2,8 @@
 
 Discover Stories is a story-production and reading/listening platform built with Next.js and Supabase.
 
+> GitHub connection test: this line confirms ChatGPT can update the DiscoverStories repository.
+
 The project supports:
 
 - long-form stories developed in ten-episode review batches,
