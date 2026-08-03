@@ -1,4 +1,4 @@
-name: Upload queued story artwork
+name: Upload queued story media
 
 on:
   pull_request:
@@ -61,6 +61,11 @@ jobs:
 
           test -s "$queue"
           jq -e 'has("storySlug") and has("assetRole") and has("imageBase64")' "$queue" >/dev/null
+          jq -e '(.assetRole | IN("cover", "banner", "episode", "reader", "canon"))' "$queue" >/dev/null
+          if jq -e '(.assetRole == "reader" or .assetRole == "episode") and ((.seasonNumber|type) != "number" or (.episodeNumber|type) != "number")' "$queue" >/dev/null; then
+            echo "Reader and episode media require numeric seasonNumber and episodeNumber." >&2
+            exit 1
+          fi
           echo "queue=$queue" >> "$GITHUB_OUTPUT"
           echo "count=$(wc -l < "$queue" | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
@@ -80,7 +85,7 @@ jobs:
       - name: Install image conversion tools
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      - name: Upload and link artwork batch
+      - name: Upload and link media batch
         shell: bash
         run: |
           set -uo pipefail
