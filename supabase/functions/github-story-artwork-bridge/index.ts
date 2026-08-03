@@ -3,8 +3,8 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const EXPECTED_REPOSITORY = "he84677-Platform/ai-audio-stories";
-const EXPECTED_ACTOR = "he84677-Platform";
+const EXPECTED_REPOSITORY = "ClimbingBuddies/DiscoverStories";
+const EXPECTED_ACTOR = "ClimbingBuddies";
 const AUDIENCE = "supabase-story-artwork";
 const ISSUER = "https://token.actions.githubusercontent.com";
 const WORKFLOW_TARGETS = new Map([
