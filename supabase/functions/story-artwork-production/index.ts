@@ -7,7 +7,7 @@ const bucket = Deno.env.get("SUPABASE_STORAGE_BUCKET") ?? "story-images";
 const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const allowedStatuses = new Set(["draft", "review"]);
 const allowedStages = new Set(["concept", "refined", "production"]);
-const allowedRoles = new Set(["cover", "banner", "episode", "canon"]);
+const allowedRoles = new Set(["cover", "banner", "episode", "reader", "canon"]);
 const allowedMimes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function respond(body: unknown, status = 200) {
@@ -53,7 +53,10 @@ function canonicalPath(args: { slug: string; role: string; stage: string; versio
   if (args.role === "cover") return `${args.slug}/${args.slug}-cover${suffix}.${args.extension}`;
   if (args.role === "banner") return `${args.slug}/${args.slug}-banner${suffix}.${args.extension}`;
   if (args.role === "canon") throw new Error("Canon paths require a Canon object slug.");
-  return `${args.slug}/episodes/${args.slug}-s${String(args.season).padStart(2, "0")}e${String(args.episode).padStart(2, "0")}${suffix}.${args.extension}`;
+  const episodeName = `${args.slug}-s${String(args.season).padStart(2, "0")}e${String(args.episode).padStart(2, "0")}`;
+  const filename = `${episodeName}${suffix}.${args.extension}`;
+  if (args.role === "reader") return `${args.slug}/episodes/${episodeName}/reader/${filename}`;
+  return `${args.slug}/episodes/${filename}`;
 }
 function cleanObjectSlug(value: unknown) {
   const result = String(value ?? "").trim().toLowerCase();
@@ -95,7 +98,7 @@ async function uploadAsset(form: FormData) {
   const version = positive(form.get("versionNumber") ?? 1, "versionNumber");
   const notes = String(form.get("generationNotes") ?? "").trim();
   const file = form.get("file");
-  if (!allowedRoles.has(role)) throw new Error("assetRole must be cover, banner, episode or canon.");
+  if (!allowedRoles.has(role)) throw new Error("assetRole must be cover, banner, episode, reader or canon.");
   if (!allowedStages.has(stage)) throw new Error("stage must be concept, refined or production.");
   if (!allowedStatuses.has(workflowStatus)) throw new Error("workflowStatus must be draft or review.");
   if (!(file instanceof File)) throw new Error("A file upload is required.");
@@ -142,7 +145,7 @@ async function uploadAsset(form: FormData) {
 
   const publicUrl = db.storage.from(bucket).getPublicUrl(storagePath).data.publicUrl;
   const lifecycleStatus = stage === "production" ? "approved" : stage;
-  const assetType = role === "canon" ? "character_reference" : stage === "concept" ? "concept_image" : stage === "refined" ? "refined_image" : role === "cover" ? "cover_image" : role === "banner" ? "story_banner" : "episode_image";
+  const assetType = role === "canon" ? "character_reference" : role === "reader" ? "reader_image" : stage === "concept" ? "concept_image" : stage === "refined" ? "refined_image" : role === "cover" ? "cover_image" : role === "banner" ? "story_banner" : "episode_image";
   const now = new Date().toISOString();
   try {
     const assetId = await registerAsset({
@@ -184,6 +187,9 @@ async function uploadAsset(form: FormData) {
     } else if (role === "banner") {
       const result = await db.from("stories").update({ banner_image_path: storagePath, updated_at: now }).eq("id", story.id);
       if (result.error) throw result.error;
+    } else if (role === "reader") {
+      // Reader media is registered in media_assets and referenced by Reader JSON.
+      // It must never replace the episode's primary artwork fields.
     } else {
       const result = await db.from("episodes").update({ artwork_path: storagePath, artwork_url: publicUrl, updated_at: now }).eq("id", episode!.id);
       if (result.error) throw result.error;
