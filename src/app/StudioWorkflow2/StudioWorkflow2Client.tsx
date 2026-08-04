@@ -52,7 +52,7 @@ type CanonRule = { rule_category: string; canon_state: string; content_status: s
 type CanonCategory = { slug: string; name: string; is_active: boolean; };
 
 const domains = [
-  { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Workspaces", "0"], ["Canon records", "0"], ["Confirmed", "0"], ["Proposed", "0"], ["Image references", "0"]], link: "Open Canon" },
+  { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Stories", "0"], ["Records", "0"], ["Confirmed", "0"], ["Draft", "0"], ["Needs Review", "0"], ["Characters", "0"], ["Science", "0"]], link: "Open Canon" },
   { label: "Artwork", eyebrow: "SUPPORTING LAYER", icon: "image", state: "In Progress", tone: "blue", description: "Visual production informed by Canon and Story.", items: [["Concept Art", "342"], ["Key Art", "18"], ["Assets", "1,247"], ["References", "96"], ["Moodboards", "24"]], link: "Open Artwork" },
   { label: "Wiki", eyebrow: "DOWNSTREAM PUBLICATION", icon: "file", state: "Published", tone: "purple", description: "Approved public knowledge with reveal and spoiler controls.", items: [["Articles", "512"], ["Guides", "37"], ["Glossary", "148"], ["Timeline", "23"], ["Updates", "6"]], link: "Open Wiki" },
 ] as const;
