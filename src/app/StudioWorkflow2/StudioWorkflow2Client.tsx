@@ -114,7 +114,7 @@ export default function StudioWorkflow2Client() {
       <section className="studio2-content studio-story-content">
         <header className="studio2-topbar">
           <div><span className="studio2-kicker">DISCOVER STORIES / STORY STUDIO</span><h1>{selected === "Story" && dashboard ? dashboard.story.title : "STUDIO WORKFLOW"}</h1></div>
-          <label className="studio2-story-picker"><span>STORY</span><input value={storySearch} onChange={(event) => setStorySearch(event.target.value)} placeholder={selectedOption?.title ?? "Search stories"} list="studio-story-options" aria-label="Search stories" /><datalist id="studio-story-options">{matchingStories.map((option) => <option key={option.id} value={option.title} /></datalist></label>
+          <label className="studio2-story-picker"><span>STORY</span><input value={storySearch} onChange={(event) => setStorySearch(event.target.value)} placeholder={selectedOption?.title ?? "Search stories"} list="studio-story-options" aria-label="Search stories" /><datalist id="studio-story-options">{matchingStories.map((option) => <option key={option.id} value={option.title} />)}</datalist></label>
           <span className="studio2-mode"><span /> Studio mode</span>
         </header>
 
