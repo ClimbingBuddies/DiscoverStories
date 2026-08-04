@@ -71,7 +71,7 @@ export default function StudioWorkflow2Client() {
     });
   }, [storyId]);
 
-  const selectedOption = storyOptions.find((option) => option.id === storyId);
+  useEffect(() => {\n    const matched = storyOptions.find((option) => option.title === storySearch);\n    if (matched && matched.id !== storyId) setStoryId(matched.id);\n  }, [storySearch, storyOptions, storyId]);\n\n  const selectedOption = storyOptions.find((option) => option.id === storyId);
   const matchingStories = storyOptions.filter((option) => option.title.toLowerCase().includes(storySearch.trim().toLowerCase()));
   const filteredEpisodes = useMemo(() => {
     if (!dashboard) return [];
