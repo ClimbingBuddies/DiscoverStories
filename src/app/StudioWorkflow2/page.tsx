@@ -9,3 +9,4 @@ export const metadata: Metadata = {
 export default function StudioWorkflow2Page() {
   return <StudioWorkflow2Client />;
 }
+
