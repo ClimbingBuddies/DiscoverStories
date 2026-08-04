@@ -48,6 +48,8 @@ const securityControls = [
 ] as const;
 
 type CanonWorkspace = { id: string; slug: string; title: string; record_count: number; confirmed_count: number; proposed_count: number; content_status: string; updated_at: string; linked_story: { slug: string; title: string } | null; };
+type CanonRule = { rule_category: string; canon_state: string; content_status: string; story_id: string | null; canon_project_id: string | null; };
+type CanonCategory = { slug: string; name: string; is_active: boolean; };
 
 const domains = [
   { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Workspaces", "0"], ["Canon records", "0"], ["Confirmed", "0"], ["Proposed", "0"], ["Image references", "0"]], link: "Open Canon" },
@@ -59,29 +61,41 @@ export default function StudioWorkflow2Client() {
   const [selected, setSelected] = useState("Overview");
   const [selectedStage, setSelectedStage] = useState("Brief");
   const [canonWorkspaces, setCanonWorkspaces] = useState<CanonWorkspace[]>([]);
+  const [canonRules, setCanonRules] = useState<CanonRule[]>([]);
+  const [canonCategories, setCanonCategories] = useState<CanonCategory[]>([]);
   const [canonLoading, setCanonLoading] = useState(true);
-  const [canonCategoryCount, setCanonCategoryCount] = useState(0);
-  const [canonAssetCount, setCanonAssetCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
-    void supabase.rpc("list_studio_private_canon", { p_studio_mode: true }).then(({ data, error }) => {
+    void Promise.all([
+      supabase.rpc("list_studio_private_canon", { p_studio_mode: true }),
+      supabase.from("story_canon_rules").select("rule_category, canon_state, content_status, story_id, canon_project_id"),
+      supabase.from("private_canon_category_types").select("slug, name, is_active").eq("is_active", true),
+    ]).then(([workspacesResult, rulesResult, categoriesResult]) => {
       if (!mounted) return;
-      if (!error && Array.isArray(data)) setCanonWorkspaces(data as CanonWorkspace[]);
+      if (!workspacesResult.error && Array.isArray(workspacesResult.data)) setCanonWorkspaces(workspacesResult.data as CanonWorkspace[]);
+      if (!rulesResult.error && Array.isArray(rulesResult.data)) setCanonRules(rulesResult.data as CanonRule[]);
+      if (!categoriesResult.error && Array.isArray(categoriesResult.data)) setCanonCategories(categoriesResult.data as CanonCategory[]);
       setCanonLoading(false);
     });
     return () => { mounted = false; };
   }, []);
 
   const canonMetrics = useMemo(() => {
-    const workspaces = canonWorkspaces.length;
-    const records = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.record_count ?? 0), 0);
-    const confirmed = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.confirmed_count ?? 0), 0);
-    const proposed = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.proposed_count ?? 0), 0);
-    return { workspaces, records, confirmed, proposed };
-  }, [canonWorkspaces]);
+    const categorySlugs = new Set(canonCategories.map((category) => category.slug.toLowerCase()));
+    const isCategory = (rule: CanonRule, names: string[]) => {
+      const category = rule.rule_category.toLowerCase();
+      return names.some((name) => category === name || category === name + "s") && (categorySlugs.size === 0 || categorySlugs.has(category));
+    };
+    const records = canonRules.length;
+    const confirmed = canonRules.filter((rule) => rule.canon_state.toLowerCase() === "confirmed").length;
+    const draft = canonRules.filter((rule) => rule.canon_state.toLowerCase() === "proposed" || rule.content_status.toLowerCase() === "draft").length;
+    const needsReview = canonRules.filter((rule) => ["review", "needs_review", "needs review"].includes(rule.content_status.toLowerCase()) || ["review", "needs_review", "needs review"].includes(rule.canon_state.toLowerCase())).length;
+    const stories = new Set(canonRules.map((rule) => rule.story_id ?? rule.canon_project_id).filter(Boolean)).size;
+    return { stories, records, confirmed, draft, needsReview, characters: canonRules.filter((rule) => isCategory(rule, ["character"])).length, science: canonRules.filter((rule) => isCategory(rule, ["science"])).length };
+  }, [canonRules, canonCategories]);
 
-  const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Workspaces", String(canonMetrics.workspaces)], ["Canon records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Proposed", String(canonMetrics.proposed)], ["Image references", String(canonAssetCount)]] as [string, string][] } : domain);
+  const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Stories", String(canonMetrics.stories)], ["Records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Draft", String(canonMetrics.draft)], ["Needs Review", String(canonMetrics.needsReview)], ["Characters", String(canonMetrics.characters)], ["Science", String(canonMetrics.science)]] as [string, string][] } : domain);
   const recentCanon = canonWorkspaces.slice().sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 4);
   const selectedDomain = selected === "Overview" ? "Canon" : selected;
 
@@ -111,7 +125,7 @@ export default function StudioWorkflow2Client() {
             <div className="studio2-security-card"><div className="studio2-security-title"><span className="studio2-domain-icon"><Icon name="shield" /></span><div><h4>Security</h4><p>Cross-cutting control</p></div><span className="studio2-domain-state"><i /> Compliant</span></div><div className="studio2-security-controls">{securityControls.map(([label, note]) => <div key={label}><strong>{label}</strong><small>{note}</small></div>)}</div><button className="studio2-domain-link">Open Security <span>→</span></button></div>
           </div>
         </div>
-        <aside className="studio2-inspector"><button className="studio2-inspector-close" aria-label="Close inspector">×</button><div className="studio2-inspector-heading"><span className="studio2-domain-icon"><Icon name={selectedDomain === "Artwork" ? "image" : selectedDomain === "Wiki" ? "file" : "database"} /></span><div><h2>{selectedDomain.toUpperCase()}</h2><p>{selectedDomain === "Canon" ? "Source of Truth" : selectedDomain === "Artwork" ? "Supporting Layer" : "Downstream Publication"}</p></div></div><div className="studio2-inspector-sync"><i /> Synced <span>Updated just now</span> ↻</div><h3>OVERVIEW</h3><p>Canonical data and production information used across the Studio workflow.</p><div className="studio2-metric-grid"><span><strong>{canonMetrics.workspaces}</strong><small>Workspaces</small></span><span><strong>{canonMetrics.records}</strong><small>Canon records</small></span><span><strong>{canonMetrics.confirmed}</strong><small>Confirmed</small></span><span><strong>{canonMetrics.proposed}</strong><small>Proposed</small></span><span><strong>{canonCategoryCount}</strong><small>Categories</small></span><span><strong>{canonAssetCount}</strong><small>Image refs</small></span></div><h3>RECENT CHANGES <em>View All</em></h3><ul className="studio2-recent">{recentCanon.length ? recentCanon.map((workspace) => <li key={workspace.id}>{workspace.title}<small>{workspace.record_count} records · {new Date(workspace.updated_at).toLocaleDateString("en-AU")}</small></li>) : <li>{canonLoading ? "Loading Canon workspaces…" : "No Canon workspaces found"}<small>Supabase Studio read</small></li>}</ul><button className="studio2-inspector-open">Open {selectedDomain} <span>→</span></button></aside>
+        <aside className="studio2-inspector"><button className="studio2-inspector-close" aria-label="Close inspector">×</button><div className="studio2-inspector-heading"><span className="studio2-domain-icon"><Icon name={selectedDomain === "Artwork" ? "image" : selectedDomain === "Wiki" ? "file" : "database"} /></span><div><h2>{selectedDomain.toUpperCase()}</h2><p>{selectedDomain === "Canon" ? "Source of Truth" : selectedDomain === "Artwork" ? "Supporting Layer" : "Downstream Publication"}</p></div></div><div className="studio2-inspector-sync"><i /> Synced <span>Updated just now</span> ↻</div><h3>OVERVIEW</h3><p>Canonical data and production information used across the Studio workflow.</p><div className="studio2-metric-grid"><span><strong>{canonMetrics.stories}</strong><small>Stories</small></span><span><strong>{canonMetrics.records}</strong><small>Canon records</small></span><span><strong>{canonMetrics.confirmed}</strong><small>Confirmed</small></span><span><strong>{canonMetrics.draft}</strong><small>Draft</small></span><span><strong>{canonMetrics.needsReview}</strong><small>Needs Review</small></span><span><strong>{canonMetrics.characters}</strong><small>Characters</small></span><span><strong>{canonMetrics.science}</strong><small>Science</small></span></div><h3>RECENT CHANGES <em>View All</em></h3><ul className="studio2-recent">{recentCanon.length ? recentCanon.map((workspace) => <li key={workspace.id}>{workspace.title}<small>{workspace.record_count} records · {new Date(workspace.updated_at).toLocaleDateString("en-AU")}</small></li>) : <li>{canonLoading ? "Loading Canon workspaces…" : "No Canon workspaces found"}<small>Supabase Studio read</small></li>}</ul><button className="studio2-inspector-open">Open {selectedDomain} <span>→</span></button></aside>
       </section>
     </main>
   );
