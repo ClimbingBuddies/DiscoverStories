@@ -47,7 +47,9 @@ const securityControls = [
   ["Policy", "Rules and compliance"],
 ] as const;
 
-type CanonWorkspace = { id: string; slug: string; title: string; record_count: number; confirmed_count: number; proposed_count: number; content_status: string; updated_at: string; linked_story: { slug: string; title: string } | null; };\n\nconst domains = [
+type CanonWorkspace = { id: string; slug: string; title: string; record_count: number; confirmed_count: number; proposed_count: number; content_status: string; updated_at: string; linked_story: { slug: string; title: string } | null; };
+
+const domains = [
   { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Characters", "128"], ["Locations", "64"], ["Organisations", "36"], ["Items", "212"], ["Events", "89"]], link: "Open Canon" },
   { label: "Artwork", eyebrow: "SUPPORTING LAYER", icon: "image", state: "In Progress", tone: "blue", description: "Visual production informed by Canon and Story.", items: [["Concept Art", "342"], ["Key Art", "18"], ["Assets", "1,247"], ["References", "96"], ["Moodboards", "24"]], link: "Open Artwork" },
   { label: "Wiki", eyebrow: "DOWNSTREAM PUBLICATION", icon: "file", state: "Published", tone: "purple", description: "Approved public knowledge with reveal and spoiler controls.", items: [["Articles", "512"], ["Guides", "37"], ["Glossary", "148"], ["Timeline", "23"], ["Updates", "6"]], link: "Open Wiki" },
@@ -55,7 +57,30 @@ type CanonWorkspace = { id: string; slug: string; title: string; record_count: n
 
 export default function StudioWorkflow2Client() {
   const [selected, setSelected] = useState("Overview");
-  const [selectedStage, setSelectedStage] = useState("Brief");\n  const [canonWorkspaces, setCanonWorkspaces] = useState<CanonWorkspace[]>([]);\n  const [canonLoading, setCanonLoading] = useState(true);\n\n  useEffect(() => {\n    let mounted = true;\n    void supabase.rpc("list_studio_private_canon", { p_studio_mode: true }).then(({ data, error }) => {\n      if (!mounted) return;\n      if (!error && Array.isArray(data)) setCanonWorkspaces(data as CanonWorkspace[]);\n      setCanonLoading(false);\n    });\n    return () => { mounted = false; };\n  }, []);\n\n  const canonMetrics = useMemo(() => {\n    const workspaces = canonWorkspaces.length;\n    const records = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.record_count ?? 0), 0);\n    const confirmed = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.confirmed_count ?? 0), 0);\n    const proposed = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.proposed_count ?? 0), 0);\n    return { workspaces, records, confirmed, proposed };\n  }, [canonWorkspaces]);\n\n  const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Workspaces", String(canonMetrics.workspaces)], ["Canon records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Proposed", String(canonMetrics.proposed)], ["Image references", "0"]] as [string, string][] } : domain);\n  const recentCanon = canonWorkspaces.slice().sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 4);
+  const [selectedStage, setSelectedStage] = useState("Brief");
+  const [canonWorkspaces, setCanonWorkspaces] = useState<CanonWorkspace[]>([]);
+  const [canonLoading, setCanonLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    void supabase.rpc("list_studio_private_canon", { p_studio_mode: true }).then(({ data, error }) => {
+      if (!mounted) return;
+      if (!error && Array.isArray(data)) setCanonWorkspaces(data as CanonWorkspace[]);
+      setCanonLoading(false);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const canonMetrics = useMemo(() => {
+    const workspaces = canonWorkspaces.length;
+    const records = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.record_count ?? 0), 0);
+    const confirmed = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.confirmed_count ?? 0), 0);
+    const proposed = canonWorkspaces.reduce((sum, workspace) => sum + (workspace.proposed_count ?? 0), 0);
+    return { workspaces, records, confirmed, proposed };
+  }, [canonWorkspaces]);
+
+  const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Workspaces", String(canonMetrics.workspaces)], ["Canon records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Proposed", String(canonMetrics.proposed)], ["Image references", "0"]] as [string, string][] } : domain);
+  const recentCanon = canonWorkspaces.slice().sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 4);
   const selectedDomain = selected === "Overview" ? "Canon" : selected;
 
   return (
