@@ -25,6 +25,61 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* StudioWorkflow2 prototype */
+.studio2-shell { background: #101315; color: #e7e5df; display: flex; min-height: 100vh; }
+.studio2-sidebar { background: #171b1e; border-right: 1px solid #2a3032; display: flex; flex: 0 0 244px; flex-direction: column; padding: 0 14px; }
+.studio2-brand { align-items: center; border-bottom: 1px solid #252b2d; color: #d9d4c7; display: flex; font-size: 1rem; font-weight: 700; gap: 21px; height: 73px; letter-spacing: .16em; padding: 0 12px; }
+.studio2-menu { color: #778084; font-size: 1rem; letter-spacing: 0; }
+.studio2-section-label, .studio2-kicker { color: #b28738; font-size: .66rem; font-weight: 800; letter-spacing: .16em; margin: 27px 10px 10px; }
+.studio2-nav-item { align-items: center; background: transparent; border: 0; border-radius: 6px; color: #aeb5b7; cursor: pointer; display: flex; font-size: .82rem; gap: 14px; margin: 2px 0; padding: 10px 12px; position: relative; text-align: left; width: 100%; }
+.studio2-nav-item svg { height: 18px; width: 18px; }
+.studio2-nav-item:hover, .studio2-nav-item.is-selected { background: #252a2c; color: #d7a83d; }
+.studio2-nav-item.is-selected:before { background: #d7a83d; content: ""; height: 28px; left: -14px; position: absolute; width: 2px; }
+.studio2-nav-item i { background: #d7a83d; border-radius: 50%; height: 4px; margin-left: auto; width: 4px; }
+.studio2-nav-item b { background: #705421; border-radius: 5px; color: #e8c56d; font-size: .65rem; margin-left: auto; padding: 3px 6px; }
+.studio2-divider { border-top: 1px solid #2a3032; margin: 29px 10px 18px; }
+.studio2-user { align-items: center; border-top: 1px solid #2a3032; display: flex; gap: 10px; margin-top: auto; padding: 20px 3px; }
+.studio2-avatar { align-items: center; background: #27645d; border: 1px solid #4aa99a; border-radius: 50%; color: #d9f1eb; display: flex; font-size: .7rem; height: 30px; justify-content: center; width: 30px; }
+.studio2-user strong, .studio2-user small { display: block; font-size: .68rem; font-weight: 500; }
+.studio2-user small { color: #7d878a; margin-top: 3px; }
+.studio2-user em { color: #8d9698; font-style: normal; margin-left: auto; }
+.studio2-content { flex: 1; min-width: 0; }
+.studio2-topbar { align-items: center; border-bottom: 1px solid #292f31; display: flex; justify-content: space-between; min-height: 112px; padding: 24px clamp(24px, 5vw, 74px); }
+.studio2-topbar .studio2-kicker { margin: 0 0 8px; }
+.studio2-topbar h1 { color: #f2f0eb; font-size: clamp(1.5rem, 3vw, 2.15rem); font-weight: 600; letter-spacing: -.035em; margin: 0; }
+.studio2-mode { border: 1px solid #3b4446; border-radius: 20px; color: #aeb5b7; font-size: .72rem; padding: 8px 13px; }
+.studio2-mode span, .studio2-status span { background: #45a887; border-radius: 50%; display: inline-block; height: 7px; margin-right: 7px; width: 7px; }
+.studio2-body { margin: 0 auto; max-width: 1420px; padding: 45px clamp(24px, 5vw, 74px) 80px; }
+.studio2-intro { align-items: end; display: flex; justify-content: space-between; margin-bottom: 27px; }
+.studio2-intro .studio2-kicker { margin: 0 0 8px; }
+.studio2-intro h2 { color: #f3f0e9; font-size: 2.4rem; font-weight: 600; letter-spacing: -.05em; margin: 0; }
+.studio2-intro p:not(.studio2-kicker) { color: #8f999b; font-size: .9rem; line-height: 1.65; margin: 8px 0 0; max-width: 590px; }
+.studio2-status { color: #77b99f; font-size: .72rem; padding-bottom: 4px; }
+.studio2-workflow-card { background: #1a1f21; border: 1px solid #ae7926; border-radius: 8px; box-shadow: 0 0 0 1px #3f3020 inset; display: flex; min-height: 148px; overflow: hidden; padding: 22px 20px; }
+.studio2-workflow-title { align-items: center; border-right: 1px solid #303638; display: flex; flex: 0 0 152px; gap: 12px; }
+.studio2-round-icon { align-items: center; border: 1px solid #c08b32; border-radius: 50%; color: #e5b852; display: flex; height: 55px; justify-content: center; width: 55px; }
+.studio2-round-icon svg { height: 25px; width: 25px; }
+.studio2-workflow-title strong, .studio2-workflow-title small { display: block; }
+.studio2-workflow-title strong { color: #e8b74b; font-size: .88rem; letter-spacing: .14em; }
+.studio2-workflow-title small { color: #747f81; font-size: .62rem; margin-top: 6px; }
+.studio2-stage-row { align-items: center; display: flex; flex: 1; justify-content: space-around; min-width: 0; padding-left: 16px; }
+.studio2-stage-wrap { align-items: center; display: flex; flex: 1; min-width: 0; }
+.studio2-stage { align-items: center; background: transparent; border: 1px solid #4a5050; border-radius: 6px; color: #c9ccca; cursor: pointer; display: flex; flex-direction: column; gap: 6px; min-height: 82px; padding: 10px 8px; width: 100%; }
+.studio2-stage:hover, .studio2-stage.is-active { background: #252a2c; border-color: #c4933c; }
+.studio2-stage strong { font-size: .72rem; font-weight: 600; white-space: nowrap; }
+.studio2-stage small { color: #7b8587; font-size: .58rem; white-space: nowrap; }
+.studio2-stage-icon { align-items: center; color: #b9c0bf; display: flex; height: 22px; justify-content: center; }
+.studio2-stage-icon svg { height: 19px; width: 19px; }
+.studio2-stage-icon.complete { color: #d8a43e; }.studio2-stage-icon.active { color: #6d9ee0; }.studio2-stage-icon.next { color: #8b9697; }
+.studio2-connector { background: #8b6429; display: block; height: 1px; margin: 0 8px; min-width: 18px; position: relative; }
+.studio2-connector i { background: #d6a23a; border-radius: 50%; height: 5px; left: 50%; position: absolute; top: -2px; width: 5px; }
+.studio2-detail { align-items: center; background: #171b1d; border: 1px solid #2b3335; border-radius: 8px; display: flex; justify-content: space-between; margin-top: 22px; padding: 23px 26px; }
+.studio2-detail .studio2-kicker { margin: 0 0 7px; }.studio2-detail h3 { color: #e7e2d8; font-size: 1.25rem; margin: 0; }.studio2-detail p:not(.studio2-kicker) { color: #889294; font-size: .8rem; line-height: 1.6; margin: 7px 0 0; max-width: 650px; }
+.studio2-open { background: #af7d29; border: 0; border-radius: 5px; color: #17130c; cursor: pointer; font-size: .76rem; font-weight: 700; padding: 11px 16px; white-space: nowrap; }.studio2-open span { font-size: 1.1rem; margin-left: 7px; }
+.studio2-foundations { border-top: 1px solid #2a3032; margin-top: 50px; padding-top: 28px; }.studio2-foundations .studio2-kicker { margin: 0 0 8px; }.studio2-foundations h3 { color: #d8d5ce; font-size: 1.15rem; font-weight: 500; margin: 0; }.studio2-foundation-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); margin-top: 20px; }.studio2-foundation-grid div { background: #171b1d; border: 1px solid #2b3335; border-radius: 7px; display: grid; gap: 5px; padding: 17px; }.studio2-foundation-grid svg { color: #bd8b37; height: 20px; width: 20px; }.studio2-foundation-grid strong { color: #dbd8d0; font-size: .82rem; font-weight: 600; }.studio2-foundation-grid span { color: #7d8788; font-size: .7rem; }
+@media (max-width: 900px) { .studio2-sidebar { flex-basis: 210px; }.studio2-workflow-card { display: block; }.studio2-workflow-title { border-bottom: 1px solid #303638; border-right: 0; padding-bottom: 16px; }.studio2-stage-row { overflow-x: auto; padding: 18px 0 4px; }.studio2-stage-wrap { min-width: 135px; }.studio2-foundation-grid { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .studio2-sidebar { flex-basis: 58px; padding: 0 8px; }.studio2-brand { justify-content: center; padding: 0; }.studio2-brand > span:last-child, .studio2-section-label, .studio2-nav-item span, .studio2-nav-item b, .studio2-user > span:not(.studio2-avatar), .studio2-user em { display: none; }.studio2-nav-item { justify-content: center; padding: 12px 0; }.studio2-nav-item.is-selected:before { left: -8px; }.studio2-user { justify-content: center; }.studio2-intro, .studio2-detail { align-items: flex-start; flex-direction: column; gap: 16px; }.studio2-topbar { min-height: 92px; padding: 20px; }.studio2-mode { display: none; }.studio2-body { padding: 30px 20px 60px; } }
+
 .education-reader {
   color: #d4d4d8;
   font-size: 1.05rem;
