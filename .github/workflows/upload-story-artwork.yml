@@ -38,7 +38,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             target="production-queue/${{ inputs.queue_path }}"
           else
-            target="production-queue"
+            target="production-queue/private-canon-upload-test-20260804"
           fi
 
           if [[ -f "$target" && "$target" == *.json ]]; then
@@ -138,6 +138,10 @@ jobs:
             season_number=$(jq -r '.seasonNumber // empty' <<< "$item")
             episode_number=$(jq -r '.episodeNumber // empty' <<< "$item")
             generation_notes=$(jq -r '.generationNotes // "ChatGPT generated draft concept transferred through the Story Pipeline."' <<< "$item")
+            canon_project_slug=$(jq -r '.canonProjectSlug // empty' <<< "$item")
+            canon_object_slug=$(jq -r '.canonObjectSlug // empty' <<< "$item")
+            canon_asset_role=$(jq -r '.canonAssetRole // "reference"' <<< "$item")
+            consistency_notes=$(jq -r '.consistencyNotes // empty' <<< "$item")
 
             args=(
               -sS --fail-with-body
@@ -154,6 +158,10 @@ jobs:
             )
 
             if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
+            if [[ -n "$canon_project_slug" ]]; then args+=( -F "canonProjectSlug=$canon_project_slug" ); fi
+            if [[ -n "$canon_object_slug" ]]; then args+=( -F "canonObjectSlug=$canon_object_slug" ); fi
+            if [[ -n "$canon_asset_role" ]]; then args+=( -F "canonAssetRole=$canon_asset_role" ); fi
+            if [[ -n "$consistency_notes" ]]; then args+=( -F "consistencyNotes=$consistency_notes" ); fi
             if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
 
             uploaded=false
