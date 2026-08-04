@@ -1,12 +1,10 @@
 {
   "storySlug": "aristotle-the-shape-of-thought",
-  "assetRole": "canon",
+  "assetRole": "episode",
   "stage": "concept",
   "workflowStatus": "review",
   "versionNumber": 1,
-  "canonProjectSlug": "aristotle-the-shape-of-thought",
-  "canonObjectSlug": "plato-intellectual-tension",
-  "canonAssetRole": "reference",
-  "consistencyNotes": "Disposable upload test for private Canon Storage; delete after verification.",
-  "generationNotes": "Disposable test image generated for private Canon Storage verification."
+  "seasonNumber": 1,
+  "episodeNumber": 1,
+  "generationNotes": "Disposable transfer test; concept artwork only."
 }
