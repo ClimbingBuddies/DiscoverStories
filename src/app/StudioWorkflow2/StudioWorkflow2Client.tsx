@@ -48,8 +48,7 @@ const securityControls = [
 ] as const;
 
 type CanonWorkspace = { id: string; slug: string; title: string; record_count: number; confirmed_count: number; proposed_count: number; content_status: string; updated_at: string; linked_story: { slug: string; title: string } | null; };
-type CanonRule = { rule_category: string; canon_state: string; content_status: string; story_id: string | null; canon_project_id: string | null; };
-type CanonCategory = { slug: string; name: string; is_active: boolean; };
+type CanonMetrics = { stories: number; records: number; confirmed: number; draft: number; needs_review: number; characters: number; science: number; };
 
 const domains = [
   { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Stories", "0"], ["Records", "0"], ["Confirmed", "0"], ["Draft", "0"], ["Needs Review", "0"], ["Characters", "0"], ["Science", "0"]], link: "Open Canon" },
@@ -61,39 +60,36 @@ export default function StudioWorkflow2Client() {
   const [selected, setSelected] = useState("Overview");
   const [selectedStage, setSelectedStage] = useState("Brief");
   const [canonWorkspaces, setCanonWorkspaces] = useState<CanonWorkspace[]>([]);
-  const [canonRules, setCanonRules] = useState<CanonRule[]>([]);
-  const [canonCategories, setCanonCategories] = useState<CanonCategory[]>([]);
+  const [canonMetrics, setCanonMetrics] = useState<CanonMetrics>({ stories: 0, records: 0, confirmed: 0, draft: 0, needs_review: 0, characters: 0, science: 0 });
   const [canonLoading, setCanonLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     void Promise.all([
       supabase.rpc("list_studio_private_canon", { p_studio_mode: true }),
-      supabase.from("story_canon_rules").select("rule_category, canon_state, content_status, story_id, canon_project_id"),
-      supabase.from("private_canon_category_types").select("slug, name, is_active").eq("is_active", true),
-    ]).then(([workspacesResult, rulesResult, categoriesResult]) => {
+      supabase.rpc("get_studio_canon_metrics", { p_studio_mode: true }),
+    ]).then(([workspacesResult, metricsResult]) => {
       if (!mounted) return;
       if (!workspacesResult.error && Array.isArray(workspacesResult.data)) setCanonWorkspaces(workspacesResult.data as CanonWorkspace[]);
-      if (!rulesResult.error && Array.isArray(rulesResult.data)) setCanonRules(rulesResult.data as CanonRule[]);
-      if (!categoriesResult.error && Array.isArray(categoriesResult.data)) setCanonCategories(categoriesResult.data as CanonCategory[]);
+      if (!metricsResult.error && metricsResult.data && typeof metricsResult.data === "object") {
+        const value = metricsResult.data as Partial<CanonMetrics>;
+        setCanonMetrics({
+          stories: Number(value.stories ?? 0), records: Number(value.records ?? 0),
+          confirmed: Number(value.confirmed ?? 0), draft: Number(value.draft ?? 0),
+          needs_review: Number(value.needs_review ?? 0), characters: Number(value.characters ?? 0),
+          science: Number(value.science ?? 0),
+        });
+      }
       setCanonLoading(false);
     });
     return () => { mounted = false; };
   }, []);
 
-  const canonMetrics = useMemo(() => {
-    const categorySlugs = new Set(canonCategories.map((category) => category.slug.toLowerCase()));
-    const isCategory = (rule: CanonRule, names: string[]) => {
-      const category = rule.rule_category.toLowerCase();
-      return names.some((name) => category === name || category === name + "s") && (categorySlugs.size === 0 || categorySlugs.has(category));
-    };
-    const records = canonRules.length;
-    const confirmed = canonRules.filter((rule) => rule.canon_state.toLowerCase() === "confirmed").length;
-    const draft = canonRules.filter((rule) => rule.canon_state.toLowerCase() === "proposed" || rule.content_status.toLowerCase() === "draft").length;
-    const needsReview = canonRules.filter((rule) => ["review", "needs_review", "needs review"].includes(rule.content_status.toLowerCase()) || ["review", "needs_review", "needs review"].includes(rule.canon_state.toLowerCase())).length;
-    const stories = new Set(canonRules.map((rule) => rule.story_id ?? rule.canon_project_id).filter(Boolean)).size;
-    return { stories, records, confirmed, draft, needsReview, characters: canonRules.filter((rule) => isCategory(rule, ["character"])).length, science: canonRules.filter((rule) => isCategory(rule, ["science"])).length };
-  }, [canonRules, canonCategories]);
+  const liveCanonMetrics = {
+    stories: canonMetrics.stories, records: canonMetrics.records, confirmed: canonMetrics.confirmed,
+    draft: canonMetrics.draft, needsReview: canonMetrics.needs_review,
+    characters: canonMetrics.characters, science: canonMetrics.science,
+  };
 
   const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Stories", String(canonMetrics.stories)], ["Records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Draft", String(canonMetrics.draft)], ["Needs Review", String(canonMetrics.needsReview)], ["Characters", String(canonMetrics.characters)], ["Science", String(canonMetrics.science)]] as [string, string][] } : domain);
   const recentCanon = canonWorkspaces.slice().sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 4);
