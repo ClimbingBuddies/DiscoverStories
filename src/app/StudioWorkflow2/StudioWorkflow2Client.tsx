@@ -48,7 +48,7 @@ const securityControls = [
 ] as const;
 
 type CanonWorkspace = { id: string; slug: string; title: string; record_count: number; confirmed_count: number; proposed_count: number; content_status: string; updated_at: string; linked_story: { slug: string; title: string } | null; };
-type CanonMetrics = { stories: number; records: number; confirmed: number; draft: number; needs_review: number; characters: number; science: number; };\ntype ArtworkMetrics = { stories: number; episode_art: number; covers: number; banners: number; assets: number; approved: number; needs_review: number; draft: number; missing_art: number; };\ntype WikiMetrics = { stories: number; articles: number; public_articles: number; draft: number; needs_review: number; sections: number; episode_links: number; published: number; };
+type CanonMetrics = { stories: number; records: number; confirmed: number; draft: number; needs_review: number; characters: number; science: number; };\ntype ArtworkMetrics = { stories: number; episode_art: number; covers: number; banners: number; assets: number; approved: number; needs_review: number; draft: number; missing_art: number; };\ntype WikiMetrics = { stories: number; articles: number; public_articles: number; draft: number; needs_review: number; sections: number; episode_links: number; published: number; };\ntype StoryOption = { id: string; title: string; slug: string; };
 
 const domains = [
   { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Stories", "0"], ["Records", "0"], ["Confirmed", "0"], ["Draft", "0"], ["Needs Review", "0"], ["Characters", "0"], ["Science", "0"]], link: "Open Canon" },
@@ -94,7 +94,7 @@ export default function StudioWorkflow2Client() {
     return () => { mounted = false; };
   }, []);
 
-  const liveCanonMetrics = {
+  useEffect(() => {\n    const storyId = new URLSearchParams(window.location.search).get("story_id") ?? "";\n    setSelectedStoryId(storyId);\n    void supabase.from("stories").select("id,title,slug").order("title").then(({ data }) => {\n      if (Array.isArray(data)) setStories(data as StoryOption[]);\n    });\n  }, []);\n\n  const filteredStories = stories.filter((story) => story.title.toLowerCase().includes(storySearch.trim().toLowerCase()));\n  const selectedStory = stories.find((story) => story.id === selectedStoryId);\n\n  useEffect(() => {\n    const matched = stories.find((story) => story.title === storySearch);\n    if (!matched) return;\n    setSelectedStoryId(matched.id);\n    const url = new URL(window.location.href);\n    url.searchParams.set("story_id", matched.id);\n    window.history.replaceState({}, "", url);\n  }, [storySearch, stories]);\n  const liveCanonMetrics = {
     stories: canonMetrics.stories, records: canonMetrics.records, confirmed: canonMetrics.confirmed,
     draft: canonMetrics.draft, needsReview: canonMetrics.needs_review,
     characters: canonMetrics.characters, science: canonMetrics.science,
@@ -118,7 +118,7 @@ export default function StudioWorkflow2Client() {
       </aside>
 
       <section className="studio2-content">
-        <header className="studio2-topbar"><div><span className="studio2-kicker">DISCOVER STORIES / STUDIO WORKFLOW</span><h1>STUDIO WORKFLOW</h1></div><span className="studio2-mode"><span /> Studio mode</span></header>
+        <header className="studio2-topbar"><div><span className="studio2-kicker">DISCOVER STORIES / STUDIO WORKFLOW</span><h1>STUDIO WORKFLOW</h1></div><label className="studio2-story-picker"><span>STORY</span><input value={storySearch} onChange={(event) => setStorySearch(event.target.value)} placeholder={selectedStory?.title ?? "Search stories"} list="studio2-story-options" aria-label="Search for a story" /><datalist id="studio2-story-options">{filteredStories.map((story) => <option key={story.id} value={story.title} />)}</datalist></label><span className="studio2-mode"><span /> Studio mode</span></header>
         <div className="studio2-body">
           <div className="studio2-overview-label"><p className="studio2-kicker">CORE WORKFLOW</p></div>
           <div className="studio2-workflow-card"><div className="studio2-workflow-title"><span className="studio2-round-icon"><Icon name="book" /></span><div><strong>STORY</strong><small>Core workflow</small></div></div><div className="studio2-stage-row">{stages.map((stage, index) => <div className="studio2-stage-wrap" key={stage.label}><button onClick={() => setSelectedStage(stage.label)} className={`studio2-stage ${selectedStage === stage.label ? "is-active" : ""}`}><span className={`studio2-stage-icon ${stage.state}`}><Icon name={stage.icon} /></span><strong>{stage.label}</strong><small>{stage.note}</small></button>{index < stages.length - 1 && <span className="studio2-connector"><i /></span>}</div>)}</div></div>
