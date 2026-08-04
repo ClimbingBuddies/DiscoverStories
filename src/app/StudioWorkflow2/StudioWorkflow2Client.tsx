@@ -33,15 +33,27 @@ const secondary = [["Search", "search"], ["Inbox", "inbox"], ["Activity", "activ
 const stages = [
   { label: "Brief", note: "Define the story", icon: "brief", state: "complete" },
   { label: "Season Plan", note: "Shape the season", icon: "calendar", state: "complete" },
-  { label: "Episode Plan", note: "Map each episode", icon: "brief", state: "active" },
   { label: "Draft", note: "Write the story", icon: "draft", state: "next" },
   { label: "Review", note: "Check the candidate", icon: "review", state: "next" },
   { label: "Approve", note: "Release the version", icon: "approve", state: "next" },
 ] as const;
 
+const securityControls = [
+  ["Access Control", "Roles and permissions"],
+  ["Audit Log", "Track production changes"],
+  ["Data Protection", "Classification and privacy"],
+  ["Policy", "Rules and compliance"],
+] as const;
+
+const domains = [
+  { label: "Canon", eyebrow: "PRIVATE SOURCE OF TRUTH", icon: "database", state: "Independent", tone: "teal", description: "Continuity, world rules, characters and visual identity are maintained here for Studio use.", items: ["Characters and relationships", "Locations, objects and rules", "Timeline, secrets and references"], link: "Open Canon" },
+  { label: "Artwork", eyebrow: "SUPPORTING PRODUCTION", icon: "image", state: "In preparation", tone: "blue", description: "Visual briefs and assets are produced from the approved Canon and the relevant episode state.", items: ["1024 × 1024 episode artwork", "1024 × 1024 story cover", "1600 × 900 story banner"], link: "Open Artwork" },
+  { label: "Wiki", eyebrow: "DOWNSTREAM PUBLICATION", icon: "file", state: "After approval", tone: "purple", description: "Approved story and episode information becomes public, with reveal episodes and spoiler controls.", items: ["Public entries and sections", "Episode appearances and reveals", "Optional Canon references"], link: "Open Wiki" },
+] as const;
+
 export default function StudioWorkflow2Client() {
   const [selected, setSelected] = useState("Overview");
-  const [selectedStage, setSelectedStage] = useState("Episode Plan");
+  const [selectedStage, setSelectedStage] = useState("Brief");
 
   return (
     <main className="studio2-shell">
@@ -59,10 +71,16 @@ export default function StudioWorkflow2Client() {
       <section className="studio2-content">
         <header className="studio2-topbar"><div><span className="studio2-kicker">DISCOVER STORIES / STUDIO WORKFLOW</span><h1>{selected === "Overview" ? "Studio overview" : selected}</h1></div><span className="studio2-mode"><span /> Studio mode</span></header>
         <div className="studio2-body">
-          <div className="studio2-intro"><div><p className="studio2-kicker">CORE WORKFLOW</p><h2>Story</h2><p>Story Creation is the core creative production workflow. Plan, draft, review and approve the story before downstream publication.</p></div><span className="studio2-status"><span /> In development</span></div>
+          <div className="studio2-intro"><div><p className="studio2-kicker">CORE WORKFLOW</p><h2>Story Creation</h2><p>The central creative workflow. Plan, draft, review and approve stories before they move into supporting production and publication layers.</p></div><span className="studio2-status"><span /> In development</span></div>
           <div className="studio2-workflow-card"><div className="studio2-workflow-title"><span className="studio2-round-icon"><Icon name="book" /></span><div><strong>STORY</strong><small>Creative production</small></div></div><div className="studio2-stage-row">{stages.map((stage, index) => <div className="studio2-stage-wrap" key={stage.label}><button onClick={() => setSelectedStage(stage.label)} className={`studio2-stage ${selectedStage === stage.label ? "is-active" : ""}`}><span className={`studio2-stage-icon ${stage.state}`}><Icon name={stage.icon} /></span><strong>{stage.label}</strong><small>{stage.note}</small></button>{index < stages.length - 1 && <span className="studio2-connector"><i /></span>}</div>)}</div></div>
           <div className="studio2-detail"><div><p className="studio2-kicker">CURRENT STAGE</p><h3>{selectedStage}</h3><p>{stages.find((stage) => stage.label === selectedStage)?.note}. This stage is presented here as the Story workspace entry point; its records and status can later be resolved from Supabase.</p></div><button className="studio2-open">Open workspace <span>→</span></button></div>
-          <div className="studio2-foundations"><div><p className="studio2-kicker">WORKFLOW FOUNDATIONS</p><h3>Story works with the other studio domains</h3></div><div className="studio2-foundation-grid"><div><Icon name="database" /><strong>Canon</strong><span>Persistent source of truth</span></div><div><Icon name="image" /><strong>Artwork</strong><span>Supporting production layer</span></div><div><Icon name="file" /><strong>Wiki</strong><span>Approved public output</span></div></div></div>
+          <div className="studio2-foundations">
+            <div className="studio2-layer-heading"><p className="studio2-kicker">SUPPORTING LAYERS</p><p>These domains support Story Creation without becoming part of its core workflow.</p></div>
+            <div className="studio2-domain-grid">{domains.map((domain) => <article className={`studio2-domain-card ${domain.tone}`} key={domain.label}><div className="studio2-domain-head"><span className="studio2-domain-icon"><Icon name={domain.icon} /></span><div><p>{domain.eyebrow}</p><h4>{domain.label}</h4></div><span className="studio2-domain-state"><i />{domain.state}</span></div><p className="studio2-domain-description">{domain.description}</p><ul>{domain.items.map((item) => <li key={item}>{item}</li>)}</ul><button className="studio2-domain-link">{domain.link}<span>→</span></button></article>)}</div>
+            <div className="studio2-flow-note"><span className="studio2-flow-line" /><strong>DEPENDENCY FLOW</strong><span>Canon informs Artwork</span><span>Story approval enables Wiki publication</span></div>
+            <div className="studio2-layer-heading security-heading"><p className="studio2-kicker">SECURITY LAYER</p><p>Cross-cutting controls apply across every Studio domain.</p></div>
+            <div className="studio2-security-card"><div className="studio2-security-title"><span className="studio2-domain-icon"><Icon name="shield" /></span><div><h4>Security</h4><p>Cross-cutting control</p></div><span className="studio2-domain-state"><i /> Compliant</span></div><div className="studio2-security-controls">{securityControls.map(([label, note]) => <div key={label}><strong>{label}</strong><small>{note}</small></div>)}</div><button className="studio2-domain-link">Open Security <span>→</span></button></div>
+          </div>
         </div>
       </section>
     </main>
