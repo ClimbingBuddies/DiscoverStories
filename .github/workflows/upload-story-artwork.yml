@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out queued artwork
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Prepare queue
         id: queue
@@ -37,26 +39,36 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             target="production-queue/${{ inputs.queue_path }}"
+            if [[ -f "$target" && "$target" == *.json ]]; then
+              jq -c '.items[]' "$target" >> "$queue"
+            else
+              mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
+              if [[ ${#batch_files[@]} -gt 0 ]]; then
+                for batch in "${batch_files[@]}"; do
+                  jq -c '.items[]' "$batch" >> "$queue"
+                done
+              else
+                while IFS= read -r manifest; do
+                  folder=$(dirname "$manifest")
+                  image_base64=$(tr -d '\\n\\r' < "$folder/image.b64")
+                  jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
+                done < <(find "$target" -name manifest.json -type f | sort)
+              fi
+            fi
           else
-            target="production-queue"
-          fi
-
-          if [[ -f "$target" && "$target" == *.json ]]; then
-            batch_files=("$target")
-          else
-            mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
-          fi
-
-          if [[ ${#batch_files[@]} -gt 0 ]]; then
-            for batch in "${batch_files[@]}"; do
-              jq -c '.items[]' "$batch" >> "$queue"
-            done
-          else
-            while IFS= read -r manifest; do
-              folder=$(dirname "$manifest")
-              image_base64=$(tr -d '\n\r' < "$folder/image.b64")
-              jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
-            done < <(find "$target" -name manifest.json -type f | sort)
+            while IFS= read -r changed_file; do
+              if [[ "$changed_file" == */batch.json ]]; then
+                jq -c '.items[]' "$changed_file" >> "$queue"
+              elif [[ "$changed_file" == */manifest.json ]]; then
+                folder=$(dirname "$changed_file")
+                image_base64=$(tr -d '\\n\\r' < "$folder/image.b64")
+                jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$changed_file" >> "$queue"
+              fi
+            done < <(
+              git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" |
+                grep -E '^production-queue/.*/(batch.json|manifest.json)' |
+                sort -u || true
+            )
           fi
 
           test -s "$queue"
