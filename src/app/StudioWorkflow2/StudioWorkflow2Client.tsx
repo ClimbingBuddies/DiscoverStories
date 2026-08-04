@@ -48,11 +48,11 @@ const securityControls = [
 ] as const;
 
 type CanonWorkspace = { id: string; slug: string; title: string; record_count: number; confirmed_count: number; proposed_count: number; content_status: string; updated_at: string; linked_story: { slug: string; title: string } | null; };
-type CanonMetrics = { stories: number; records: number; confirmed: number; draft: number; needs_review: number; characters: number; science: number; };
+type CanonMetrics = { stories: number; records: number; confirmed: number; draft: number; needs_review: number; characters: number; science: number; };\ntype ArtworkMetrics = { stories: number; episode_art: number; covers: number; banners: number; assets: number; approved: number; needs_review: number; draft: number; missing_art: number; };
 
 const domains = [
   { label: "Canon", eyebrow: "SOURCE OF TRUTH", icon: "database", state: "Synced", tone: "teal", description: "Canonical data used across all production domains.", items: [["Stories", "0"], ["Records", "0"], ["Confirmed", "0"], ["Draft", "0"], ["Needs Review", "0"], ["Characters", "0"], ["Science", "0"]], link: "Open Canon" },
-  { label: "Artwork", eyebrow: "SUPPORTING LAYER", icon: "image", state: "In Progress", tone: "blue", description: "Visual production informed by Canon and Story.", items: [["Concept Art", "342"], ["Key Art", "18"], ["Assets", "1,247"], ["References", "96"], ["Moodboards", "24"]], link: "Open Artwork" },
+  { label: "Artwork", eyebrow: "SUPPORTING LAYER", icon: "image", state: "Synced", tone: "blue", description: "Visual production informed by Canon and Story.", items: [["Stories", "0"], ["Episode Art", "0"], ["Covers", "0"], ["Banners", "0"], ["Approved", "0"], ["Needs Review", "0"], ["Missing Art", "0"]], link: "Open Artwork" },
   { label: "Wiki", eyebrow: "DOWNSTREAM PUBLICATION", icon: "file", state: "Published", tone: "purple", description: "Approved public knowledge with reveal and spoiler controls.", items: [["Articles", "512"], ["Guides", "37"], ["Glossary", "148"], ["Timeline", "23"], ["Updates", "6"]], link: "Open Wiki" },
 ] as const;
 
@@ -61,14 +61,14 @@ export default function StudioWorkflow2Client() {
   const [selectedStage, setSelectedStage] = useState("Brief");
   const [canonWorkspaces, setCanonWorkspaces] = useState<CanonWorkspace[]>([]);
   const [canonMetrics, setCanonMetrics] = useState<CanonMetrics>({ stories: 0, records: 0, confirmed: 0, draft: 0, needs_review: 0, characters: 0, science: 0 });
-  const [canonLoading, setCanonLoading] = useState(true);
+  const [canonLoading, setCanonLoading] = useState(true);\n  const [artworkMetrics, setArtworkMetrics] = useState<ArtworkMetrics>({ stories: 0, episode_art: 0, covers: 0, banners: 0, assets: 0, approved: 0, needs_review: 0, draft: 0, missing_art: 0 });
 
   useEffect(() => {
     let mounted = true;
     void Promise.all([
       supabase.rpc("list_studio_private_canon", { p_studio_mode: true }),
-      supabase.rpc("get_studio_canon_metrics", { p_studio_mode: true }),
-    ]).then(([workspacesResult, metricsResult]) => {
+      supabase.rpc("get_studio_canon_metrics", { p_studio_mode: true }),\n      supabase.rpc("get_studio_artwork_metrics", { p_studio_mode: true }),
+    ]).then(([workspacesResult, metricsResult, artworkResult]) => {
       if (!mounted) return;
       if (!workspacesResult.error && Array.isArray(workspacesResult.data)) setCanonWorkspaces(workspacesResult.data as CanonWorkspace[]);
       if (!metricsResult.error && metricsResult.data && typeof metricsResult.data === "object") {
@@ -80,7 +80,7 @@ export default function StudioWorkflow2Client() {
           science: Number(value.science ?? 0),
         });
       }
-      setCanonLoading(false);
+      if (!artworkResult.error && artworkResult.data && typeof artworkResult.data === "object") {\n        const value = artworkResult.data as Partial<ArtworkMetrics>;\n        setArtworkMetrics({\n          stories: Number(value.stories ?? 0), episode_art: Number(value.episode_art ?? 0),\n          covers: Number(value.covers ?? 0), banners: Number(value.banners ?? 0), assets: Number(value.assets ?? 0),\n          approved: Number(value.approved ?? 0), needs_review: Number(value.needs_review ?? 0),\n          draft: Number(value.draft ?? 0), missing_art: Number(value.missing_art ?? 0),\n        });\n      }\n      setCanonLoading(false);
     });
     return () => { mounted = false; };
   }, []);
@@ -91,7 +91,7 @@ export default function StudioWorkflow2Client() {
     characters: canonMetrics.characters, science: canonMetrics.science,
   };
 
-  const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Stories", String(canonMetrics.stories)], ["Records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Draft", String(canonMetrics.draft)], ["Needs Review", String(canonMetrics.needs_review)], ["Characters", String(canonMetrics.characters)], ["Science", String(canonMetrics.science)]] as [string, string][] } : domain);
+  const liveDomains = domains.map((domain) => domain.label === "Canon" ? { ...domain, state: canonLoading ? "Loading" : "Synced", items: [["Stories", String(canonMetrics.stories)], ["Records", String(canonMetrics.records)], ["Confirmed", String(canonMetrics.confirmed)], ["Draft", String(canonMetrics.draft)], ["Needs Review", String(canonMetrics.needs_review)], ["Characters", String(canonMetrics.characters)], ["Science", String(canonMetrics.science)]] as [string, string][] : domain.label === "Artwork" ? { ...domain, items: [["Stories", String(artworkMetrics.stories)], ["Episode Art", String(artworkMetrics.episode_art)], ["Covers", String(artworkMetrics.covers)], ["Banners", String(artworkMetrics.banners)], ["Approved", String(artworkMetrics.approved)], ["Needs Review", String(artworkMetrics.needs_review)], ["Missing Art", String(artworkMetrics.missing_art)]] as [string, string][] } : domain);
   const recentCanon = canonWorkspaces.slice().sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 4);
   const selectedDomain = selected === "Overview" ? "Canon" : selected;
 
