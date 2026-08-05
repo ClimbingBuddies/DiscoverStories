@@ -12,12 +12,16 @@ type CanonRecord = { id:string; slug:string; category:string; title:string; summ
 type Dashboard = { story:{id:string;title:string;content_status:string;short_description:string|null;description:string|null;cover_image_url:string|null}; premise:{premise_title:string;premise_text:string;content_status:string;version_number:number}|null; episodes:Episode[]; planning_blocks:PlanningBlock[]; canon_categories:Category[]; canon_records:CanonRecord[]; counts:{episodes:number;published_episodes:number;planning_blocks:number;canon_records:number} };
 
 const tabs = ["Story Brief","Season Plan","Episodes","Canon","Planning","Review"] as const;
-type ColourScheme = "warm-parchment"|"clean-light"|"dark-studio"|"midnight-blue";
+type ColourScheme = "warm-parchment"|"clean-light"|"dark-studio"|"midnight-blue"|"sage-editorial"|"coral-pop"|"violet-dusk"|"ocean-glass";
 const colourSchemes:{value:ColourScheme;label:string}[] = [
   {value:"warm-parchment",label:"Warm Parchment"},
   {value:"clean-light",label:"Clean Light"},
   {value:"dark-studio",label:"Dark Studio"},
   {value:"midnight-blue",label:"Midnight Blue"},
+  {value:"sage-editorial",label:"Sage Editorial"},
+  {value:"coral-pop",label:"Coral Pop"},
+  {value:"violet-dusk",label:"Violet Dusk"},
+  {value:"ocean-glass",label:"Ocean Glass"},
 ];
 type Tab = typeof tabs[number];
 const icons:Record<string,string> = { character:"♙",location:"△",organisation:"⚑",faction:"⚑",technology:"⚙",concept:"⚖",event:"⌛",artefact:"▣",object:"▣" };
