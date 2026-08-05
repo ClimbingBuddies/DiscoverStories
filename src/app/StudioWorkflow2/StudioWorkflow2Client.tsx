@@ -50,7 +50,7 @@ function RichText({ value }: { value: string }) {
   const blocks = value.split(/\n{2,}/).filter((part) => part.trim());
   return <div className="sr-richtext">{blocks.map((block, index) => {
     const text = block.trim();
-    const heading = text.match(/^(#{1,3})\s+(.+)$/s);
+    const heading = text.match(/^(#{1,3})\s+(.+)$/);
     if (heading) {
       const Tag = heading[1].length === 1 ? "h2" : heading[1].length === 2 ? "h3" : "h4";
       return <Tag key={index}>{heading[2]}</Tag>;
