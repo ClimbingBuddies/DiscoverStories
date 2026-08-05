@@ -78,3 +78,20 @@
   .w3-story-brief-page{height:auto;min-height:0;overflow:visible}
   .w3-story-brief-page .w3-brief{height:auto;display:block}
 }
+
+
+/* Explicit colour-scheme menu */
+.w3-scheme-picker{position:relative;display:block}
+.w3-scheme-picker summary{height:36px;min-width:170px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;background:var(--paper2);color:var(--ink);padding:0 10px;cursor:pointer;list-style:none;font:12px Arial,sans-serif;box-shadow:0 3px 10px rgba(20,31,41,.05)}
+.w3-scheme-picker summary::-webkit-details-marker{display:none}
+.w3-scheme-picker summary>span{font-weight:700;color:var(--rust)}
+.w3-scheme-picker summary>strong{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w3-scheme-picker summary>i{font-style:normal;font-size:16px;transition:transform .18s ease}
+.w3-scheme-picker[open] summary{border-color:var(--pop);box-shadow:0 6px 16px var(--pop-soft)}
+.w3-scheme-picker[open] summary>i{transform:rotate(180deg)}
+.w3-scheme-menu{position:absolute;top:calc(100% + 8px);right:0;width:245px;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--paper2);box-shadow:0 18px 48px rgba(10,22,32,.22);z-index:80}
+.w3-actions .w3-scheme-menu button{width:100%;height:40px;display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:9px;border:0;border-radius:9px;background:transparent;color:var(--ink);padding:0 9px;text-align:left;box-shadow:none}
+.w3-actions .w3-scheme-menu button:hover,.w3-actions .w3-scheme-menu button.active{background:var(--pop-soft);transform:none;box-shadow:none}
+.w3-scheme-menu button small{font-size:9px;color:var(--rust);text-transform:uppercase;letter-spacing:.06em}
+.w3-swatch{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.16);background:linear-gradient(135deg,var(--paper) 50%,var(--pop) 50%)}
+@media(max-width:720px){.w3-scheme-picker summary{min-width:110px}.w3-scheme-picker summary>strong{display:none}.w3-scheme-menu{position:fixed;top:72px;right:12px;left:12px;width:auto}}
