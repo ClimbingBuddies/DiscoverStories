@@ -12,6 +12,13 @@ type CanonRecord = { id:string; slug:string; category:string; title:string; summ
 type Dashboard = { story:{id:string;title:string;content_status:string;short_description:string|null;description:string|null;cover_image_url:string|null}; premise:{premise_title:string;premise_text:string;content_status:string;version_number:number}|null; episodes:Episode[]; planning_blocks:PlanningBlock[]; canon_categories:Category[]; canon_records:CanonRecord[]; counts:{episodes:number;published_episodes:number;planning_blocks:number;canon_records:number} };
 
 const tabs = ["Story Brief","Season Plan","Episodes","Canon","Planning","Review"] as const;
+type ColourScheme = "warm-parchment"|"clean-light"|"dark-studio"|"midnight-blue";
+const colourSchemes:{value:ColourScheme;label:string}[] = [
+  {value:"warm-parchment",label:"Warm Parchment"},
+  {value:"clean-light",label:"Clean Light"},
+  {value:"dark-studio",label:"Dark Studio"},
+  {value:"midnight-blue",label:"Midnight Blue"},
+];
 type Tab = typeof tabs[number];
 const icons:Record<string,string> = { character:"♙",location:"△",organisation:"⚑",faction:"⚑",technology:"⚙",concept:"⚖",event:"⌛",artefact:"▣",object:"▣" };
 const aliases:Record<string,string> = { character:"Characters",location:"Locations",organisation:"Factions",faction:"Factions",technology:"Technology & Science",concept:"Rules",event:"History & Timeline",artefact:"Objects",object:"Objects" };
@@ -28,18 +35,18 @@ function Empty({title,children}:{title:string;children:React.ReactNode}) { retur
 
 export default function StudioWorkflow3Client(){
   const [stories,setStories]=useState<StoryOption[]>([]),[storyId,setStoryId]=useState(""),[data,setData]=useState<Dashboard|null>(null);
-  const [tab,setTab]=useState<Tab>("Story Brief"),[mode,setMode]=useState<"studio"|"reference">("studio"),[theme,setTheme]=useState<"light"|"dark">("light");
+  const [tab,setTab]=useState<Tab>("Story Brief"),[mode,setMode]=useState<"studio"|"reference">("studio"),[colourScheme,setColourScheme]=useState<ColourScheme>("warm-parchment");
   const [category,setCategory]=useState(""),[recordId,setRecordId]=useState(""),[episodeId,setEpisodeId]=useState(""),[loading,setLoading]=useState(true),[error,setError]=useState("");
-  useEffect(()=>{const saved=localStorage.getItem("story-studio-theme");if(saved==="dark")setTheme("dark");const initial=new URLSearchParams(location.search).get("story_id")??"";void supabase.rpc("list_studio_story_options",{p_studio_mode:true}).then(({data,error})=>{if(error){setError(error.message);setLoading(false);return}const list=(data??[]) as StoryOption[];setStories(list);setStoryId(list.some(s=>s.id===initial)?initial:list[0]?.id??"")})},[]);
+  useEffect(()=>{const saved=localStorage.getItem("story-studio-colour-scheme") as ColourScheme|null;if(saved&&colourSchemes.some(s=>s.value===saved))setColourScheme(saved);const initial=new URLSearchParams(location.search).get("story_id")??"";void supabase.rpc("list_studio_story_options",{p_studio_mode:true}).then(({data,error})=>{if(error){setError(error.message);setLoading(false);return}const list=(data??[]) as StoryOption[];setStories(list);setStoryId(list.some(s=>s.id===initial)?initial:list[0]?.id??"")})},[]);
   useEffect(()=>{if(!storyId)return;setLoading(true);setError("");const u=new URL(location.href);u.searchParams.set("story_id",storyId);history.replaceState({},"",u);void supabase.rpc("get_studio_story_dashboard",{p_story_id:storyId,p_studio_mode:mode==="studio"}).then(({data,error})=>{if(error)setError(error.message);else{const d=data as Dashboard;setData(d);setCategory(d.canon_categories.find(c=>c.record_count>0)?.slug??d.canon_categories[0]?.slug??"");setEpisodeId(d.episodes[0]?.id??"")}setLoading(false)})},[storyId,mode]);
-  useEffect(()=>localStorage.setItem("story-studio-theme",theme),[theme]);
+  useEffect(()=>localStorage.setItem("story-studio-colour-scheme",colourScheme),[colourScheme]);
   const categories=data?.canon_categories??[];
   const records=useMemo(()=>(data?.canon_records??[]).filter(r=>r.category===category),[data,category]);
   const record=records.find(r=>r.id===recordId)??records[0]??null;
   const episode=data?.episodes.find(e=>e.id===episodeId)??data?.episodes[0]??null;
   useEffect(()=>{if(record&&record.id!==recordId)setRecordId(record.id)},[record,recordId]);
-  return <main className={`w3-shell ${theme}`}>
-    <header className="w3-header"><button className="w3-brand" onClick={()=>setTab("Story Brief")}><span className="w3-compass">✥</span><span><strong>Story Studio</strong><small>DISCOVER STORIES</small></span></button><nav>{tabs.map(t=><button key={t} className={tab===t?"active":""} onClick={()=>setTab(t)}>{t}</button>)}</nav><div className="w3-actions"><select aria-label="Select story" value={storyId} onChange={e=>setStoryId(e.target.value)}>{stories.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select><button onClick={()=>setMode(mode==="studio"?"reference":"studio")}>{mode==="studio"?"Studio":"Reference"}</button><button aria-label="Toggle theme" onClick={()=>setTheme(theme==="light"?"dark":"light")}>{theme==="light"?"☾":"☀"}</button></div></header>
+  return <main className={`w3-shell scheme-${colourScheme}`}>
+    <header className="w3-header"><button className="w3-brand" onClick={()=>setTab("Story Brief")}><span className="w3-compass">✥</span><span><strong>Story Studio</strong><small>DISCOVER STORIES</small></span></button><nav>{tabs.map(t=><button key={t} className={tab===t?"active":""} onClick={()=>setTab(t)}>{t}</button>)}</nav><div className="w3-actions"><select aria-label="Select story" value={storyId} onChange={e=>setStoryId(e.target.value)}>{stories.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select><button onClick={()=>setMode(mode==="studio"?"reference":"studio")}>{mode==="studio"?"Studio":"Reference"}</button><label className="w3-scheme-picker"><span>Colour scheme</span><select aria-label="Select colour scheme" value={colourScheme} onChange={e=>setColourScheme(e.target.value as ColourScheme)}>{colourSchemes.map(s=><option key={s.value} value={s.value}>{s.label}</option>)}</select></label></div></header>
     {error&&<div className="w3-error">{error}</div>}{loading&&<div className="w3-loading">Opening the story studio…</div>}
     {!loading&&data&&<>
       {tab==="Story Brief"&&<section className="w3-page w3-story-brief-page"><div className="w3-brief-meta"><p>STORY FOUNDATION</p><span>{pretty(data.story.content_status)}</span></div><article className="w3-brief">
