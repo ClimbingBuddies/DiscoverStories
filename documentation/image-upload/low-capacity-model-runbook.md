@@ -4,7 +4,7 @@
 
 Follow this document literally. Do not optimise it, replace tools, infer missing values or continue after a failed gate.
 
-Your task is upload-only. Do not generate or redesign an image.
+Your task is upload-only through the GitHub queue/OIDC route. Do not generate or redesign an image, and do not substitute connected-Supabase Storage operations for this runbook.
 
 ## Allowed roles
 
