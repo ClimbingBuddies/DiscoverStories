@@ -21,6 +21,8 @@ The pipeline can process one image or many images, including:
 
 The pipeline may be used during story creation, before publication or after publication. Running an image review does not by itself authorise an image change or alter the story's publication status.
 
+Image creation is controlled by [`documentation/image-creation/README.md`](../image-creation/README.md). Conversion, upload, Storage naming, linking and technical verification are controlled by [`documentation/image-upload/README.md`](../image-upload/README.md). Do not invent a Storage path from examples in this review pipeline.
+
 The pipeline may use:
 
 - story title, summary and premise;
@@ -319,7 +321,7 @@ Default standards:
 | Cover | 1024 × 1024 |
 | Episode artwork | 1024 × 1024 |
 | Roadmap artwork | 1024 × 1024 |
-| Banner | 1600 × 900 |
+| Banner | 1280 × 720 |
 
 Operational requirements:
 
@@ -330,14 +332,7 @@ Operational requirements:
 - use predictable lowercase filenames;
 - do not merely rename a PNG extension to `.jpg`.
 
-Example paths:
-
-```text
-<slug>/cover.jpg
-<slug>/banner.jpg
-<slug>/episodes/<slug>-s01e03.jpg
-<slug>/episodes/<slug>-s01e11-20.jpg
-```
+Final Storage paths are derived by the supported upload implementation. Follow the destination profile in [`documentation/image-upload/destination-profiles.md`](../image-upload/destination-profiles.md); do not prescribe or override a path here.
 
 ## 10. Upload and Database Linking
 
@@ -355,7 +350,7 @@ When upload is authorised:
 
 The database stores the path, not the image bytes.
 
-Where the existing path remains correct, the Storage object may be replaced while the database link remains unchanged. This is permitted for a published replacement only when the previous asset or version remains recoverable and cache behaviour is understood.
+Visual preparation and approval of a published replacement are supported. Database replacement of a published asset is currently blocked through the canonical GitHub upload bridge because it cannot safely preserve published status. Follow the [replacement runbook](../image-creation/replacement-runbook.md) and stop before upload until that capability is separately enabled and verified.
 
 Where versioned paths are used, update only the intended story or episode link after the replacement has been approved.
 

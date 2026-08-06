@@ -1,5 +1,7 @@
 # Episode Artwork Production Guide
 
+> **DEPRECATED — FOR DELETE.** Do not use this document. It is retained temporarily for review history and will be removed after the cleanup is approved. Start with [`documentation/image-creation/README.md`](../image-creation/README.md); the Episode Artwork Production Specification v1.5 controls creative quality and the Reliable Image Upload Guides control upload behaviour.
+
 **Audio Platform · Version 1.0 · 26 Jul 2026**
 
 | Status | Owner | Related standard |

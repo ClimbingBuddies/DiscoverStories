@@ -149,7 +149,7 @@ The user does not need to memorise rigid syntax. The project prefix **Audio Plat
 - Story SQL insert: `documentation/specifications/story-sql-insert-specification.md`
 - Wiki SQL insert: `documentation/specifications/wiki-sql-insert-specification.md`
 - Episode artwork: `documentation/specifications/episode-artwork-production-specification.md`
-- Image upload automation: `database/IMAGE-UPLOAD-AUTOMATION.md`
+- Image upload process: `documentation/image-upload/README.md`
 
 ## 7. Definition of done
 
