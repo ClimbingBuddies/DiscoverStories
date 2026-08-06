@@ -1,6 +1,8 @@
 # Episode Artwork Production Specification
 
-**Audio Platform · Version 1.4 · 26 Jul 2026**
+**Audio Platform · Version 1.5 · 28 Jul 2026**
+
+> **Authoritative creative standard.** This document controls artwork creation and creative quality. If another creative document conflicts with it, this specification wins. Upload conversion, Storage paths, linking and verification are controlled by [`documentation/image-upload/README.md`](../image-upload/README.md).
 
 | Status | Owner | Current standard |
 |---|---|---|
@@ -157,7 +159,7 @@ Before generating a sequence of images, keep a short visual record for every rec
 
 Character identity should be approved separately before large episode batches are produced.
 
-## 9. File naming and storage
+## 9. Working-file naming and upload hand-off
 
 Use lowercase slugs and a predictable naming pattern. Keep temporary review assets separate from the final approved production asset.
 
@@ -172,7 +174,9 @@ Use lowercase slugs and a predictable naming pattern. Keep temporary review asse
 | Art direction report | `ash-and-silver-s01e01-e10-art-direction.md` |
 | Approved prompt record | `ash-and-silver-s01e01-e10-production-prompts.md` |
 
-Only the final approved production filename is treated as the stable public platform asset.
+These names are suitable for local working files and creative records only. Do not use this table to invent a Supabase Storage path.
+
+After approval, stop using this creative specification for transport decisions and follow [`documentation/image-upload/README.md`](../image-upload/README.md). The upload process determines the final Storage path and supported destination roles.
 
 ## 10. Artwork request rule
 
@@ -267,15 +271,18 @@ Any concept with Story Fidelity below 4 must not proceed to Refine.
 ### Technical and publishing
 
 - Is there no logo, watermark, interface element or unwanted text?
-- Is the filename correctly slugged?
+- Is the working filename correctly slugged?
 - Is this the final Production asset rather than a temporary file?
-- Has storage, database linkage and website display been verified?
+- Was the supported upload runbook followed without inventing a Storage path?
+- Have Storage, database linkage and website display been verified?
 
 ## 15. Version control
 
 This is Version 1.5, dated 28 Jul 2026.
 
-Version 1.4 introduces:
+Version 1.5 resolves document authority and hands upload naming, conversion, linking and verification to the Reliable Image Upload Guides.
+
+Version 1.4 introduced:
 
 - full episode text as the primary source of truth;
 - separate Concept Board, Art Direction Report and Production Prompt deliverables;

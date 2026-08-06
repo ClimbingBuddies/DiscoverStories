@@ -1,5 +1,7 @@
 # Automatic image upload process
 
+> **DEPRECATED — FOR DELETE.** Do not use this document. It is retained temporarily for review history. The authoritative upload entry point is [`documentation/image-upload/README.md`](../documentation/image-upload/README.md).
+
 The supported Draft route is:
 
 ```text

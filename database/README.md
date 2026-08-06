@@ -16,4 +16,4 @@ This folder contains SQL migrations, seed data, and automation scripts used by t
 - `007_image_upload_automation.sql` - Image upload automation schema for Supabase storage/webhook sync.
 - `007_seed_ash_and_silver.sql` - New seed script for the "Ash and Silver" story and its Season 1 episodes.
 - `008_add_ash_and_silver_full_episodes.sql` - Adds complete Season 1 prose drafts and updates episode script_text and word_count for Ash and Silver.
-- `IMAGE-UPLOAD-AUTOMATION.md` - Instructions for the Supabase image upload automation workflow.
+- `IMAGE-UPLOAD-AUTOMATION_for-Delete.md` - Deprecated historical upload notes retained temporarily for review. Use `documentation/image-upload/README.md`.
