@@ -1,8 +1,10 @@
 # Storage Move Runbook
 
+> **Implementation status — connected Supabase Chat only.** `storage_move` is **not implemented or validated as a private custom GPT Action**. It is deliberately absent from the custom GPT OpenAPI schema and the long-lived private GPT key does not permit it. A model must not attempt this operation unless the current chat has the connected Supabase tools required by this runbook.
+
 ## Purpose
 
-Use this runbook to move or rename one existing DiscoverStories image from Chat. A successful move creates the destination and removes the source.
+Use this runbook to move or rename one existing DiscoverStories image from a Chat session with connected Supabase tools. A successful move creates the destination and removes the source.
 
 Supported directions:
 
@@ -37,7 +39,7 @@ Stop if any value is ambiguous. Existing destinations are never overwritten.
 
 ## Gate 2 — Chat authority
 
-When `storage_move` is not available as a direct connected tool, Chat may use the connected Supabase SQL capability:
+Only a Chat session with the connected Supabase SQL capability may use this controlled fallback:
 
 1. generate a random token inside Postgres;
 2. store only its SHA-256 hash in `public.storage_action_keys`;
@@ -46,7 +48,7 @@ When `storage_move` is not available as a direct connected tool, Chat may use th
 5. invoke the Edge Function with `pg_net`;
 6. remove the temporary key after verification.
 
-Never expose the plaintext token in Chat or GitHub.
+Never expose the plaintext token in Chat or GitHub. If the connected Supabase SQL capability is unavailable, stop and report `storage_move: not implemented in this chat`.
 
 ## Gate 3 — Invoke
 
