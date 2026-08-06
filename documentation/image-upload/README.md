@@ -2,13 +2,13 @@
 
 ## Purpose
 
-These guides define the smallest repeatable process for transferring an existing image through GitHub, converting it to a genuine JPEG, uploading it to Supabase Storage, registering it in `media_assets`, linking it to the intended record and verifying the result.
+These guides define the smallest repeatable process for transferring and linking an existing image. They distinguish the GitHub queue/OIDC production route from controlled Storage maintenance performed in a Chat session with connected Supabase tools.
 
 They do not define image-generation or creative specifications.
 
 The instructions are deliberately explicit so that a lower-capacity model can follow them without inventing filenames, paths, database fields or alternative upload methods.
 
-## Canonical pipeline
+## Route 1 — GitHub production upload
 
 ```text
 Source image
@@ -22,7 +22,19 @@ Source image
 → Storage, database and rendering verification
 ```
 
-There is one transport pipeline. Cover, banner, episode, Canon and Reader images use destination profiles; they must not use independently invented upload processes.
+This is the canonical production-upload route for the supported destination profiles. Its derived filenames and destination rules must not be replaced with invented paths.
+
+## Route 2 — Connected-Supabase Chat
+
+A Chat session with connected Supabase tools may perform controlled `storage_upload`, `storage_copy` and, with temporary authority, `storage_move` operations. This route is used for private uploads and authorised Storage maintenance; it does not inherit the GitHub manifest or derived-filename rules.
+
+- `storage_upload` may create an object at an approved path and may use a lowercase UUID filename.
+- `storage_copy` preserves the source and is preferred for linked relocation.
+- `storage_move` removes the source and is suitable only for unlinked objects; it is not available to the private custom GPT Action.
+- Storage operations do not automatically register `media_assets` or relink database/content references.
+- `storage_file_rename` and a general atomic `media_relink` operation do not exist.
+
+Random naming reduces guessability but does not make a public object private. Restricted assets belong in private Storage with appropriate access control.
 
 ## Current capability matrix
 
@@ -58,10 +70,10 @@ Do not test a blocked profile until the implementation is corrected and separate
 3. Never invent a story slug, episode number, Canon key, filename or database target.
 4. Never update a database link before the Storage upload succeeds.
 5. Never report success from a green workflow alone.
-6. Never use a random filename for a production replacement.
+6. On the GitHub production route, never invent or override a replacement filename. On the connected-Supabase route, UUID names are permitted only for an approved new private destination.
 7. Never use a blocked destination profile.
 8. Stop after the first failed gate and report the exact failure.
-9. Preserve the existing content status. The present bridge accepts only `draft` or `review`; published replacement work therefore requires separate review before use.
+9. Preserve the existing content status. The GitHub bridge accepts only `draft` or `review`. Published linked relocation through connected-Supabase Chat requires copy-first verification, exact authorised relinking, rendering verification and rollback; it is not an atomic replacement operation.
 10. For an upload test, process one image first. Expand only after all verification gates pass.
 
 ## Definition of complete
