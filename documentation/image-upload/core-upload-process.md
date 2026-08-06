@@ -2,7 +2,7 @@
 
 ## Scope
 
-Use this procedure for a small, authorised image upload through the existing GitHub queue. It covers transport, conversion, upload, registration, linking and verification.
+Use this procedure for a small, authorised image upload through the existing GitHub queue/OIDC route. It covers transport, conversion, upload, registration, linking and verification. It does not govern connected-Supabase Chat Storage maintenance.
 
 Do not use it for image generation. Do not use it for Canon or Reader/Tiptap images until those profiles are marked supported in [README](./README.md).
 
