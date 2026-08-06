@@ -2,7 +2,7 @@
 
 ## Use
 
-Match the observed failure to this table. Do not change pathways before identifying the failed gate.
+First identify the selected route: GitHub queue/OIDC production upload or connected-Supabase Chat Storage management. Match the observed failure to that route and table. Do not change pathways before identifying the failed gate.
 
 | Symptom | Likely cause | Required response |
 |---|---|---|
@@ -20,6 +20,12 @@ Match the observed failure to this table. Do not change pathways before identify
 | Reader path contains invalid episode text | Reader values were not assigned by upload function | Stop: Reader profile blocked |
 | Workflow is green but no intended link changed | Wrong queue item or incomplete destination handler | Mark failed/not verified and inspect result artifact |
 | Story or episodes changed status | `workflowStatus` caused a broad status update | Stop, report affected records and restore only with explicit authority |
+
+## Connected-Supabase Chat checks
+
+For `storage_upload`, `storage_copy` or `storage_move`, separately verify the source/destination bucket, exact path, MIME type, size and eTag/checksum where available. A successful Storage response does not prove that `media_assets`, episode/story fields, Canon, Wiki or Reader content were relinked.
+
+For linked production media, do not use direct move. Copy first, verify, relink only authorised references, verify Studio and website rendering, retain the source for rollback, then submit the source to controlled cleanup.
 
 ## Proven successful pattern
 
