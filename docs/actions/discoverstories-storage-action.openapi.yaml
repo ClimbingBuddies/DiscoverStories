@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: DiscoverStories Storage Action
   description: Controlled image storage operations for a private DiscoverStories GPT.
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: https://qsyapcprhhmlsgdzclwq.supabase.co/functions/v1/discoverstories-storage-action
 security:
@@ -61,6 +61,20 @@ paths:
       responses:
         '200':
           description: Copy result.
+  /storage-move:
+    post:
+      operationId: storage_move
+      summary: Move or rename one image and remove the source only after the destination is created.
+      description: Existing destinations are never overwritten. Verify database references before moving a linked object.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+      responses:
+        '200':
+          description: Move result; the destination exists and the source no longer exists.
   /storage-publish-batch:
     post:
       operationId: storage_publish_batch
@@ -150,6 +164,26 @@ components:
             destinationPath:
               type: string
               description: Destination path relative to the story root. Existing files are never overwritten.
+    MoveRequest:
+      allOf:
+        - $ref: '#/components/schemas/StoryRequest'
+        - type: object
+          required: [sourcePath, destinationPath]
+          properties:
+            sourceVisibility:
+              type: string
+              enum: [private, public]
+              default: private
+            sourcePath:
+              type: string
+              description: Existing source path relative to the story root.
+            destinationVisibility:
+              type: string
+              enum: [private, public]
+              default: private
+            destinationPath:
+              type: string
+              description: New destination path relative to the story root. Existing files are never overwritten.
     PublishEntry:
       type: object
       additionalProperties: false
