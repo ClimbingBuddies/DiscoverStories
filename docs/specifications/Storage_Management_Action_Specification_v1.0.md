@@ -1,6 +1,6 @@
 # DiscoverStories Storage Management Action Specification
 
-Version 1.3
+Version 1.4
 Date: 06 Aug 2026
 Status: Verified standard; custom GPT `storage_move` not implemented
 
@@ -31,7 +31,7 @@ Move and delete remain excluded from the private custom GPT Action in Version 1.
 
 `storage_copy` is the supported relocation primitive. It can copy private-to-private, private-to-public, public-to-public or public-to-private while preserving the source. It does not convert image formats, update `media_assets`, relink story or episode records, or delete the source.
 
-For the verified copy process, use [`docs/actions/storage-copy-runbook.md`](../actions/storage-copy-runbook.md). The [`storage-move-runbook.md`](../actions/storage-move-runbook.md) is restricted to chats with connected Supabase tools and is not a custom GPT Action.
+For the verified copy process, use [`docs/actions/storage-copy-runbook.md`](../actions/storage-copy-runbook.md). The [`storage-move-runbook.md`](../actions/storage-move-runbook.md) is restricted to chats with connected Supabase tools and is not a custom GPT Action. For linked production images, follow [`storage-move-and-relink-runbook.md`](../actions/storage-move-and-relink-runbook.md); it is a process specification, not a single implemented operation.
 
 ## Authentication and security
 
@@ -150,6 +150,7 @@ This proves the Supabase backend pathway only. It does **not** prove or authoris
 
 | Version | Date | Change |
 |---|---|---|
+| 1.4 | 06 Aug 2026 | Added the Storage Move and Database Relink Runbook, defining copy-first relocation, reference discovery, website verification and rollback boundaries for linked production images. |
 | 1.3 | 06 Aug 2026 | Removed `storage_move` from the private custom GPT OpenAPI contract and long-lived key. Marked it not implemented for custom GPTs while preserving connected-Supabase backend evidence. |
 | 1.2 | 06 Aug 2026 | Added Chat-executable `storage_move`, the Action-key allow-list migration, OpenAPI operation, private-to-private acceptance evidence and the Storage Move Runbook. |
 | 1.1 | 06 Aug 2026 | Added the verified ChatGPT Work `storage_copy` execution path, public-to-public and public-to-private evidence, metadata verification, short-lived-key cleanup and the operational runbook. Corrected the banner target to 1280 × 720. |
