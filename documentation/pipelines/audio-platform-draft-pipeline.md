@@ -1,4 +1,4 @@
-# Audio Platform Draft Pipeline
+# Audio Platform Workflow Router
 
 **Status:** Current project standard  
 **Scope:** Router for Initial Draft, Creative Development, artwork hand-off and Review submission  
@@ -12,7 +12,7 @@ This document routes Audio Platform draft work into separate controlled processe
 2. **Audio Platform Creative Development Process** — explores, diagnoses, revises and explicitly synchronises the existing draft.
 3. **Audio Platform Image Review Pipeline** — reviews or creates artwork from verified Supabase source records.
 4. **Audio Platform Review Pipeline** — assesses one exact synced Review Candidate.
-5. **Audio Platform Public Pipeline** — separately authorises publication.
+5. **Audio Platform Publication Pipeline** — separately authorises publication.
 
 This is a router. Detailed image creation, Storage transport, database relinking and publication rules remain in their authoritative runbooks.
 
@@ -36,7 +36,7 @@ Audio Platform Submit to Review Pipeline
 Audio Platform Review Pipeline
       ↺ may return findings to Creative Development or Image Review
       ↓
-Audio Platform Public Pipeline
+Audio Platform Publication Pipeline
       ↓
 controlled public copy/link and website verification
 ```
@@ -169,13 +169,13 @@ Interpret ordinary language as follows:
 | review/create/replace images | Image Review Pipeline |
 | upload approved images | Image Review upload hand-off using a supported route |
 | submit to Review | Sync/verify candidate and begin Review |
-| publish | Public Pipeline; never implied by draft or upload authority |
+| publish | Publication Pipeline; never implied by draft or upload authority |
 
 The user does not need to memorise rigid syntax. The project prefix **Audio Platform** distinguishes these commands from work in other projects.
 
 ## 5. Draft data rules
 
-- New and updated content records remain `draft` unless the Public Pipeline separately authorises publication.
+- New and updated content records remain `draft` unless the Publication Pipeline separately authorises publication.
 - Supabase loads must be safe to rerun.
 - Use the season-aware episode identity `(story_id, season_number, episode_number)`.
 - Roadmap blocks are planning records and must not pretend that future individual episodes already exist.
@@ -274,6 +274,7 @@ A database update alone is not proof that the image works.
 - Creative Development Process: `documentation/pipelines/audio-platform-creative-development-process.md`
 - Image Review Pipeline: `documentation/pipelines/audio-platform-image-review-pipeline.md`
 - Review Pipeline: `documentation/pipelines/audio-platform-review-pipeline.md`
+- Publication Pipeline: `documentation/pipelines/audio-platform-publication-pipeline.md`
 - Story creation: `documentation/specifications/story-creation-specification.md`
 - Story Quality Index: `documentation/specifications/story-quality-index.md`
 - Story SQL insert: `documentation/specifications/story-sql-insert-specification.md`
@@ -306,5 +307,6 @@ This router is correctly followed when:
 
 | Version | Date | Change |
 |---|---|---|
+| 2.1 | 06 Aug 2026 | Renamed the document as the Workflow Router and linked the authoritative Publication Pipeline. |
 | 2.0 | 06 Aug 2026 | Added the Image Review hand-off, distinct GitHub and connected-Supabase Storage routes, UUID naming boundary, private/public controls, verified upload/copy/move behaviour, database relinking, rendering verification and rollback requirements. |
 | 1.0 | 29 Jul 2026 | Initial router for Initial Draft, Creative Development and Review submission. |
