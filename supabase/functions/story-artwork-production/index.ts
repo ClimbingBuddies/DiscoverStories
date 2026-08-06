@@ -126,10 +126,12 @@ async function uploadAsset(form: FormData) {
   const canonObjectSlug = role === "canon" ? cleanObjectSlug(form.get("canonObjectSlug")) : null;
   const canonProjectSlug = role === "canon" ? cleanSlug(form.get("canonProjectSlug") ?? slug) : null;
   const canonAssetTitle = role === "canon" ? String(form.get("canonAssetTitle") ?? "").trim() : "";
+  const canonAssetRole = role === "canon" ? String(form.get("canonAssetRole") ?? "reference").trim() || "reference" : "";
   const canonAssetDescription = role === "canon" ? String(form.get("canonAssetDescription") ?? "").trim() : "";
   const canonSortOrder = role === "canon" ? nonNegative(form.get("canonSortOrder") ?? 0, "canonSortOrder") : 0;
   const canonIsPrimary = role === "canon" ? booleanField(form.get("canonIsPrimaryReference")) : false;
   if (role === "canon" && !canonAssetTitle) throw new Error("canonAssetTitle is required for Canon images.");
+  if (role === "canon" && !/^[a-z0-9_-]{1,50}$/i.test(canonAssetRole)) throw new Error("canonAssetRole contains invalid characters.");
   let canonProject: { id: string; linked_story_id: string | null } | null = null;
   let canonRule: { id: string } | null = null;
   if (role === "canon") {
@@ -158,6 +160,66 @@ async function uploadAsset(form: FormData) {
   const actualMime = detectedMime(bytes);
   if (actualMime !== file.type) throw new Error(`Image content does not match declared MIME type (${file.type}).`);
   if (stage !== "production" && actualMime !== "image/jpeg") throw new Error("Draft and review artwork must be genuine JPEG data.");
+
+  const sourceHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+
+  if (role === "canon") {
+    const link = await db.from("private_canon_assets")
+      .select("media_asset_id")
+      .eq("canon_rule_id", canonRule!.id)
+      .eq("asset_role", canonAssetRole)
+      .eq("title", canonAssetTitle)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (link.error) throw new Error(`Canon idempotency lookup failed: ${link.error.message}`);
+    if (link.data?.media_asset_id) {
+      const asset = await db.from("media_assets")
+        .select("id,storage_path,public_url,source_hash,lifecycle_status,asset_type,version_number")
+        .eq("id", link.data.media_asset_id)
+        .maybeSingle();
+      if (asset.error) throw new Error(`Canon media lookup failed: ${asset.error.message}`);
+      if (asset.data) {
+        if (asset.data.source_hash && asset.data.source_hash !== sourceHash) {
+          throw new Error("A Canon image with this title and role already exists with different image bytes. Use a new title or an explicit replacement workflow.");
+        }
+        if (!asset.data.source_hash) {
+          const hashed = await db.from("media_assets").update({ source_hash: sourceHash }).eq("id", asset.data.id);
+          if (hashed.error) throw new Error(`Canon source hash update failed: ${hashed.error.message}`);
+        }
+        return {
+          uploaded: true,
+          reused: true,
+          assetId: asset.data.id,
+          storySlug: slug,
+          storyStatus: null,
+          assetRole: role,
+          productionStage: stage,
+          seasonNumber: null,
+          episodeNumber: null,
+          storagePath: asset.data.storage_path,
+          publicUrl: asset.data.public_url,
+          canon: {
+            projectSlug: canonProjectSlug,
+            objectSlug: canonObjectSlug,
+            title: canonAssetTitle,
+            role: canonAssetRole,
+            sortOrder: canonSortOrder,
+            isPrimaryReference: canonIsPrimary,
+          },
+          mediaAsset: {
+            assetType: asset.data.asset_type,
+            lifecycleStatus: asset.data.lifecycle_status,
+            isApproved: asset.data.lifecycle_status === "approved",
+            versionNumber: asset.data.version_number,
+          },
+        };
+      }
+    }
+  }
+
   const storagePath = role === "canon"
     ? `${canonProjectSlug}/canon/${canonObjectSlug}/${stage}/${productionFilename(ext(actualMime))}`
     : canonicalPath({ slug, role, stage, version, season: seasonNumber, episode: episodeNumber, extension: ext(actualMime) });
@@ -188,6 +250,7 @@ async function uploadAsset(form: FormData) {
       version_number: version,
       is_approved: stage === "production",
       generation_notes: notes || `Uploaded through the ChatGPT artwork bridge. Role: ${role}.`,
+      source_hash: sourceHash,
       updated_at: now,
     }, storagePath);
     registeredAssetId = assetId;
@@ -197,7 +260,7 @@ async function uploadAsset(form: FormData) {
         canon_project_id: canonProject!.id,
         canon_rule_id: canonRule!.id,
         media_asset_id: assetId,
-        asset_role: String(form.get("canonAssetRole") ?? "reference"),
+        asset_role: canonAssetRole,
         title: canonAssetTitle,
         description: canonAssetDescription || null,
         review_status: stage === "production" ? "approved" : stage === "refined" ? "review" : "draft",
@@ -248,7 +311,7 @@ async function uploadAsset(form: FormData) {
         projectSlug: canonProjectSlug,
         objectSlug: canonObjectSlug,
         title: canonAssetTitle,
-        role: String(form.get("canonAssetRole") ?? "reference"),
+        role: canonAssetRole,
         sortOrder: canonSortOrder,
         isPrimaryReference: canonIsPrimary,
       } : null,
