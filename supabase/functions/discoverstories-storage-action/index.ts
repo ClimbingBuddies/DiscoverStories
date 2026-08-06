@@ -11,6 +11,7 @@ const OPERATIONS = new Set([
   "storage_inspect",
   "storage_upload",
   "storage_copy",
+  "storage_move",
   "storage_publish_batch",
 ]);
 
@@ -265,17 +266,32 @@ Deno.serve(async (req: Request) => {
       return json({ requestId, operation, result: "uploaded", storySlug: slug, visibility: "private", relativePath, storagePath: fullPath, contentType: file.contentType, bytes: file.bytes.length });
     }
 
-    if (operation === "storage_copy") {
+    if (operation === "storage_copy" || operation === "storage_move") {
       const sourceAccess = visibility(body.sourceVisibility, "private");
       const destinationAccess = visibility(body.destinationVisibility, "private");
       const sourceRelative = cleanRelativePath(body.sourcePath, "sourcePath");
       const destinationRelative = cleanRelativePath(body.destinationPath, "destinationPath");
+      const sourceBucket = bucketFor(sourceAccess);
+      const destinationBucket = bucketFor(destinationAccess);
       const sourceFull = storagePath(sourceAccess, story.id, slug, sourceRelative);
       const destinationFull = storagePath(destinationAccess, story.id, slug, destinationRelative);
-      if (!await inspectObject(admin.storage.from(bucketFor(sourceAccess)), sourceFull)) throw new ClientError("Source file does not exist", 404);
-      await copyObject(admin, bucketFor(sourceAccess), sourceFull, bucketFor(destinationAccess), destinationFull);
+      if (!await inspectObject(admin.storage.from(sourceBucket), sourceFull)) throw new ClientError("Source file does not exist", 404);
+      if (operation === "storage_move" && sourceBucket === destinationBucket) {
+        if (await inspectObject(admin.storage.from(destinationBucket), destinationFull)) {
+          throw new ClientError(`Destination already exists: ${destinationFull}`, 409);
+        }
+        const { error } = await admin.storage.from(sourceBucket).move(sourceFull, destinationFull);
+        if (error) throw new ClientError(error.message, 502);
+      } else {
+        await copyObject(admin, sourceBucket, sourceFull, destinationBucket, destinationFull);
+        if (operation === "storage_move") {
+          const { error } = await admin.storage.from(sourceBucket).remove([sourceFull]);
+          if (error) throw new ClientError(`Copied successfully, but source removal failed: ${error.message}`, 502);
+        }
+      }
+      const result = operation === "storage_copy" ? "copied" : "moved";
       console.info(JSON.stringify({ requestId, actionKeyId, operation, storySlug: slug, sourceFull, destinationFull }));
-      return json({ requestId, operation, result: "copied", storySlug: slug, sourceVisibility: sourceAccess, sourcePath: sourceRelative, destinationVisibility: destinationAccess, destinationPath: destinationRelative });
+      return json({ requestId, operation, result, storySlug: slug, sourceVisibility: sourceAccess, sourcePath: sourceRelative, destinationVisibility: destinationAccess, destinationPath: destinationRelative });
     }
 
     if (!Array.isArray(body.entries) || !body.entries.length || body.entries.length > MAX_BATCH_ITEMS) {
