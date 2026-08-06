@@ -2,7 +2,7 @@
 
 ## Rule
 
-All destinations use the [Core Upload Process](./core-upload-process.md). A destination profile changes routing and linking only. It does not authorise an alternative transport method.
+These destination profiles apply to the GitHub queue/OIDC production route. Every GitHub-route destination uses the [Core Upload Process](./core-upload-process.md); a profile changes routing and linking only.
 
 The final Storage path is derived by the Supabase upload function. Do not invent or override it in a queue manifest.
 
@@ -102,7 +102,9 @@ Do not use a random filename for an intended episode replacement. The current up
 
 A random queue folder name does not produce a random Storage filename. The current production function derives Storage paths from story, role, stage, version and episode identifiers.
 
-A truly random Storage filename is therefore not supported by this canonical pipeline without a separate test-only implementation. Do not add an unsupported `filename` or `storagePath` field to the manifest and assume it will be honoured.
+A truly random Storage filename is not supported by the GitHub production route. Do not add an unsupported `filename` or `storagePath` field to the manifest and assume it will be honoured.
+
+A connected-Supabase Chat operation may upload or copy to an explicitly approved UUID destination. That is a separate Storage-management route, not a destination-profile override, and it does not automatically update `media_assets` or content links.
 
 A safe low-impact test uses:
 
