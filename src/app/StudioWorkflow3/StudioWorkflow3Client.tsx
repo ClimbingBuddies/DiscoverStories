@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -58,7 +58,11 @@ export default function StudioWorkflow3Client(){
   const episode=filteredEpisodes.find(e=>e.id===episodeId)??filteredEpisodes[0]??null;
   const planningRecord=data?.planning??null;
   const planningValue=planningRecord?.planning;
-  const planningText=typeof planningValue==="string"?planningValue:"";
+  const planningText=typeof planningValue==="string"
+    ? planningValue
+    : planningValue&&typeof planningValue==="object"&&typeof (planningValue as {content?:unknown}).content==="string"
+      ? (planningValue as {content:string}).content
+      : "";
   const planningRichValue=useMemo(()=>{
     if(!planningValue)return"";
     if(typeof planningValue==="object"&&Array.isArray((planningValue as {content?:unknown}).content))return JSON.stringify(planningValue);
@@ -84,13 +88,8 @@ export default function StudioWorkflow3Client(){
       {tab==="Canon"&&<section className="w3-canon"><div className="w3-canon-nav"><button className={!category?"active":""}>Overview</button>{categories.map(c=><button key={c.slug} className={category===c.slug?"active":""} onClick={()=>{setCategory(c.slug);setRecordId("")}}><span>{icons[c.slug]??"✦"}</span>{aliases[c.slug]??c.name}<small>{c.record_count}</small></button>)}</div><div className="w3-page">
         {!records.length?<Empty title="No Canon records in this category">No placeholder information has been invented.</Empty>:<div className="w3-canon-workspace"><aside>{records.map(r=><button key={r.id} className={record?.id===r.id?"active":""} onClick={()=>setRecordId(r.id)}>{r.images[0]?.public_url?<img src={r.images[0].public_url} alt=""/>:<span className="portrait">{icons[r.category]??"✦"}</span>}<div><strong>{r.title}</strong><small>{r.summary??"No summary loaded."}</small></div></button>)}</aside>{record&&<article className="w3-record"><div className="w3-record-hero"><div><p className="w3-kicker">{aliases[record.category]??pretty(record.category)}  ·  {pretty(record.content_status)}</p><h2>{record.title}</h2><p className="w3-lead">{record.summary}</p><div className="w3-tags"><span>{record.is_public?"Public infrastructure":"Restricted"}</span>{record.reveal_episode&&<span>Reveals E{record.reveal_episode.episode_number}</span>}<span>Spoiler {record.spoiler_level}</span></div></div>{record.images[0]?.public_url?<img src={record.images[0].public_url} alt={record.images[0].alt_text??""}/>:<div className="w3-art-empty">No reference artwork linked</div>}</div>{record.description&&<section><h3>Overview</h3><p className="w3-lead">{record.description}</p></section>}{record.sections.map(s=><section key={s.id}><h3>{s.heading}</h3><RichText value={s.content}/></section>)}{record.character_profile&&<section><h3>Character reference</h3><div className="w3-attributes">{Object.entries(record.character_profile).filter(([k,v])=>profileLabels[k]&&v).map(([k,v])=><div key={k}><small>{profileLabels[k]}</small><p>{v}</p></div>)}</div></section>}{record.related_records.length>0&&<section><h3>Related Canon</h3><div className="w3-links">{record.related_records.map(r=><button key={r.id} onClick={()=>{setCategory(r.category);setRecordId(r.id)}}><small>{aliases[r.category]??pretty(r.category)}</small><strong>{r.title}</strong></button>)}</div></section>}{record.linked_episodes.length>0&&<section><h3>Linked episodes</h3><div className="w3-links">{record.linked_episodes.map(e=><button key={e.id} onClick={()=>{setEpisodeId(e.id);setTab("Episodes")}}><small>EPISODE {e.episode_number}</small><strong>{e.title}</strong></button>)}</div></section>}</article>}</div>}
       </div></section>}
-      {tab==="Planning"&&<section className="w3-page"><div className="w3-page-title"><div><p>STUDIO WORKSPACE</p><h1>Planning</h1></div>{planningRecord?<span>{pretty(planningRecord.content_status)}</span>:null}</div>{planningRecord?<article className="w3-record"><p className="w3-kicker">SEASON {planningRecord.season_number}</p><h2>{planningRecord.title}</h2><div className="w3-tags"><span>{pretty(planningRecord.content_status)}</span></div>{hasPlanningBody?(planningRichValue?<RichText value={planningRichValue}/>:<p className="w3-lead" style={{whiteSpace:"pre-wrap"}}>{planningText}</p>):<p className="w3-lead">No planning document has been created.</p>}</article>:<Empty title="Planning unavailable">No planning document has been created.</Empty>}</section>}
+      {tab==="Planning"&&<section className="w3-page"><div className="w3-page-title"><div><p>STUDIO WORKSPACE</p><h1>Planning</h1></div>{planningRecord?<span>{pretty(planningRecord.content_status)}</span>:null}</div>{planningRecord?<article className="w3-record"><p className="w3-kicker">SEASON {planningRecord.season_number}</p><h2>{planningRecord.title}</h2><div className="w3-tags"><span>{pretty(planningRecord.content_status)}</span></div>{hasPlanningBody?(planningRichValue?<RichText value={planningRichValue}/>:<RichText value={planningText}/>):<p className="w3-lead">No planning document has been created.</p>}</article>:<Empty title="Planning unavailable">No planning document has been created.</Empty>}</section>}
       {tab==="Review"&&<section className="w3-page"><div className="w3-page-title"><div><p>PRODUCTION EVIDENCE</p><h1>Review</h1></div></div><div className="w3-review">{[[data.counts.episodes,"Episodes"],[data.counts.published_episodes,"Published"],[data.counts.planning_blocks,"Plan blocks"],[data.counts.canon_records,"Canon records"]].map(([n,l])=><div key={l}><strong>{n}</strong><span>{l}</span></div>)}</div></section>}
     </>}
   </main>
 }
-
-
-
-
-
