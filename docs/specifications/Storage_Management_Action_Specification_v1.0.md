@@ -1,8 +1,8 @@
 # DiscoverStories Storage Management Action Specification
 
-Version 1.0  
-Date: 04 Aug 2026  
-Status: Initial private-GPT standard
+Version 1.1
+Date: 06 Aug 2026
+Status: Verified Storage Management standard
 
 ## Purpose
 
@@ -27,7 +27,11 @@ The Action resolves the story UUID from `public.stories.slug`. The GPT and user 
 | `storage_copy` | Copies one object and preserves the source. | Creates one object; never overwrites |
 | `storage_publish_batch` | Copies mapped private objects to `story-images`. | Dry-run first; creates public copies only after approval |
 
-Delete and move/rename are excluded from Version 1.0. Periodic deletion remains a manual Supabase task.
+Delete and move/rename remain excluded from Version 1.1. Periodic deletion remains a manual Supabase task.
+
+`storage_copy` is the supported relocation primitive. It can copy private-to-private, private-to-public, public-to-public or public-to-private while preserving the source. It does not convert image formats, update `media_assets`, relink story or episode records, or delete the source.
+
+For the verified ChatGPT Work execution process, use [`docs/actions/storage-copy-runbook.md`](../actions/storage-copy-runbook.md).
 
 ## Authentication and security
 
@@ -46,7 +50,7 @@ Delete and move/rename are excluded from Version 1.0. Periodic deletion remains 
 The Episode Artwork Production Specification remains authoritative:
 
 - Episode and story-cover artwork: 1024 x 1024 pixels.
-- Story banner: 1600 x 900 pixels.
+- Story banner: 1280 x 720 pixels.
 - Lowercase predictable filenames with no spaces.
 - JPG is preferred for standard illustration; PNG is reserved for a genuine transparency requirement.
 - No embedded title, logo, watermark, episode number, UI or generated text.
@@ -92,9 +96,36 @@ The private GPT must apply these rules:
 | 5 | Preview one private-to-public mapping | `dryRun: true`, `ready: true`, no object copied |
 | 6 | Approve and execute the same mapping | `result: published`; private source remains |
 
+## Verified Storage copy acceptance tests
+
+On 06 Aug 2026, the Storage Management Action was invoked from ChatGPT Work through the connected Supabase project using `pg_net` and a short-lived `storage_copy`-only Action key.
+
+| Test | Source | Destination | Result |
+|---|---|---|---|
+| Public to public | Life Inside the Dyson Episode 4 PNG | Isolated public test path | HTTP 200; `result: copied` |
+| Public to private | Life Inside the Dyson Episode 4 PNG | Story UUID private test path | HTTP 200; `result: copied` |
+
+Both tests verified:
+
+- the source remained in place;
+- the destination did not exist before execution;
+- the destination existed after execution;
+- source and destination eTag, byte size and MIME type matched;
+- no episode or `media_assets` record changed;
+- the temporary Action key was removed after verification.
+
+These tests prove that ChatGPT Work can trigger the deployed `storage_copy` function even when the custom Storage Action is not exposed as a direct chat tool. The controlled fallback is Supabase SQL execution → short-lived Action key → `pg_net` → Edge Function → response and Storage verification.
+
 ## Relationship to existing specifications
 
 - Story Creation determines the image brief and continuity requirements.
 - Episode Artwork Production controls canvas dimensions, composition, filename and image acceptance.
 - Story SQL Insert and Wiki SQL Insert store relative public paths only after the image has been approved and published.
 - This specification controls the separate Storage transport and publishing workflow.
+
+## Version history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 06 Aug 2026 | Added the verified ChatGPT Work `storage_copy` execution path, public-to-public and public-to-private evidence, metadata verification, short-lived-key cleanup and the operational runbook. Corrected the banner target to 1280 × 720. |
+| 1.0 | 04 Aug 2026 | Initial private-GPT Storage Management standard. |
