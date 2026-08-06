@@ -62,9 +62,9 @@ Where Supabase data is incomplete or inconsistent, the affected image must be ma
 
 Where the image cannot be viewed in Studio and cannot be inspected directly, the visual assessment must be marked as blocked. Technical checks may still be reported separately.
 
-## Relationship to the Draft Pipeline
+## Relationship to the Workflow Router
 
-The Audio Platform Draft Pipeline may create fast, low-resolution draft concepts after its Supabase load and verification steps.
+The Audio Platform Workflow Router may create fast, low-resolution draft concepts after its Supabase load and verification steps.
 
 Draft concepts exist to establish:
 
@@ -74,7 +74,7 @@ Draft concepts exist to establish:
 - setting;
 - episode atmosphere.
 
-The Draft Pipeline should not spend significant time refining production artwork.
+The Workflow Router should not spend significant time refining production artwork.
 
 Draft availability in Studio exists so the assembled story package can be visually reviewed before public release. This includes covers, banners, episode cards, roadmap artwork, Wiki imagery and other rendered assets.
 
@@ -333,6 +333,19 @@ Operational requirements:
 - do not merely rename a PNG extension to `.jpg`.
 
 Final Storage paths are derived by the supported upload implementation. Follow the destination profile in [`documentation/image-upload/destination-profiles.md`](../image-upload/destination-profiles.md); do not prescribe or override a path here.
+
+## Storage transport decision
+
+After image approval and explicit upload authority, select one route and keep its rules separate:
+
+| Route | Use | Naming rule |
+|---|---|---|
+| GitHub queue and OIDC bridge | Supported production cover, banner and episode profiles | The upload function derives the canonical path and filename |
+| Connected-Supabase Chat | Controlled private upload, copy and maintenance | An approved path may include a lowercase UUID filename; access still depends on bucket policy |
+
+For linked production media, use copy-first relocation: discover every reference, copy, verify the destination, register or update `media_assets`, relink only the exact authorised records, verify Studio and public rendering, and retain the source for rollback. A direct `storage_move` is for unlinked objects only.
+
+There is no `storage_file_rename` operation and no general atomic `media_relink` operation. A rename is a move to a new path; database relinking is a separate controlled step.
 
 ## 10. Upload and Database Linking
 
