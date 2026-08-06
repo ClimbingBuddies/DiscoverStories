@@ -66,6 +66,10 @@ jobs:
             echo "Reader and episode media require numeric seasonNumber and episodeNumber." >&2
             exit 1
           fi
+          if jq -e 'select(.assetRole == "canon") | (((.canonProjectSlug // "") | length) == 0 or ((.canonObjectSlug // "") | length) == 0 or ((.canonAssetTitle // "") | length) == 0)' "$queue" >/dev/null; then
+            echo "Canon media require canonProjectSlug, canonObjectSlug and canonAssetTitle." >&2
+            exit 1
+          fi
           echo "queue=$queue" >> "$GITHUB_OUTPUT"
           echo "count=$(wc -l < "$queue" | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
@@ -138,6 +142,13 @@ jobs:
             season_number=$(jq -r '.seasonNumber // empty' <<< "$item")
             episode_number=$(jq -r '.episodeNumber // empty' <<< "$item")
             generation_notes=$(jq -r '.generationNotes // "ChatGPT generated draft concept transferred through the Story Pipeline."' <<< "$item")
+            canon_project_slug=$(jq -r '.canonProjectSlug // empty' <<< "$item")
+            canon_object_slug=$(jq -r '.canonObjectSlug // empty' <<< "$item")
+            canon_asset_title=$(jq -r '.canonAssetTitle // empty' <<< "$item")
+            canon_asset_role=$(jq -r '.canonAssetRole // "reference"' <<< "$item")
+            canon_asset_description=$(jq -r '.canonAssetDescription // empty' <<< "$item")
+            canon_sort_order=$(jq -r '.canonSortOrder // 0' <<< "$item")
+            canon_is_primary=$(jq -r '.canonIsPrimaryReference // false' <<< "$item")
 
             args=(
               -sS --fail-with-body
@@ -155,6 +166,17 @@ jobs:
 
             if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
             if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
+            if [[ "$asset_role" == "canon" ]]; then
+              args+=(
+                -F "canonProjectSlug=$canon_project_slug"
+                -F "canonObjectSlug=$canon_object_slug"
+                -F "canonAssetTitle=$canon_asset_title"
+                -F "canonAssetRole=$canon_asset_role"
+                -F "canonAssetDescription=$canon_asset_description"
+                -F "canonSortOrder=$canon_sort_order"
+                -F "canonIsPrimaryReference=$canon_is_primary"
+              )
+            fi
 
             uploaded=false
             result=""
