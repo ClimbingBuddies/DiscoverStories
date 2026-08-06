@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use this runbook to copy one existing image between authorised DiscoverStories Storage locations while preserving the source.
+Use this runbook to copy one existing image between authorised DiscoverStories Storage locations while preserving the source. For a move or rename that removes the source, use [`storage-move-runbook.md`](storage-move-runbook.md).
 
 Supported directions:
 
