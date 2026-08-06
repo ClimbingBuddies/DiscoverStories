@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out queued artwork
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Prepare queue
         id: queue
@@ -35,29 +37,52 @@ jobs:
           queue="$RUNNER_TEMP/artwork-queue.jsonl"
           : > "$queue"
 
+          batch_files=()
+          manifest_files=()
+
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             target="production-queue/${{ inputs.queue_path }}"
+            if [[ -f "$target" && "$(basename "$target")" == "batch.json" ]]; then
+              batch_files=("$target")
+            elif [[ -f "$target" && "$(basename "$target")" == "manifest.json" ]]; then
+              manifest_files=("$target")
+            else
+              mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
+              mapfile -t manifest_files < <(find "$target" -name manifest.json -type f | sort)
+            fi
           else
-            target="production-queue"
-          fi
-
-          if [[ -f "$target" && "$target" == *.json ]]; then
-            batch_files=("$target")
-          else
-            mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
-          fi
-
-          if [[ ${#batch_files[@]} -gt 0 ]]; then
-            for batch in "${batch_files[@]}"; do
-              jq -c '.items[]' "$batch" >> "$queue"
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+            mapfile -t changed_files < <(git diff --name-only "$base_sha" "$head_sha" -- production-queue | sort)
+            declare -A seen_batches=()
+            declare -A seen_manifests=()
+            for changed in "${changed_files[@]}"; do
+              case "$changed" in
+                */batch.json)
+                  [[ -f "$changed" ]] && seen_batches["$changed"]=1
+                  ;;
+                */manifest.json|*/image.b64)
+                  manifest="$(dirname "$changed")/manifest.json"
+                  [[ -f "$manifest" ]] && seen_manifests["$manifest"]=1
+                  ;;
+              esac
             done
-          else
-            while IFS= read -r manifest; do
-              folder=$(dirname "$manifest")
-              image_base64=$(tr -d '\n\r' < "$folder/image.b64")
-              jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
-            done < <(find "$target" -name manifest.json -type f | sort)
+            if [[ ${#seen_batches[@]} -gt 0 ]]; then
+              mapfile -t batch_files < <(printf '%s\n' "${!seen_batches[@]}" | sort)
+            fi
+            if [[ ${#seen_manifests[@]} -gt 0 ]]; then
+              mapfile -t manifest_files < <(printf '%s\n' "${!seen_manifests[@]}" | sort)
+            fi
           fi
+
+          for batch in "${batch_files[@]}"; do
+            jq -c '.items[]' "$batch" >> "$queue"
+          done
+          for manifest in "${manifest_files[@]}"; do
+            folder=$(dirname "$manifest")
+            image_base64=$(tr -d '\n\r' < "$folder/image.b64")
+            jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
+          done
 
           test -s "$queue"
           jq -e 'has("storySlug") and has("assetRole") and has("imageBase64")' "$queue" >/dev/null
