@@ -138,6 +138,7 @@ jobs:
             season_number=$(jq -r '.seasonNumber // empty' <<< "$item")
             episode_number=$(jq -r '.episodeNumber // empty' <<< "$item")
             generation_notes=$(jq -r '.generationNotes // "ChatGPT generated draft concept transferred through the Story Pipeline."' <<< "$item")
+            file_name=$(jq -r '.fileName // empty' <<< "$item")
 
             args=(
               -sS --fail-with-body
