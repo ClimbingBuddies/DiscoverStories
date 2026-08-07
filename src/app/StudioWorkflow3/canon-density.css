@@ -1,0 +1,43 @@
+/* Compact Canon hierarchy navigation.
+   Keep the Group -> Category structure, but reduce the vertical footprint
+   so the actual canon content stays visible on a single desktop screen. */
+
+.w3-canon > .w3-canon-nav:first-child {
+  height: 48px;
+  padding-inline: 12px;
+}
+
+.w3-canon > .w3-canon-nav:nth-child(2) {
+  height: 42px;
+  padding-inline: 12px;
+}
+
+.w3-canon > .w3-canon-nav button {
+  padding-inline: 13px;
+}
+
+.w3-canon > .w3-canon-nav:nth-child(2) button {
+  font-size: 13px;
+  padding-inline: 12px;
+}
+
+.w3-canon > .w3-page {
+  padding-top: 10px;
+}
+
+.w3-canon .w3-canon-workspace {
+  margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .w3-canon > .w3-canon-nav:first-child,
+  .w3-canon > .w3-canon-nav:nth-child(2) {
+    height: 42px;
+    justify-content: flex-start;
+  }
+
+  .w3-canon > .w3-canon-nav button,
+  .w3-canon > .w3-canon-nav:nth-child(2) button {
+    padding-inline: 10px;
+  }
+}
