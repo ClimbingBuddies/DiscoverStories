@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StudioWorkflow3Client from "./StudioWorkflow3Client";
+import "./canon-density.css";
 
 export const metadata: Metadata = {
   title: "Story Studio | Discover Stories",
