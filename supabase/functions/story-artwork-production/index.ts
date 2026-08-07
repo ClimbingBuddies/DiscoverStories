@@ -36,6 +36,14 @@ function positive(value: unknown, field: string) {
   if (!Number.isInteger(result) || result < 1) throw new Error(`${field} must be a positive integer.`);
   return result;
 }
+function nonNegative(value: unknown, field: string) {
+  const result = Number(value);
+  if (!Number.isInteger(result) || result < 0) throw new Error(`${field} must be a non-negative integer.`);
+  return result;
+}
+function booleanField(value: unknown) {
+  return String(value ?? "false").trim().toLowerCase() === "true";
+}
 function detectedMime(bytes: Uint8Array) {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
@@ -48,8 +56,17 @@ function ext(mime: string) {
   if (mime === "image/webp") return "webp";
   throw new Error("Unsupported image type.");
 }
+function productionFilename(extension: string) {
+  return `${crypto.randomUUID()}.${extension}`;
+}
 function canonicalPath(args: { slug: string; role: string; stage: string; version: number; season?: number; episode?: number; extension: string }) {
-  const suffix = args.stage === "production" ? "" : `-${args.stage}-${String(args.version).padStart(2, "0")}`;
+  if (args.stage === "production") {
+    if (args.role === "cover" || args.role === "banner") return `${args.slug}/story/${productionFilename(args.extension)}`;
+    const episodeName = `${args.slug}-s${String(args.season).padStart(2, "0")}e${String(args.episode).padStart(2, "0")}`;
+    if (args.role === "reader") return `${args.slug}/episodes/${episodeName}/reader/${productionFilename(args.extension)}`;
+    return `${args.slug}/episodes/${episodeName}/${productionFilename(args.extension)}`;
+  }
+  const suffix = `-${args.stage}-${String(args.version).padStart(2, "0")}`;
   if (args.role === "cover") return `${args.slug}/${args.slug}-cover${suffix}.${args.extension}`;
   if (args.role === "banner") return `${args.slug}/${args.slug}-banner${suffix}.${args.extension}`;
   if (args.role === "canon") throw new Error("Canon paths require a Canon object slug.");
@@ -105,15 +122,25 @@ async function uploadAsset(form: FormData) {
   if (!allowedMimes.has(file.type)) throw new Error("Only JPEG, PNG and WebP images are accepted.");
   if (file.size < 1 || file.size > 12 * 1024 * 1024) throw new Error("Image must be between 1 byte and 12 MB.");
 
-  const story = role === "canon" ? null : await storyBySlug(slug);
+  let story = role === "canon" ? null : await storyBySlug(slug);
   const canonObjectSlug = role === "canon" ? cleanObjectSlug(form.get("canonObjectSlug")) : null;
   const canonProjectSlug = role === "canon" ? cleanSlug(form.get("canonProjectSlug") ?? slug) : null;
-  let canonProject: { id: string } | null = null;
+  const canonAssetTitle = role === "canon" ? String(form.get("canonAssetTitle") ?? "").trim() : "";
+  const canonAssetRole = role === "canon" ? String(form.get("canonAssetRole") ?? "reference").trim() || "reference" : "";
+  const canonAssetDescription = role === "canon" ? String(form.get("canonAssetDescription") ?? "").trim() : "";
+  const canonSortOrder = role === "canon" ? nonNegative(form.get("canonSortOrder") ?? 0, "canonSortOrder") : 0;
+  const canonIsPrimary = role === "canon" ? booleanField(form.get("canonIsPrimaryReference")) : false;
+  if (role === "canon" && !canonAssetTitle) throw new Error("canonAssetTitle is required for Canon images.");
+  if (role === "canon" && !/^[a-z0-9_-]{1,50}$/i.test(canonAssetRole)) throw new Error("canonAssetRole contains invalid characters.");
+  let canonProject: { id: string; linked_story_id: string | null } | null = null;
   let canonRule: { id: string } | null = null;
   if (role === "canon") {
-    const project = await db.from("private_canon_projects").select("id").eq("slug", canonProjectSlug).single();
+    const project = await db.from("private_canon_projects").select("id,linked_story_id").eq("slug", canonProjectSlug).single();
     if (project.error || !project.data) throw new Error(`Private Canon workspace '${canonProjectSlug}' was not found.`);
+    if (!project.data.linked_story_id) throw new Error("The Canon workspace must be linked to a story before media can be registered.");
     canonProject = project.data;
+    story = await storyBySlug(slug);
+    if (story.id !== canonProject.linked_story_id) throw new Error("storySlug does not match the Canon workspace linked story.");
     const rule = await db.from("story_canon_rules").select("id").eq("canon_project_id", canonProject.id).eq("canon_key", canonObjectSlug).single();
     if (rule.error || !rule.data) throw new Error(`Canon object '${canonObjectSlug}' was not found.`);
     canonRule = rule.data;
@@ -133,25 +160,87 @@ async function uploadAsset(form: FormData) {
   const actualMime = detectedMime(bytes);
   if (actualMime !== file.type) throw new Error(`Image content does not match declared MIME type (${file.type}).`);
   if (stage !== "production" && actualMime !== "image/jpeg") throw new Error("Draft and review artwork must be genuine JPEG data.");
+
+  const sourceHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+
+  if (role === "canon") {
+    const link = await db.from("private_canon_assets")
+      .select("media_asset_id")
+      .eq("canon_rule_id", canonRule!.id)
+      .eq("asset_role", canonAssetRole)
+      .eq("title", canonAssetTitle)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (link.error) throw new Error(`Canon idempotency lookup failed: ${link.error.message}`);
+    if (link.data?.media_asset_id) {
+      const asset = await db.from("media_assets")
+        .select("id,storage_path,public_url,source_hash,lifecycle_status,asset_type,version_number")
+        .eq("id", link.data.media_asset_id)
+        .maybeSingle();
+      if (asset.error) throw new Error(`Canon media lookup failed: ${asset.error.message}`);
+      if (asset.data) {
+        if (asset.data.source_hash && asset.data.source_hash !== sourceHash) {
+          throw new Error("A Canon image with this title and role already exists with different image bytes. Use a new title or an explicit replacement workflow.");
+        }
+        if (!asset.data.source_hash) {
+          const hashed = await db.from("media_assets").update({ source_hash: sourceHash }).eq("id", asset.data.id);
+          if (hashed.error) throw new Error(`Canon source hash update failed: ${hashed.error.message}`);
+        }
+        return {
+          uploaded: true,
+          reused: true,
+          assetId: asset.data.id,
+          storySlug: slug,
+          storyStatus: null,
+          assetRole: role,
+          productionStage: stage,
+          seasonNumber: null,
+          episodeNumber: null,
+          storagePath: asset.data.storage_path,
+          publicUrl: asset.data.public_url,
+          canon: {
+            projectSlug: canonProjectSlug,
+            objectSlug: canonObjectSlug,
+            title: canonAssetTitle,
+            role: canonAssetRole,
+            sortOrder: canonSortOrder,
+            isPrimaryReference: canonIsPrimary,
+          },
+          mediaAsset: {
+            assetType: asset.data.asset_type,
+            lifecycleStatus: asset.data.lifecycle_status,
+            isApproved: asset.data.lifecycle_status === "approved",
+            versionNumber: asset.data.version_number,
+          },
+        };
+      }
+    }
+  }
+
   const storagePath = role === "canon"
-    ? `${canonProjectSlug}/canon/${canonObjectSlug}/${canonObjectSlug}-${stage}-${String(version).padStart(2, "0")}.${ext(actualMime)}`
+    ? `${canonProjectSlug}/canon/${canonObjectSlug}/${stage}/${productionFilename(ext(actualMime))}`
     : canonicalPath({ slug, role, stage, version, season: seasonNumber, episode: episodeNumber, extension: ext(actualMime) });
   const stored = await db.storage.from(bucket).upload(storagePath, bytes, {
     contentType: actualMime,
     cacheControl: stage === "production" ? "31536000" : "3600",
-    upsert: true,
+    upsert: role !== "canon",
   });
   if (stored.error) throw new Error(`Storage upload failed: ${stored.error.message}`);
 
   const publicUrl = db.storage.from(bucket).getPublicUrl(storagePath).data.publicUrl;
   const lifecycleStatus = stage === "production" ? "approved" : stage;
-  const assetType = role === "canon" ? "character_reference" : role === "reader" ? "reader_image" : stage === "concept" ? "concept_image" : stage === "refined" ? "refined_image" : role === "cover" ? "cover_image" : role === "banner" ? "story_banner" : "episode_image";
+  const assetType = role === "canon" ? "canon_reference" : role === "reader" ? "reader_image" : stage === "concept" ? "concept_image" : stage === "refined" ? "refined_image" : role === "cover" ? "cover_image" : role === "banner" ? "story_banner" : "episode_image";
   const now = new Date().toISOString();
+  let registeredAssetId: string | null = null;
   try {
     const assetId = await registerAsset({
       story_id: episode ? null : story?.id ?? null,
       episode_id: episode?.id ?? null,
       asset_type: assetType,
+      title: role === "canon" ? canonAssetTitle : null,
       storage_provider: "supabase",
       storage_path: storagePath,
       public_url: publicUrl,
@@ -161,20 +250,26 @@ async function uploadAsset(form: FormData) {
       version_number: version,
       is_approved: stage === "production",
       generation_notes: notes || `Uploaded through the ChatGPT artwork bridge. Role: ${role}.`,
+      source_hash: sourceHash,
       updated_at: now,
     }, storagePath);
+    registeredAssetId = assetId;
 
     if (role === "canon") {
-      const linked = await db.from("private_canon_assets").upsert({
+      const linked = await db.from("private_canon_assets").insert({
         canon_project_id: canonProject!.id,
         canon_rule_id: canonRule!.id,
         media_asset_id: assetId,
-        asset_role: String(form.get("canonAssetRole") ?? "reference"),
+        asset_role: canonAssetRole,
+        title: canonAssetTitle,
+        description: canonAssetDescription || null,
         review_status: stage === "production" ? "approved" : stage === "refined" ? "review" : "draft",
+        is_primary_reference: canonIsPrimary,
+        sort_order: canonSortOrder,
         consistency_notes: String(form.get("consistencyNotes") ?? "").trim() || null,
         refinement_direction: String(form.get("refinementDirection") ?? "").trim() || null,
         updated_at: now,
-      }, { onConflict: "media_asset_id" });
+      });
       if (linked.error) throw new Error(`Canon asset registration failed: ${linked.error.message}`);
     }
 
@@ -200,9 +295,32 @@ async function uploadAsset(form: FormData) {
     const verified = await db.storage.from(bucket).list(folder, { search: filename, limit: 10 });
     if (verified.error || !verified.data?.some((row) => row.name === filename)) throw new Error("Storage verification failed.");
 
-    if (story) await setWorkflowStatus(slug, workflowStatus);
-    return { uploaded: true, assetId, storySlug: slug, storyStatus: story ? workflowStatus : null, assetRole: role, productionStage: stage, seasonNumber: seasonNumber ?? null, episodeNumber: episodeNumber ?? null, storagePath, publicUrl, mediaAsset: { assetType, lifecycleStatus, isApproved: stage === "production", versionNumber: version } };
+    if (story && role !== "canon") await setWorkflowStatus(slug, workflowStatus);
+    return {
+      uploaded: true,
+      assetId,
+      storySlug: slug,
+      storyStatus: role === "canon" ? null : workflowStatus,
+      assetRole: role,
+      productionStage: stage,
+      seasonNumber: seasonNumber ?? null,
+      episodeNumber: episodeNumber ?? null,
+      storagePath,
+      publicUrl,
+      canon: role === "canon" ? {
+        projectSlug: canonProjectSlug,
+        objectSlug: canonObjectSlug,
+        title: canonAssetTitle,
+        role: canonAssetRole,
+        sortOrder: canonSortOrder,
+        isPrimaryReference: canonIsPrimary,
+      } : null,
+      mediaAsset: { assetType, lifecycleStatus, isApproved: stage === "production", versionNumber: version },
+    };
   } catch (error) {
+    if (role === "canon" && registeredAssetId) {
+      await db.from("media_assets").delete().eq("id", registeredAssetId);
+    }
     await db.storage.from(bucket).remove([storagePath]);
     throw error;
   }

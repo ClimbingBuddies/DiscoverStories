@@ -48,7 +48,9 @@ Upload requires explicit authority and a supported destination in [`documentatio
 
 Draft/review cover, banner and episode replacements may proceed through the canonical upload runbook.
 
-Published database replacement is currently **BLOCKED** because the GitHub upload bridge cannot safely preserve published status. Do not downgrade status, manually relink as a workaround, overwrite the live object, or claim replacement support. The replacement Production image may be prepared and approved, but upload must wait for a separately implemented and verified published-preservation pathway.
+Published replacement through the GitHub upload bridge remains **BLOCKED** because that bridge cannot safely preserve published status. Do not downgrade status or overwrite the live object.
+
+A connected-Supabase Chat session may perform an explicitly authorised published linked relocation using the Storage Move and Database Relink Runbook. This is a controlled multi-step process, not an atomic replacement: copy first, verify the destination, register or update `media_assets`, relink only exact authorised references, verify Studio and public rendering, retain the source for rollback, and remove the old object only through later controlled cleanup.
 
 Canon and Reader/Tiptap replacements remain blocked by their destination-profile limitations.
 

@@ -15,6 +15,40 @@ export type CanonBrowserRecord = {
   content_status: string;
   spoiler_level: number;
   updated_at: string;
+  fields: Array<{
+    key: string;
+    label: string;
+    value_type: string;
+    help_text: string | null;
+    value: unknown;
+    sort_order: number;
+  }>;
+  relationships: Array<{
+    id: string;
+    relationship_type: string;
+    description: string | null;
+    target_canon_key: string;
+    target_title: string;
+    target_category: string;
+  }>;
+  images: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    asset_role: string;
+    public_url: string | null;
+    is_primary_reference: boolean;
+    review_status: string;
+  }>;
+  references: Array<{
+    id: string;
+    reference_type: string;
+    title: string;
+    citation: string | null;
+    url: string | null;
+    description: string | null;
+    review_status: string;
+  }>;
 };
 
 export type CanonBrowserCategory = {
@@ -25,6 +59,13 @@ export type CanonBrowserCategory = {
 
 function humanize(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function displayValue(value: unknown) {
+  if (Array.isArray(value)) return value.join(" · ");
+  if (value && typeof value === "object") return JSON.stringify(value);
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
 }
 
 function StatusPills({ record }: { record: CanonBrowserRecord }) {
@@ -62,6 +103,85 @@ function RecordDetails({ record }: { record: CanonBrowserRecord }) {
           <dd className="mt-1 break-all text-zinc-200">{record.canon_key}</dd>
         </div>
       </dl>
+
+      {record.fields.length > 0 ? (
+        <section className="mt-6 overflow-hidden rounded-xl border border-sky-400/20 bg-sky-400/[0.04]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-sky-400/15 px-4 py-3">
+            <h4 className="text-sm font-semibold text-sky-200">Category-specific fields</h4>
+            <span className="text-[11px] text-zinc-500">Fields vary by category</span>
+          </div>
+          <dl className="divide-y divide-zinc-800/80">
+            {record.fields.map((field) => (
+              <div key={field.key} className="grid gap-1 px-4 py-3 text-xs sm:grid-cols-[minmax(8rem,0.42fr)_1fr] sm:gap-4">
+                <dt className="text-zinc-500">{field.label}</dt>
+                <dd className="leading-5 text-zinc-200">{displayValue(field.value)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+
+      {record.relationships.length > 0 ? (
+        <section className="mt-6 rounded-xl border border-violet-400/20 bg-violet-400/[0.04] p-4">
+          <h4 className="text-sm font-semibold text-violet-200">Relationships</h4>
+          <ul className="mt-3 space-y-2">
+            {record.relationships.map((relationship) => (
+              <li key={relationship.id} className="flex items-center gap-3 rounded-lg bg-zinc-950/70 px-3 py-2 text-xs">
+                <span className="rounded-full bg-violet-400/10 px-2 py-1 text-violet-300">
+                  {humanize(relationship.relationship_type.replace(/-/g, "_"))}
+                </span>
+                <span className="min-w-0 truncate text-zinc-200">{relationship.target_title}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {record.images.length > 0 || record.references.length > 0 ? (
+        <section className="mt-6 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.035] p-4">
+          <h4 className="text-sm font-semibold text-emerald-200">Images and references</h4>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {record.images.map((image) =>
+              image.public_url ? (
+                <a
+                  key={image.id}
+                  href={image.public_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950"
+                >
+                  <img
+                    src={image.public_url}
+                    alt={image.description || image.title}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-[1.02]"
+                  />
+                  <span className="block px-3 py-2">
+                    <span className="block text-xs font-medium text-zinc-200">{image.title}</span>
+                    <span className="mt-1 block text-[11px] text-zinc-500">
+                      {humanize(image.asset_role)}
+                      {image.is_primary_reference ? " · Primary" : ""}
+                    </span>
+                  </span>
+                </a>
+              ) : null
+            )}
+            {record.references.map((reference) => (
+              <a
+                key={reference.id}
+                href={reference.url || undefined}
+                target={reference.url ? "_blank" : undefined}
+                rel={reference.url ? "noreferrer" : undefined}
+                className="flex min-h-28 flex-col rounded-lg border border-zinc-800 bg-zinc-950 p-3 hover:border-emerald-300/50"
+              >
+                <span className="text-2xl text-emerald-300" aria-hidden="true">▧</span>
+                <span className="mt-auto text-xs font-medium text-zinc-200">{reference.title}</span>
+                <span className="mt-1 text-[11px] text-zinc-500">{humanize(reference.reference_type)}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }
@@ -209,7 +329,7 @@ export default function PrivateCanonObjectBrowser({
           ) : null}
 
           <div
-            className={`grid gap-3 p-4 sm:mt-6 sm:grid-cols-2 sm:gap-4 sm:p-0 ${
+            className={`grid gap-3 p-4 sm:mt-6 sm:grid-cols-1 sm:gap-4 sm:p-0 ${
               selectedRecord ? "hidden sm:grid" : ""
             }`}
           >

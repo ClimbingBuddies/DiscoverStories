@@ -2,21 +2,21 @@
 
 ## Rule
 
-All destinations use the [Core Upload Process](./core-upload-process.md). A destination profile changes routing and linking only. It does not authorise an alternative transport method.
+These destination profiles apply to the GitHub queue/OIDC production route. Every supported destination uses the [Core Upload Process](./core-upload-process.md); a profile changes routing and linking only.
 
 The final Storage path is derived by the Supabase upload function. Do not invent or override it in a queue manifest.
 
 ## Profile summary
 
-| Role | Required identifiers | Canonical path pattern | Link behaviour | Status |
+| Role | Required identifiers | Production path pattern | Link behaviour | Status |
 |---|---|---|---|---|
-| Cover | `storySlug` | `{storySlug}/{storySlug}-cover[-stage-version].jpg` | Updates story cover path and URL | Supported |
-| Banner | `storySlug` | `{storySlug}/{storySlug}-banner[-stage-version].jpg` | Updates story banner path | Supported |
-| Episode | `storySlug`, `seasonNumber`, `episodeNumber` | `{storySlug}/episodes/{storySlug}-s##e##[-stage-version].jpg` | Updates episode artwork path and URL | Supported |
-| Reader | Story and episode identifiers | `{storySlug}/episodes/{episode}/reader/{filename}` | Registers media; Reader JSON must reference ID | Blocked |
-| Canon | Canon project and object identifiers | `{canonProjectSlug}/canon/{canonObjectSlug}/{object}-stage-version.jpg` | Registers media and `private_canon_assets` relationship | Blocked |
+| Cover | `storySlug` | `{storySlug}/story/{uuid}.jpg` | Updates story cover path and URL | Supported |
+| Banner | `storySlug` | `{storySlug}/story/{uuid}.jpg` | Updates story banner path | Supported |
+| Episode | `storySlug`, `seasonNumber`, `episodeNumber` | `{storySlug}/episodes/{episode}/{uuid}.jpg` | Updates episode artwork path and URL | Supported |
+| Reader | Story and episode identifiers | `{storySlug}/episodes/{episode}/reader/{uuid}.jpg` | Registers media; Reader JSON must reference ID | Blocked |
+| Canon | `storySlug`, `canonProjectSlug`, `canonObjectSlug`, `canonAssetTitle` | `{canonProjectSlug}/canon/{canonObjectSlug}/production/{uuid}.jpg` | Registers `media_assets` and `private_canon_assets` relationship | **Supported** |
 
-For `production` stage, the stage/version suffix is omitted. For `concept` and `refined`, the suffix is included.
+For `concept` and `refined` stages, the production function uses deterministic stage/version paths appropriate to the destination. Production assets use UUID filenames.
 
 ## Story cover
 
@@ -61,7 +61,7 @@ Expected database effects:
 - one `media_assets` row is inserted or updated by Storage path;
 - `stories.banner_image_path` receives the relative Storage path.
 
-Verify the actual banner rendering; a successful object upload alone is incomplete.
+Verify actual banner rendering; a successful object upload alone is incomplete.
 
 ## Episode artwork
 
@@ -88,77 +88,89 @@ Expected database effects:
 
 The workflow rejects identical converted JPEG bytes used for two episode assets in the same batch.
 
-For an existing episode replacement:
+For an existing episode replacement, follow the replacement runbook rather than guessing whether an existing filename should be retained. Production uploads may receive a new UUID path and therefore require verification of the returned database link.
 
-1. record the existing path;
-2. determine whether the established canonical path must be preserved;
-3. upload and verify the new object;
-4. confirm the episode was linked only after upload;
-5. verify HTTP 200 and page rendering.
+## Canon image — supported profile
 
-Do not use a random filename for an intended episode replacement. The current upload function derives the canonical filename.
+Canon images use the same GitHub queue/OIDC transport as other artwork but are linked through Canon-specific records rather than story or episode artwork columns.
 
-## Random-filename test
+Minimum production manifest:
 
-A random queue folder name does not produce a random Storage filename. The current production function derives Storage paths from story, role, stage, version and episode identifiers.
+```json
+{
+  "storySlug": "life-inside-the-dyson",
+  "assetRole": "canon",
+  "stage": "production",
+  "workflowStatus": "draft",
+  "versionNumber": 1,
+  "canonProjectSlug": "life-inside-the-dyson",
+  "canonObjectSlug": "white-dwarf-energy-limits",
+  "canonAssetTitle": "Descriptive unique image title",
+  "canonAssetRole": "reference",
+  "canonAssetDescription": "What this image shows and why it belongs to the Canon object.",
+  "canonSortOrder": 0,
+  "canonIsPrimaryReference": false,
+  "generationNotes": "Controlled Canon image upload."
+}
+```
 
-A truly random Storage filename is therefore not supported by this canonical pipeline without a separate test-only implementation. Do not add an unsupported `filename` or `storagePath` field to the manifest and assume it will be honoured.
+Required identifiers:
 
-A safe low-impact test uses:
+- `storySlug` — must match the story linked to the Canon workspace;
+- `canonProjectSlug` — exact existing Canon workspace slug;
+- `canonObjectSlug` — exact existing `canon_key` for the Canon object;
+- `canonAssetTitle` — non-empty logical title used in idempotency checks.
 
-- an existing draft story;
-- a non-production stage;
-- a new version number;
-- one asset;
-- an exact queue folder;
-- verification before any larger batch.
+Optional Canon metadata:
+
+- `canonAssetRole`, default `reference`;
+- `canonAssetDescription`;
+- `canonSortOrder`, non-negative integer;
+- `canonIsPrimaryReference`, boolean;
+- consistency/refinement notes when supported by the invoking route.
+
+Expected effects:
+
+1. upload genuine image bytes to the derived Canon Storage path;
+2. register the object in `media_assets` with a source SHA-256 hash;
+3. create the `private_canon_assets` relationship to the exact Canon object;
+4. preserve story and episode artwork fields;
+5. preserve story/episode workflow status;
+6. return the asset ID, Storage path and public URL.
+
+### Canon idempotency
+
+For an existing Canon object, the production function checks the logical combination of Canon object, asset role and title. If that logical asset already exists with the same source hash, the existing asset is reused. If the same title and role exist with different bytes, the upload is rejected and an explicit replacement workflow is required.
+
+This prevents a retry from silently creating duplicate Canon assets.
+
+### Canon acceptance test
+
+The supported profile was verified with `life-inside-the-dyson` → `white-dwarf-energy-limits`: three distinct approved images, one primary image, matching database relationships, and a clean workflow rerun without duplicate creation.
+
+## Characters
+
+A character reference is a Canon image, not a separate transport role. Use `assetRole: "canon"` with the exact Character Canon object's project slug and object slug.
+
+Do not create an invented `character` transport role.
 
 ## Reader/Tiptap image — blocked profile
 
 Intended behaviour:
 
 1. upload and register the image in `media_assets`;
-2. do not replace the episode’s primary artwork;
+2. do not replace the episode's primary artwork;
 3. return the media asset ID;
 4. write that ID to the Tiptap image node;
 5. retain `src` only as a fallback;
 6. resolve approved Reader-visible media by ID at render time.
 
-Current blockers:
+The current end-to-end workflow does not yet guarantee the required Reader document/Tiptap linkage. A model must stop and report **Reader profile blocked** rather than substituting episode artwork or an unregistered URL.
 
-- the upload function constructs the Reader path without first assigning the supplied season and episode values;
-- the GitHub-to-database sequence does not write the returned asset ID into a specific Tiptap document;
-- approval and Reader-visibility state require separate controlled handling.
+## Random-filename behaviour
 
-A lower-capacity model must stop and report **Reader profile blocked**. It must not upload the image as episode artwork and must not paste an unregistered permanent URL into Tiptap as a substitute.
+Production filenames are intentionally derived by the production function and currently use generated UUID filenames for production assets. The queue folder name does not control the Storage filename.
 
-## Canon image — blocked profile
+Do not add an unsupported `filename` or `storagePath` field to a GitHub manifest and assume it will be honoured.
 
-Intended required values include:
-
-- `canonProjectSlug`;
-- `canonObjectSlug`;
-- `canonAssetRole`;
-- optional consistency and refinement notes.
-
-Intended database effects:
-
-- register the object in `media_assets`;
-- create or update its `private_canon_assets` relationship;
-- do not alter story or episode artwork fields.
-
-Current blocker:
-
-- the GitHub workflow accepts the `canon` role but does not forward the Canon-specific fields required by the upload function.
-
-A lower-capacity model must stop and report **Canon profile blocked**. It must not substitute an episode, cover or banner role.
-
-## Characters
-
-A character reference is currently a Canon image, not a separate transport role. It inherits the Canon blocked status until the queue forwards the required Canon project and object identifiers.
-
-Do not create an invented `character` asset role; the workflow rejects roles outside:
-
-```text
-cover, banner, episode, reader, canon
-```
+Connected-Supabase Storage maintenance may use an explicitly approved UUID destination as a separate route. Storage-only operations do not automatically register `media_assets` or relink content records.

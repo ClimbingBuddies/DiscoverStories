@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out queued artwork
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Prepare queue
         id: queue
@@ -35,35 +37,62 @@ jobs:
           queue="$RUNNER_TEMP/artwork-queue.jsonl"
           : > "$queue"
 
+          batch_files=()
+          manifest_files=()
+
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             target="production-queue/${{ inputs.queue_path }}"
+            if [[ -f "$target" && "$(basename "$target")" == "batch.json" ]]; then
+              batch_files=("$target")
+            elif [[ -f "$target" && "$(basename "$target")" == "manifest.json" ]]; then
+              manifest_files=("$target")
+            else
+              mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
+              mapfile -t manifest_files < <(find "$target" -name manifest.json -type f | sort)
+            fi
           else
-            target="production-queue"
-          fi
-
-          if [[ -f "$target" && "$target" == *.json ]]; then
-            batch_files=("$target")
-          else
-            mapfile -t batch_files < <(find "$target" -name batch.json -type f | sort)
-          fi
-
-          if [[ ${#batch_files[@]} -gt 0 ]]; then
-            for batch in "${batch_files[@]}"; do
-              jq -c '.items[]' "$batch" >> "$queue"
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+            mapfile -t changed_files < <(git diff --name-only "$base_sha" "$head_sha" -- production-queue | sort)
+            declare -A seen_batches=()
+            declare -A seen_manifests=()
+            for changed in "${changed_files[@]}"; do
+              case "$changed" in
+                */batch.json)
+                  [[ -f "$changed" ]] && seen_batches["$changed"]=1
+                  ;;
+                */manifest.json|*/image.b64)
+                  manifest="$(dirname "$changed")/manifest.json"
+                  [[ -f "$manifest" ]] && seen_manifests["$manifest"]=1
+                  ;;
+              esac
             done
-          else
-            while IFS= read -r manifest; do
-              folder=$(dirname "$manifest")
-              image_base64=$(tr -d '\n\r' < "$folder/image.b64")
-              jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
-            done < <(find "$target" -name manifest.json -type f | sort)
+            if [[ ${#seen_batches[@]} -gt 0 ]]; then
+              mapfile -t batch_files < <(printf '%s\n' "${!seen_batches[@]}" | sort)
+            fi
+            if [[ ${#seen_manifests[@]} -gt 0 ]]; then
+              mapfile -t manifest_files < <(printf '%s\n' "${!seen_manifests[@]}" | sort)
+            fi
           fi
+
+          for batch in "${batch_files[@]}"; do
+            jq -c '.items[]' "$batch" >> "$queue"
+          done
+          for manifest in "${manifest_files[@]}"; do
+            folder=$(dirname "$manifest")
+            image_base64=$(tr -d '\n\r' < "$folder/image.b64")
+            jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
+          done
 
           test -s "$queue"
           jq -e 'has("storySlug") and has("assetRole") and has("imageBase64")' "$queue" >/dev/null
           jq -e '(.assetRole | IN("cover", "banner", "episode", "reader", "canon"))' "$queue" >/dev/null
           if jq -e '(.assetRole == "reader" or .assetRole == "episode") and ((.seasonNumber|type) != "number" or (.episodeNumber|type) != "number")' "$queue" >/dev/null; then
             echo "Reader and episode media require numeric seasonNumber and episodeNumber." >&2
+            exit 1
+          fi
+          if jq -e 'select(.assetRole == "canon") | (((.canonProjectSlug // "") | length) == 0 or ((.canonObjectSlug // "") | length) == 0 or ((.canonAssetTitle // "") | length) == 0)' "$queue" >/dev/null; then
+            echo "Canon media require canonProjectSlug, canonObjectSlug and canonAssetTitle." >&2
             exit 1
           fi
           echo "queue=$queue" >> "$GITHUB_OUTPUT"
@@ -138,6 +167,13 @@ jobs:
             season_number=$(jq -r '.seasonNumber // empty' <<< "$item")
             episode_number=$(jq -r '.episodeNumber // empty' <<< "$item")
             generation_notes=$(jq -r '.generationNotes // "ChatGPT generated draft concept transferred through the Story Pipeline."' <<< "$item")
+            canon_project_slug=$(jq -r '.canonProjectSlug // empty' <<< "$item")
+            canon_object_slug=$(jq -r '.canonObjectSlug // empty' <<< "$item")
+            canon_asset_title=$(jq -r '.canonAssetTitle // empty' <<< "$item")
+            canon_asset_role=$(jq -r '.canonAssetRole // "reference"' <<< "$item")
+            canon_asset_description=$(jq -r '.canonAssetDescription // empty' <<< "$item")
+            canon_sort_order=$(jq -r '.canonSortOrder // 0' <<< "$item")
+            canon_is_primary=$(jq -r '.canonIsPrimaryReference // false' <<< "$item")
 
             args=(
               -sS --fail-with-body
@@ -155,6 +191,17 @@ jobs:
 
             if [[ -n "$season_number" ]]; then args+=( -F "seasonNumber=$season_number" ); fi
             if [[ -n "$episode_number" ]]; then args+=( -F "episodeNumber=$episode_number" ); fi
+            if [[ "$asset_role" == "canon" ]]; then
+              args+=(
+                -F "canonProjectSlug=$canon_project_slug"
+                -F "canonObjectSlug=$canon_object_slug"
+                -F "canonAssetTitle=$canon_asset_title"
+                -F "canonAssetRole=$canon_asset_role"
+                -F "canonAssetDescription=$canon_asset_description"
+                -F "canonSortOrder=$canon_sort_order"
+                -F "canonIsPrimaryReference=$canon_is_primary"
+              )
+            fi
 
             uploaded=false
             result=""

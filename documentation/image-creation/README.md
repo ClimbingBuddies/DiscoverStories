@@ -38,4 +38,4 @@ Generate alternatives only when explicitly requested or when the user approves e
 
 ## Technical boundary
 
-The current canonical upload path supports draft/review cover, banner and episode artwork. Canon, Reader/Tiptap and published-status-preserving replacements remain blocked as documented in the upload capability matrix. Creative preparation may continue, but the blocked upload must not be substituted with another role or pathway.
+The GitHub queue/OIDC route supports draft/review cover, banner and episode artwork. Canon and Reader/Tiptap remain blocked on that route. Published-status-preserving GitHub replacements also remain blocked. Separately, connected-Supabase Chat may perform controlled private upload/copy and an explicitly authorised copy-first linked relocation; this does not make blocked GitHub destination profiles supported.

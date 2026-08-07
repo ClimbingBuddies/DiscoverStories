@@ -5,7 +5,7 @@
 **Owner:** Audio Platform  
 **Last updated:** 29 Jul 2026
 
-This is the authoritative runbook for assessing an Audio Platform Review Candidate before it progresses. The Initial Draft Process creates the first story package. Creative Development explores, diagnoses, revises and synchronises it. The Review Pipeline assesses one exact synced revision. The Public Pipeline releases approved material.
+This is the authoritative runbook for assessing an Audio Platform Review Candidate before it progresses. The Initial Draft Process creates the first story package. Creative Development explores, diagnoses, revises and synchronises it. The Review Pipeline assesses one exact synced revision. The Publication Pipeline releases approved material.
 
 ## 1. Review purpose
 
@@ -132,7 +132,7 @@ Record the SQI, evidence, strengths, weaknesses, findings, corrections, unresolv
 | **Revise** | Return identified material to Audio Platform Creative Development before reassessment |
 | **Hold** | Pause because the brief, concept, roadmap or evidence needs further consideration |
 | **Approve batch** | Accept the assessed batch and authorise the next development batch |
-| **Promote** | Authorise the assessed material to enter the Public Pipeline; publication is still separate |
+| **Promote** | Authorise the assessed material to enter the Publication Pipeline; publication is still separate |
 | **Stop** | Do not continue the current story direction |
 
 A score alone never changes status or publishes content. The decision must be explicit.
@@ -178,7 +178,7 @@ A Review run is complete only when:
 - required corrections are explicit;
 - one decision is recorded.
 
-The Review Pipeline may authorise progression, but it does not publish. Publication belongs exclusively to the Public Pipeline.
+The Review Pipeline may authorise progression, but it does not publish. Publication belongs exclusively to the Publication Pipeline.
 
 ## 8. Re-review
 
@@ -207,4 +207,6 @@ Corrections must return through Creative Development. The revised working draft 
 - Draft router: `documentation/pipelines/audio-platform-draft-pipeline.md`
 - Initial Draft: `documentation/pipelines/audio-platform-initial-draft-process.md`
 - Creative Development: `documentation/pipelines/audio-platform-creative-development-process.md`
+- Image Review: `documentation/pipelines/audio-platform-image-review-pipeline.md`
+- Publication Pipeline: `documentation/pipelines/audio-platform-publication-pipeline.md`
 - Story Quality Index: `documentation/specifications/story-quality-index.md`

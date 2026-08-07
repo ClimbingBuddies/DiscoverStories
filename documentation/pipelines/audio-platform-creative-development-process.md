@@ -256,9 +256,11 @@ Every Creative Development run should report:
 
 ## 10. Supporting specifications
 
-- Draft router: `documentation/pipelines/audio-platform-draft-pipeline.md`
+- Workflow Router: `documentation/pipelines/audio-platform-draft-pipeline.md`
 - Initial Draft: `documentation/pipelines/audio-platform-initial-draft-process.md`
+- Image Review Pipeline: `documentation/pipelines/audio-platform-image-review-pipeline.md`
 - Review Pipeline: `documentation/pipelines/audio-platform-review-pipeline.md`
+- Publication Pipeline: `documentation/pipelines/audio-platform-publication-pipeline.md`
 - Story creation: `documentation/specifications/story-creation-specification.md`
 - Story SQL insert: `documentation/specifications/story-sql-insert-specification.md`
 - Wiki SQL insert: `documentation/specifications/wiki-sql-insert-specification.md`

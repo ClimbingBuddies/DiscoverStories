@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: DiscoverStories Storage Action
   description: Controlled image storage operations for a private DiscoverStories GPT.
-  version: 1.0.0
+  version: 1.0.1
 servers:
   - url: https://qsyapcprhhmlsgdzclwq.supabase.co/functions/v1/discoverstories-storage-action
 security:
