@@ -7,6 +7,7 @@ on:
       - "production-queue/**/batch.json"
       - "production-queue/**/manifest.json"
       - "production-queue/**/image.b64"
+      - "production-queue/**/*.jpg"
   workflow_dispatch:
     inputs:
       queue_path:
@@ -61,7 +62,7 @@ jobs:
                 */batch.json)
                   [[ -f "$changed" ]] && seen_batches["$changed"]=1
                   ;;
-                */manifest.json|*/image.b64)
+                */manifest.json|*/image.b64|*.jpg)
                   manifest="$(dirname "$changed")/manifest.json"
                   [[ -f "$manifest" ]] && seen_manifests["$manifest"]=1
                   ;;
@@ -78,14 +79,22 @@ jobs:
           for batch in "${batch_files[@]}"; do
             jq -c '.items[]' "$batch" >> "$queue"
           done
+
           for manifest in "${manifest_files[@]}"; do
             folder=$(dirname "$manifest")
-            image_base64=$(tr -d '\n\r' < "$folder/image.b64")
-            jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
+            if [[ -s "$folder/image.jpg" ]]; then
+              jq -c --arg imagePath "$folder/image.jpg" '. + {imagePath:$imagePath}' "$manifest" >> "$queue"
+            elif [[ -s "$folder/image.b64" ]]; then
+              image_base64=$(tr -d '\n\r' < "$folder/image.b64")
+              jq -c --arg imageBase64 "$image_base64" '. + {imageBase64:$imageBase64}' "$manifest" >> "$queue"
+            else
+              echo "No image.jpg or image.b64 found for $manifest" >&2
+              exit 1
+            fi
           done
 
           test -s "$queue"
-          jq -e 'has("storySlug") and has("assetRole") and has("imageBase64")' "$queue" >/dev/null
+          jq -e 'has("storySlug") and has("assetRole") and (has("imagePath") or has("imageBase64"))' "$queue" >/dev/null
           jq -e '(.assetRole | IN("cover", "banner", "episode", "reader", "canon"))' "$queue" >/dev/null
           if jq -e '(.assetRole == "reader" or .assetRole == "episode") and ((.seasonNumber|type) != "number" or (.episodeNumber|type) != "number")' "$queue" >/dev/null; then
             echo "Reader and episode media require numeric seasonNumber and episodeNumber." >&2
@@ -134,33 +143,38 @@ jobs:
             item_number=$((item_number + 1))
             source_file="$RUNNER_TEMP/story-artwork-${item_number}.source"
             image_file="$RUNNER_TEMP/story-artwork-${item_number}.jpg"
-            if ! jq -r '.imageBase64' <<< "$item" | base64 --decode > "$source_file" || [[ ! -s "$source_file" ]]; then
-              jq -cn --argjson item "$item_number" --arg error "Base64 decode failed" '{item:$item,error:$error}' >> "$failures"
-              continue
+            image_path=$(jq -r '.imagePath // empty' <<< "$item")
+
+            if [[ -n "$image_path" ]]; then
+              if [[ ! -s "$image_path" ]]; then
+                jq -cn --argjson item "$item_number" --arg error "Native image file missing or empty" '{item:$item,error:$error}' >> "$failures"
+                continue
+              fi
+              cp "$image_path" "$source_file"
+            else
+              if ! jq -r '.imageBase64' <<< "$item" | base64 --decode > "$source_file" || [[ ! -s "$source_file" ]]; then
+                jq -cn --argjson item "$item_number" --arg error "Base64 decode failed" '{item:$item,error:$error}' >> "$failures"
+                continue
+              fi
             fi
+
             if ! "${image_convert[@]}" "$source_file" -auto-orient -strip -resize '1280x1280>' -quality 82 "$image_file" || [[ "$(identify -quiet -format '%m' "$image_file")" != "JPEG" ]]; then
               jq -cn --argjson item "$item_number" --arg error "JPEG conversion or validation failed" '{item:$item,error:$error}' >> "$failures"
               continue
             fi
-            # Reject exact duplicate episode artwork before any Storage upload.
-            # Cover and banner may share a visual direction, but two episode assets
-            # in the same batch must not contain identical converted JPEG bytes.
+
             asset_role=$(jq -r '.assetRole' <<< "$item")
             if [[ "$asset_role" == episode* ]]; then
               image_hash=$(sha256sum "$image_file" | awk '{print $1}')
               duplicate_item="${episode_hashes[$image_hash]-}"
               if [[ -n "$duplicate_item" ]]; then
-                jq -cn --argjson item "$item_number" --arg assetRole "$asset_role" \
-                  --arg duplicateOf "$duplicate_item" --arg hash "$image_hash" \
-                  --arg error "Duplicate episode artwork bytes; rejected before upload" \
-                  '{item:$item,assetRole:$assetRole,duplicateOf:$duplicateOf,sha256:$hash,error:$error}' >> "$failures"
+                jq -cn --argjson item "$item_number" --arg assetRole "$asset_role" --arg duplicateOf "$duplicate_item" --arg hash "$image_hash" --arg error "Duplicate episode artwork bytes; rejected before upload" '{item:$item,assetRole:$assetRole,duplicateOf:$duplicateOf,sha256:$hash,error:$error}' >> "$failures"
                 continue
               fi
               episode_hashes["$image_hash"]="$asset_role"
             fi
 
             story_slug=$(jq -r '.storySlug' <<< "$item")
-            asset_role=$(jq -r '.assetRole' <<< "$item")
             stage=$(jq -r '.stage // "concept"' <<< "$item")
             workflow_status=$(jq -r '.workflowStatus // "draft"' <<< "$item")
             version_number=$(jq -r '.versionNumber // 1' <<< "$item")

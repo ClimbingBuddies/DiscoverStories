@@ -1,0 +1,15 @@
+{
+  "storySlug": "life-inside-the-dyson",
+  "assetRole": "canon",
+  "stage": "concept",
+  "workflowStatus": "draft",
+  "versionNumber": 1,
+  "canonProjectSlug": "life-inside-the-dyson",
+  "canonObjectSlug": "aurora-glass",
+  "canonAssetTitle": "Aurora Glass",
+  "canonAssetRole": "reference",
+  "canonAssetDescription": "A wealthy, high-status habitat defined by transparent structural enclosures, bright open light and refined urban planning.",
+  "canonSortOrder": 0,
+  "canonIsPrimaryReference": true,
+  "generationNotes": "High-resolution native Git binary pathway acceptance test following documentation/image-upload/native-git-binary-pathway.md."
+}
