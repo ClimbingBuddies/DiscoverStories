@@ -1,0 +1,15 @@
+{
+  "storySlug": "life-inside-the-dyson",
+  "assetRole": "canon",
+  "stage": "production",
+  "workflowStatus": "draft",
+  "versionNumber": 1,
+  "canonProjectSlug": "life-inside-the-dyson",
+  "canonObjectSlug": "helios-gate",
+  "canonAssetTitle": "Helios Gate — Capital Ring-City Reference",
+  "canonAssetRole": "reference",
+  "canonAssetDescription": "Primary visual reference for Helios Gate, the planned capital-scale ring-city with a monumental civic spine, radial transport geometry and organised green and water districts.",
+  "canonSortOrder": 0,
+  "canonIsPrimaryReference": true,
+  "generationNotes": "Controlled Canon image upload using user-supplied Helios Gate artwork."
+}
