@@ -1,0 +1,16 @@
+{
+  "storySlug": "life-inside-the-dyson",
+  "assetRole": "canon",
+  "stage": "concept",
+  "workflowStatus": "draft",
+  "versionNumber": 1,
+  "generationNotes": "Native Git binary blob end-to-end Canon upload test.",
+  "canonProjectSlug": "life-inside-the-dyson",
+  "canonObjectSlug": "helios-gate",
+  "canonAssetTitle": "Helios Gate",
+  "canonAssetRole": "reference",
+  "canonAssetDescription": "Canon reference artwork for Helios Gate. Native Git binary transport test.",
+  "canonSortOrder": 0,
+  "canonIsPrimaryReference": true,
+  "imageFile": "image.jpg"
+}
