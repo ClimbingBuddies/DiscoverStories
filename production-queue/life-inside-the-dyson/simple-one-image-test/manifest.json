@@ -1,0 +1,14 @@
+{
+  "storySlug": "life-inside-the-dyson",
+  "assetRole": "canon",
+  "stage": "concept",
+  "workflowStatus": "draft",
+  "versionNumber": 1,
+  "canonProjectSlug": "life-inside-the-dyson",
+  "canonObjectSlug": "helios-gate",
+  "canonAssetTitle": "Helios Gate",
+  "canonAssetRole": "reference",
+  "canonSortOrder": 99,
+  "canonIsPrimaryReference": false,
+  "generationNotes": "Simplified one-image upload test from ChatGPT via native Git binary transport."
+}
