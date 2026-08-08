@@ -1,24 +1,68 @@
-name: Upload queued story media
+name: Simple one-image upload test
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - "production-queue/**/manifest.json"
-      - "production-queue/**/*.jpg"
+      - "production-queue/**/image.jpg"
+      - "production-queue/**/image.jpeg"
+      - "production-queue/**/image.png"
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  upload:
+  upload-one-image:
     runs-on: ubuntu-latest
     env:
       SUPABASE_FUNCTION_URL: https://qsyapcprhhmlsgdzclwq.supabase.co/functions/v1/github-story-artwork-bridge
     steps:
       - name: Check out queued artwork
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find single changed manifest
+        id: queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          mapfile -t manifests < <(git diff --name-only "$base_sha" "$head_sha" -- production-queue | awk '/\/manifest\.json$/')
+          if [[ ${#manifests[@]} -ne 1 ]]; then
+            echo "Expected exactly one changed manifest.json; found ${#manifests[@]}" >&2
+            exit 1
+          fi
+          manifest="${manifests[0]}"
+          folder="$(dirname "$manifest")"
+          image=""
+          for candidate in "$folder/image.png" "$folder/image.jpg" "$folder/image.jpeg"; do
+            if [[ -s "$candidate" ]]; then image="$candidate"; break; fi
+          done
+          if [[ -z "$image" ]]; then
+            echo "Expected image.png, image.jpg or image.jpeg beside manifest.json" >&2
+            exit 1
+          fi
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Validate image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="${{ steps.queue.outputs.image }}"
+          mime=$(file --brief --mime-type "$image")
+          case "$mime" in
+            image/png|image/jpeg) ;;
+            *) echo "Unsupported image MIME: $mime" >&2; exit 1 ;;
+          esac
+          echo "Image: $image"
+          echo "MIME: $mime"
+          echo "Bytes: $(wc -c < "$image" | tr -d ' ')"
+          echo "SHA256: $(sha256sum "$image" | awk '{print $1}')"
 
       - name: Request short-lived GitHub identity token
         id: oidc
@@ -33,21 +77,20 @@ jobs:
           echo "::add-mask::$token"
           echo "token=$token" >> "$GITHUB_OUTPUT"
 
-      - name: Upload native binary Canon image
+      - name: Upload one native image and link Canon
         shell: bash
         run: |
           set -euo pipefail
-          folder="production-queue/life-inside-the-dyson/helios-gate-native-test"
-          manifest="$folder/manifest.json"
-          image="$folder/image.jpg"
-          test -s "$image"
-          file "$image" | grep -qi 'JPEG image data'
+          manifest="${{ steps.queue.outputs.manifest }}"
+          image="${{ steps.queue.outputs.image }}"
+          mime=$(file --brief --mime-type "$image")
+
           story_slug=$(jq -r '.storySlug' "$manifest")
           asset_role=$(jq -r '.assetRole' "$manifest")
           stage=$(jq -r '.stage // "concept"' "$manifest")
           workflow_status=$(jq -r '.workflowStatus // "draft"' "$manifest")
           version_number=$(jq -r '.versionNumber // 1' "$manifest")
-          generation_notes=$(jq -r '.generationNotes' "$manifest")
+          generation_notes=$(jq -r '.generationNotes // "Simple one-image GitHub binary upload test."' "$manifest")
           canon_project_slug=$(jq -r '.canonProjectSlug' "$manifest")
           canon_object_slug=$(jq -r '.canonObjectSlug' "$manifest")
           canon_asset_title=$(jq -r '.canonAssetTitle' "$manifest")
@@ -55,6 +98,7 @@ jobs:
           canon_asset_description=$(jq -r '.canonAssetDescription // empty' "$manifest")
           canon_sort_order=$(jq -r '.canonSortOrder // 0' "$manifest")
           canon_is_primary=$(jq -r '.canonIsPrimaryReference // false' "$manifest")
+
           result=$(curl -sS --fail-with-body \
             -X POST "$SUPABASE_FUNCTION_URL" \
             -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
@@ -72,6 +116,7 @@ jobs:
             -F "canonAssetDescription=$canon_asset_description" \
             -F "canonSortOrder=$canon_sort_order" \
             -F "canonIsPrimaryReference=$canon_is_primary" \
-            -F "file=@$image;type=image/jpeg")
+            -F "file=@$image;type=$mime")
+
           echo "$result" | jq .
-          jq -e '.uploaded == true and (.storagePath | length > 0)' <<< "$result"
+          jq -e '.uploaded == true and (.storagePath | length > 0) and (.assetId | length > 0)' <<< "$result"
